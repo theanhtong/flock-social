@@ -1,0 +1,564 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  customer
+  bot_system
+  moderator
+  admin
+}
+
+enum UserStatus {
+  pending_verification
+  active
+  suspended
+  banned
+}
+
+enum PostType {
+  post
+  repost
+}
+
+enum PostStatus {
+  active
+  hidden
+  deleted_by_user
+}
+
+enum PostAudience {
+  everyone
+  followers
+  close_friends
+  restricted
+}
+
+enum MediaType {
+  image
+  video
+  gif
+}
+
+enum MediaStatus {
+  pending
+  processing
+  failed
+}
+
+enum ConversationType {
+  direct
+  group
+}
+
+enum ConversationMemberStatus {
+  active
+  pending_approval
+}
+
+enum MemberRole {
+  owner
+  monitor
+  member
+}
+
+enum ConversationFolder {
+  main
+  pending
+}
+
+enum MessageRequestStatus {
+  none
+  pending
+  accepted
+  rejected
+}
+
+enum MessageType {
+  text
+  media
+  post_share
+  system_event
+}
+
+enum NotificationType {
+  like
+  comment
+  repost
+  follow
+  follow_request
+  dm_message
+}
+
+enum AuditLogType {
+  user
+  post
+  comment
+  message
+  conversation
+  media
+  sanction
+  report
+}
+
+enum ReportType {
+  user
+  post
+  comment
+}
+
+enum ReportReason {
+  spam
+  harassment
+  hate_speech
+  violence
+  nudity
+  misinformation
+  impersonation
+  other
+}
+
+enum ReportStatus {
+  pending
+  reviewing
+  resolved
+  dismissed
+}
+
+enum AuditActionType {
+  create
+  update
+  delete
+}
+
+enum SanctionType {
+  warning
+  suspension
+  ban
+}
+
+enum SanctionStatus {
+  active
+  lifted
+  expired
+}
+
+enum AppealStatus {
+  pending
+  approved
+  rejected
+}
+
+model AuditLog {
+  id         BigInt          @id
+  adminId    BigInt          @map("admin_id")
+  action     AuditActionType
+  targetId   BigInt          @map("target_id")
+  targetType AuditLogType    @map("target_type")
+  metadata   Json?           @db.JsonB
+  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+model User {
+  id           BigInt     @id
+  username     String     @unique @db.VarChar(30)
+  email        String     @unique @db.VarChar(255)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  displayName  String     @map("display_name") @db.VarChar(50)
+  bio          String?    @db.VarChar(160)
+  avatarUrl    String?    @map("avatar_url") @db.Text
+  bannerUrl    String?    @map("banner_url") @db.Text
+  location     String?    @db.VarChar(100)
+  links        Json?      @db.JsonB
+  birthDate    DateTime?  @map("birth_date") @db.Date
+  role         UserRole   @default(customer)
+  status       UserStatus @default(active)
+  isVerified   Boolean    @default(false) @map("is_verified")
+
+  followersCount Int @default(0) @map("followers_count")
+  followingCount Int @default(0) @map("following_count")
+
+  postsCount Int @default(0) @map("posts_count")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  settings              UserSettings?
+  posts                 Post[]
+  comments              Comment[]
+  commentLikes          CommentLike[]
+  following             Follow[]             @relation("following")
+  followers             Follow[]             @relation("followers")
+  blockedUsers          UserBlock[]          @relation("blockedUsers")
+  blockedByUsers        UserBlock[]          @relation("blockedByUsers")
+  postLikes             PostLike[]
+  bookmarks             Bookmark[]
+  mediaUploads          Media[]
+  conversationMembers   ConversationMember[]
+  sentMessages          Message[]
+  receivedNotifications Notification[]       @relation("receivedNotifications")
+  actedNotifications    Notification[]       @relation("actedNotifications")
+  auditLogs             AuditLog[]
+  reports               Report[]             @relation("reports")
+  reviewedReports       Report[]             @relation("reviewedReports")
+
+  sanctions       UserSanction[] @relation("userSanctions")
+  sanctionsIssued UserSanction[] @relation("sanctionsIssued")
+  sanctionsLifted UserSanction[] @relation("sanctionsLifted")
+
+  @@index([username])
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+model UserSettings {
+  userId BigInt @id @map("user_id")
+
+  isPrivateProfile      Boolean @default(false) @map("is_private_profile")
+  requireFollowApproval Boolean @default(false) @map("require_follow_approval")
+  showReadReceipts      Boolean @default(true) @map("show_read_receipts")
+  showOnlineStatus      Boolean @default(true) @map("show_online_status")
+
+  allowTagging     String @default("everyone") @map("allow_tagging") @db.VarChar(20)
+  whoCanReplyPosts String @default("everyone") @map("who_can_reply_posts") @db.VarChar(20)
+  whoCanMessageMe  String @default("everyone") @map("who_can_message_me") @db.VarChar(20)
+  whoCanAddToGroup String @default("everyone") @map("who_can_add_to_group") @db.VarChar(20)
+
+  notifyOnLikes    Boolean @default(true) @map("notify_on_likes")
+  notifyOnComments Boolean @default(true) @map("notify_on_comments")
+  notifyOnFollows  Boolean @default(true) @map("notify_on_follows")
+  notifyOnTagging  Boolean @default(true) @map("notify_on_tagging")
+  notifyOnReposts  Boolean @default(true) @map("notify_on_reposts")
+
+  autoplayVideos Boolean @default(true) @map("autoplay_videos")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model Follow {
+  followerId  BigInt   @map("follower_id")
+  followingId BigInt   @map("following_id")
+  isPending   Boolean  @default(false) @map("is_pending")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  follower  User @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId, followerId])
+  @@map("follows")
+}
+
+model UserBlock {
+  blockerId BigInt   @map("blocker_id")
+  blockedId BigInt   @map("blocked_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  blocker User @relation("blockedUsers", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("blockedByUsers", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@map("user_blocks")
+}
+
+model Post {
+  id         BigInt   @id
+  userId     BigInt   @map("user_id")
+  content    String?  @db.Text
+  postType   PostType @default(post) @map("post_type")
+  repostOfId BigInt?  @map("repost_of_id")
+
+  likeCount    Int @default(0) @map("like_count")
+  repostCount  Int @default(0) @map("repost_count")
+  commentCount Int @default(0) @map("comment_count")
+  viewsCount   Int @default(0) @map("views_count")
+
+  status        PostStatus   @default(active)
+  audience      PostAudience @default(everyone)
+  targetUserIds BigInt[]     @default([]) @map("target_user_ids")
+  isEdited      Boolean      @default(false) @map("is_edited")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repostOf       Post?         @relation("reposts", fields: [repostOfId], references: [id], onDelete: SetNull)
+  reposts        Post[]        @relation("reposts")
+  postLikes      PostLike[]
+  comments       Comment[]
+  bookmarks      Bookmark[]
+  media          PostMedia[]
+  hashtags       PostHashtag[]
+  sharedMessages Message[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([repostOfId])
+  @@map("posts")
+}
+
+model Comment {
+  id              BigInt   @id
+  postId          BigInt   @map("post_id")
+  userId          BigInt   @map("user_id")
+  parentCommentId BigInt?  @map("parent_comment_id")
+  content         String   @db.Text
+  mediaUrl        String?  @map("media_url") @db.VarChar(512)
+  likeCount       Int      @default(0) @map("like_count")
+  replyCount      Int      @default(0) @map("reply_count")
+  isDeleted       Boolean  @default(false) @map("is_deleted")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  post          Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentComment Comment?      @relation("replies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies       Comment[]     @relation("replies")
+  commentLikes  CommentLike[]
+
+  @@index([postId, createdAt(sort: Asc)])
+  @@index([parentCommentId])
+  @@map("comments")
+}
+
+model CommentLike {
+  commentId BigInt   @map("comment_id")
+  userId    BigInt   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId])
+  @@map("comment_likes")
+}
+
+model PostLike {
+  postId    BigInt   @map("post_id")
+  userId    BigInt   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("post_likes")
+}
+
+model Bookmark {
+  userId    BigInt   @map("user_id")
+  postId    BigInt   @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@map("bookmarks")
+}
+
+model Media {
+  id              BigInt      @id
+  uploaderId      BigInt      @map("uploader_id")
+  mediaType       MediaType   @map("media_type")
+  originalUrl     String      @map("original_url") @db.Text
+  thumbnailUrl    String?     @map("thumbnail_url") @db.Text
+  hlsManifestUrl  String?     @map("hls_manifest_url") @db.Text
+  width           Int?
+  height          Int?
+  durationSeconds Int?        @map("duration_seconds")
+  status          MediaStatus @default(pending)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  uploader User           @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  posts    PostMedia[]
+  messages MessageMedia[]
+
+  @@map("media")
+}
+
+model PostMedia {
+  postId       BigInt @map("post_id")
+  mediaId      BigInt @map("media_id")
+  displayOrder Int    @default(0) @map("display_order") @db.SmallInt
+
+  post  Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([postId, mediaId])
+  @@map("post_media")
+}
+
+model Conversation {
+  id        BigInt           @id
+  type      ConversationType @default(direct)
+  title     String?          @db.VarChar(100)
+  avatarUrl String?          @map("avatar_url") @db.Text
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  members  ConversationMember[]
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model ConversationMember {
+  conversationId    BigInt                   @map("conversation_id")
+  userId            BigInt                   @map("user_id")
+  invitedBy         BigInt?                  @map("invited_by")
+  role              MemberRole               @default(member)
+  status            ConversationMemberStatus @default(active) @map("status")
+  folder            ConversationFolder       @default(main)
+  requestStatus     MessageRequestStatus     @default(accepted) @map("request_status")
+  isMuted           Boolean                  @default(false) @map("is_muted")
+  mutedUntil        DateTime?                @map("muted_until") @db.Timestamptz
+  lastReadMessageId BigInt?                  @map("last_read_message_id")
+  clearedAt         DateTime?                @map("cleared_at") @db.Timestamptz
+  joinedAt          DateTime                 @default(now()) @map("joined_at") @db.Timestamptz
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_members")
+}
+
+model Message {
+  id               BigInt      @id
+  conversationId   BigInt      @map("conversation_id")
+  senderId         BigInt      @map("sender_id")
+  messageType      MessageType @default(text) @map("message_type")
+  content          String?     @db.Text
+  isDeleted        Boolean     @default(false) @map("is_deleted")
+  replyToMessageId BigInt?     @map("reply_to_message_id")
+  sharePostId      BigInt?     @map("share_post_id")
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyToMessage Message?          @relation("replies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies        Message[]         @relation("replies")
+  sharedPost     Post?             @relation(fields: [sharePostId], references: [id], onDelete: SetNull)
+  media          MessageMedia[]
+
+  @@index([conversationId, id(sort: Desc)])
+  @@map("messages")
+}
+
+model MessageMedia {
+  messageId    BigInt @map("message_id")
+  mediaId      BigInt @map("media_id")
+  displayOrder Int    @default(0) @map("display_order") @db.SmallInt
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  media   Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, mediaId])
+  @@map("message_media")
+}
+
+model Notification {
+  id         BigInt           @id
+  receiverId BigInt           @map("receiver_id")
+  actorId    BigInt           @map("actor_id")
+  type       NotificationType
+  entityId   BigInt?          @map("entity_id")
+  isRead     Boolean          @default(false) @map("is_read")
+  isDeleted  Boolean          @default(false) @map("is_deleted")
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  receiver User @relation("receivedNotifications", fields: [receiverId], references: [id], onDelete: Cascade)
+  actor    User @relation("actedNotifications", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([receiverId, isRead, isDeleted, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+model Hashtag {
+  id         BigInt   @id
+  tag        String   @unique @db.VarChar(100)
+  postsCount Int      @default(0) @map("posts_count")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  posts PostHashtag[]
+
+  @@map("hashtags")
+}
+
+model PostHashtag {
+  postId    BigInt @map("post_id")
+  hashtagId BigInt @map("hashtag_id")
+
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([postId, hashtagId])
+  @@map("post_hashtags")
+}
+
+model Report {
+  id           BigInt       @id
+  reporterId   BigInt       @map("reporter_id")
+  targetType   ReportType   @map("target_type")
+  targetId     BigInt       @map("target_id")
+  reason       ReportReason
+  details      String?      @db.Text
+  status       ReportStatus @default(pending)
+  reviewedById BigInt?      @map("reviewed_by_id")
+  reviewedAt   DateTime?    @map("reviewed_at") @db.Timestamptz
+  resolution   String?      @db.Text
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz
+
+  reporter   User           @relation("reports", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewedBy User?          @relation("reviewedReports", fields: [reviewedById], references: [id], onDelete: SetNull)
+  sanctions  UserSanction[]
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([targetType, targetId])
+  @@map("reports")
+}
+
+model UserSanction {
+  id         BigInt         @id
+  userId     BigInt         @map("user_id")
+  issuedById BigInt         @map("issued_by_id")
+  reportId   BigInt?        @map("report_id")
+  type       SanctionType
+  reason     String         @db.Text
+  status     SanctionStatus @default(active)
+  expiresAt  DateTime?      @map("expires_at") @db.Timestamptz
+  liftedById BigInt?        @map("lifted_by_id")
+  liftedAt   DateTime?      @map("lifted_at") @db.Timestamptz
+  liftReason String?        @map("lift_reason") @db.Text
+
+  appealNote   String?       @map("appeal_note") @db.Text
+  appealStatus AppealStatus? @map("appeal_status")
+  appealedAt   DateTime?     @map("appealed_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user     User    @relation("userSanctions", fields: [userId], references: [id], onDelete: Cascade)
+  issuedBy User    @relation("sanctionsIssued", fields: [issuedById], references: [id], onDelete: Cascade)
+  liftedBy User?   @relation("sanctionsLifted", fields: [liftedById], references: [id], onDelete: SetNull)
+  report   Report? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@map("user_sanctions")
+}
