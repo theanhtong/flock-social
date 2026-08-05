@@ -192,6 +192,7 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
+  sessions Session[]
   settings              UserSettings?
   posts                 Post[]
   comments              Comment[]
@@ -219,6 +220,24 @@ model User {
   @@index([email])
   @@index([status])
   @@map("users")
+}
+
+model Session {
+  id               BigInt   @id
+  userId           BigInt
+  sessionId        String   @unique
+  refreshTokenHash String
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionId])
+  @@map("sessions")
 }
 
 model UserSettings {
