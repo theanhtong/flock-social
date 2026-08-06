@@ -3,6 +3,7 @@ import {
   IsEmail,
   IsNotEmpty,
   IsString,
+  IsOptional,
   MinLength,
   MaxLength,
   Matches,
@@ -48,24 +49,23 @@ export class RegisterDto {
 
 export class LoginDto {
   @IsString()
-  @IsNotEmpty()
-  email: string;
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @IsOptional()
+  identifier?: string;
+
+  @IsString()
+  @IsOptional()
+  username?: string;
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  @MaxLength(32, { message: 'Password must be at most 32 characters long' })
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/,
-    {
-      message:
-        'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character',
-    },
-  )
   password: string;
 }
 
-export interface RegisterResponseDto {
+export class RegisterResponseDto {
   id: string;
   username: string;
   email: string;
@@ -74,16 +74,19 @@ export interface RegisterResponseDto {
   createdAt: string;
 }
 
-export interface AuthResponseDto {
+export class AuthUserDto {
+  id: string;
+  username: string;
+  email: string;
+  displayName: string;
+  role: string;
+  avatarUrl?: string | null;
+  isVerified?: boolean;
+}
+
+export class AuthResponseDto {
   accessToken: string;
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    displayName: string;
-    role: string;
-    avatarUrl?: string | null;
-  };
+  user: AuthUserDto;
 }
 
 export class SendVerificationDto {

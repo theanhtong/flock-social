@@ -39,15 +39,34 @@ export class AuthService {
     this.googleClient = new OAuth2Client();
   }
 
-  async register(dto: RegisterDto): Promise<RegisterResponseDto> {
+  async register(
+    dto: RegisterDto,
+    res: Response,
+  ): Promise<AuthResponseDto> {
+    const verifiedKey = `email_verified:${dto.email}`;
+    const isEmailVerified = await this.redis.get(verifiedKey);
+
+    if (!isEmailVerified) {
+      throw new BadRequestException(
+        'Email not verified. Please verify your OTP code first.',
+      );
+    }
+
     const existing = await this.prisma.user.findFirst({
       where: {
-        OR: [{ username: dto.username }, { email: dto.email }],
+        OR: [
+          { username: { equals: dto.username, mode: 'insensitive' } },
+          { email: { equals: dto.email, mode: 'insensitive' } },
+        ],
       },
     });
 
     if (existing) {
-      throw new ConflictException('Username or Email already exists');
+      throw new ConflictException(
+        existing.username.toLowerCase() === dto.username.toLowerCase()
+          ? 'Username is already taken'
+          : 'Email is already registered',
+      );
     }
 
     const passwordHash = await argon2.hash(dto.password);
@@ -60,54 +79,83 @@ export class AuthService {
         email: dto.email,
         passwordHash,
         displayName: dto.displayName,
-        status: 'pending_verification',
-        isVerified: false,
+        status: 'active',
+        isVerified: true,
       },
     });
 
-    // auto trigger 6-digit otp code to gmail
-    await this.sendVerificationEmail(dto.email);
+    await this.redis.del(verifiedKey);
+
+    const sessionId = this.snowflake.generateString();
+    const tokens = await this.generateTokens(
+      user.id.toString(),
+      user.username,
+      user.role,
+      sessionId,
+    );
+
+    await this.sessionService.save(
+      user.id.toString(),
+      sessionId,
+      tokens.refreshToken,
+    );
+
+    this.setRefreshTokenCookie(res, tokens.refreshToken);
 
     return {
-      id: user.id.toString(),
-      username: user.username,
-      email: user.email,
-      displayName: user.displayName,
-      role: user.role,
-      createdAt: user.createdAt.toISOString(),
+      accessToken: tokens.accessToken,
+      user: {
+        id: user.id.toString(),
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+      },
     };
   }
 
-  async sendVerificationEmail(email: string): Promise<{ success: boolean; message: string }> {
-  const user = await this.prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    throw new BadRequestException('Account not found with this email.');
+  async sendVerificationEmail(
+    email: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
+    });
+
+    if (existingUser && existingUser.status === 'active') {
+      throw new ConflictException('An account with this email already exists.');
+    }
+
+    const cooldownKey = `send_otp_cooldown:${email}`;
+    const inCooldown = await this.redis.get(cooldownKey);
+    if (inCooldown) {
+      throw new BadRequestException(
+        'Please wait 60 seconds before requesting a new verification code.',
+      );
+    }
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const redisKey = `verify_otp:${email}`;
+    await this.redis.set(redisKey, otpCode, 600);
+    await this.redis.set(cooldownKey, 'true', 60);
+
+    const emailSent = await this.mailService.sendVerificationCode(
+      email,
+      otpCode,
+    );
+
+    if (!emailSent) {
+      throw new BadRequestException(
+        'Failed to send verification email. Please try again later.',
+      );
+    }
+
+    return {
+      success: true,
+      message:
+        'A 6-digit code has been sent to your email. Please enter it to verify your account.',
+    };
   }
-
-  // 60 seconds cooldown check to prevent spamming otp requests
-  const cooldownKey = `send_otp_cooldown:${email}`;
-  const inCooldown = await this.redis.get(cooldownKey);
-  if (inCooldown) {
-    throw new BadRequestException('Please wait 60 seconds before requesting a new verification code.');
-  }
-
-  // store otp in redis for 10 minutes
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-  const redisKey = `verify_otp:${email}`;
-  await this.redis.set(redisKey, otpCode, 600);
-  await this.redis.set(cooldownKey, 'true', 60);
-
-  const emailSent = await this.mailService.sendVerificationCode(email, otpCode);
-
-  if (!emailSent) {
-    throw new BadRequestException('Failed to send verification email. Please try again later.');
-  }
-
-  return {
-    success: true,
-    message: 'A 6-digit code has been sent to your email. Please enter it to verify your account.',
-  };
-}
 
   async verifyEmail(
     email: string,
@@ -122,19 +170,13 @@ export class AuthService {
       );
     }
 
-    await this.prisma.user.update({
-      where: { email },
-      data: {
-        status: 'active',
-        isVerified: true,
-      },
-    });
-
+    const verifiedKey = `email_verified:${email}`;
+    await this.redis.set(verifiedKey, 'true', 900);
     await this.redis.del(redisKey);
 
     return {
       success: true,
-      message: 'Account successfully verified!',
+      message: 'Email verified successfully! Please complete your profile.',
     };
   }
 
@@ -232,8 +274,18 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, res: Response): Promise<AuthResponseDto> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+    const target = dto.identifier || dto.email || dto.username;
+    if (!target) {
+      throw new UnauthorizedException('Please enter your email or username');
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: target, mode: 'insensitive' } },
+          { username: { equals: target, mode: 'insensitive' } },
+        ],
+      },
     });
 
     if (!user) {
@@ -282,7 +334,7 @@ export class AuthService {
   async refreshTokens(
     req: Request,
     res: Response,
-  ): Promise<{ accessToken: string }> {
+  ): Promise<AuthResponseDto> {
     const submittedToken = req.cookies?.[this.cookieName];
     if (!submittedToken) {
       throw new UnauthorizedException('Refresh token missing');
@@ -304,19 +356,27 @@ export class AuthService {
     );
 
     if (result === SessionValidationResult.NOT_FOUND) {
-      res.clearCookie(this.cookieName);
+      res.clearCookie(this.cookieName, { path: '/' });
       throw new UnauthorizedException(
         'Session has been revoked. Please log in again.',
       );
     }
 
     if (result === SessionValidationResult.MISMATCH) {
-      // token mismatch: possible theft — kill the entire session immediately
       await this.sessionService.revoke(payload.sid);
-      res.clearCookie(this.cookieName);
+      res.clearCookie(this.cookieName, { path: '/' });
       throw new UnauthorizedException(
         'Token reuse detected. Session terminated for security.',
       );
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: BigInt(payload.sub) },
+    });
+
+    if (!user) {
+      res.clearCookie(this.cookieName, { path: '/' });
+      throw new UnauthorizedException('User not found');
     }
 
     const newTokens = await this.generateTokens(
@@ -333,7 +393,18 @@ export class AuthService {
     );
     this.setRefreshTokenCookie(res, newTokens.refreshToken);
 
-    return { accessToken: newTokens.accessToken };
+    return {
+      accessToken: newTokens.accessToken,
+      user: {
+        id: user.id.toString(),
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        avatarUrl: user.avatarUrl,
+        isVerified: user.isVerified,
+      },
+    };
   }
 
   async logout(req: Request, res: Response): Promise<{ message: string }> {
@@ -349,7 +420,7 @@ export class AuthService {
       }
     }
 
-    res.clearCookie(this.cookieName);
+    res.clearCookie(this.cookieName, { path: '/' });
     return { message: 'Logged out successfully' };
   }
 
@@ -390,6 +461,7 @@ export class AuthService {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }
