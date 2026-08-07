@@ -8,7 +8,6 @@ import { useAuthStore } from '@/store/auth-store';
 import { userService, UserProfile } from '@/services/user-service';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { RoleBadge } from '@/components/ui/role-badge';
 import { Spinner } from '@/components/ui/spinner';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { EditProfileModal } from '@/components/profile/edit-profile-modal';
@@ -20,7 +19,6 @@ export default function SelfProfilePage() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const authLoading = useAuthStore((s) => s.isLoading);
-  const logout = useAuthStore((s) => s.logout);
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);

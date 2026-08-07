@@ -37,7 +37,7 @@ export const userService = {
   },
 
   updateProfile: async (data: UpdateProfilePayload, token?: string | null): Promise<UserProfile> => {
-    return apiClient.put<UserProfile>('/users/me', data, { token });
+    return apiClient.patch<UserProfile>('/users/me', data, { token });
   },
 
   searchUsers: async (query: string, token?: string | null): Promise<UserProfile[]> => {

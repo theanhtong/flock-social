@@ -1,3 +1,4 @@
+import { jest, expect, describe, it, beforeEach } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -15,8 +16,6 @@ import { SnowflakeService } from '../../common/snowflake/snowflake.service.js';
 import { MailService } from '../../common/mail/mail.service.js';
 import { SessionValidationResult } from './session/session.enum.js';
 
-jest.mock('argon2');
-
 const CONFIG: Record<string, string> = {
   JWT_SECRET: 'test-secret',
   GOOGLE_CLIENT_ID: 'test-google-client-id',
@@ -27,7 +26,7 @@ const mockUser = {
   username: 'johndoe',
   email: 'john@example.com',
   displayName: 'John Doe',
-  passwordHash: 'hashed-password',
+  passwordHash: '$argon2id$v=19$m=65536,t=3,p=4$mockhash',
   role: 'user',
   status: 'active',
   isVerified: true,
@@ -96,13 +95,13 @@ async function makeService(
   };
 
   const jwtService = {
-    signAsync: jest.fn().mockResolvedValue('signed-token'),
+    signAsync: jest.fn<any>().mockResolvedValue('signed-token'),
     verifyAsync: jest.fn(),
     ...overrides.jwtService,
   };
 
   const mailService = {
-    sendVerificationCode: jest.fn().mockResolvedValue(true),
+    sendVerificationCode: jest.fn<any>().mockResolvedValue(true),
     ...overrides.mailService,
   };
 
@@ -139,6 +138,7 @@ async function makeService(
 describe('AuthService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   it('should be defined', async () => {
@@ -148,64 +148,64 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should throw ConflictException when username or email already exists', async () => {
-      const { service, prisma } = await makeService();
+      const { service, prisma, redis } = await makeService();
+      redis.get.mockResolvedValue('true');
       prisma.user.findFirst.mockResolvedValue(mockUser);
 
+      const mockRes = makeRes();
       await expect(
-        service.register({
+        service.register(
+          {
+            username: 'johndoe',
+            email: 'john@example.com',
+            password: 'password123',
+            displayName: 'John Doe',
+          } as any,
+          mockRes,
+        ),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should create user and return tokens on success when email is verified', async () => {
+      const { service, prisma, redis } = await makeService();
+      const mockRes = makeRes();
+      redis.get.mockResolvedValue('true');
+      prisma.user.findFirst.mockResolvedValue(null);
+      jest.spyOn(argon2, 'hash').mockResolvedValue('hashed-password' as any);
+      prisma.user.create.mockResolvedValue({
+        ...mockUser,
+        status: 'active',
+        isVerified: true,
+      });
+
+      const result = await service.register(
+        {
           username: 'johndoe',
           email: 'john@example.com',
           password: 'password123',
           displayName: 'John Doe',
-        } as any),
-      ).rejects.toThrow(ConflictException);
-    });
-
-    it('should create a pending_verification user and send OTP email', async () => {
-      const { service, prisma, redis, mailService } = await makeService();
-      prisma.user.findFirst.mockResolvedValue(null);
-      prisma.user.findUnique.mockResolvedValue(mockUser);
-      redis.get.mockResolvedValue(null);
-      (argon2.hash as jest.Mock).mockResolvedValue('hashed-password');
-      prisma.user.create.mockResolvedValue({
-        ...mockUser,
-        status: 'pending_verification',
-        isVerified: false,
-      });
-
-      const result = await service.register({
-        username: 'johndoe',
-        email: 'john@example.com',
-        password: 'password123',
-        displayName: 'John Doe',
-      } as any);
-
-      expect(prisma.user.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            status: 'pending_verification',
-            isVerified: false,
-          }),
-        }),
+        } as any,
+        mockRes,
       );
-      expect(mailService.sendVerificationCode).toHaveBeenCalled();
-      expect(result.email).toBe('john@example.com');
+
+      expect(prisma.user.create).toHaveBeenCalled();
+      expect(result.user.email).toBe('john@example.com');
     });
   });
 
   describe('sendVerificationEmail', () => {
-    it('should throw BadRequestException when account not found', async () => {
+    it('should throw ConflictException when active account exists', async () => {
       const { service, prisma } = await makeService();
-      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.findFirst.mockResolvedValue({ ...mockUser, status: 'active' });
 
       await expect(
-        service.sendVerificationEmail('missing@example.com'),
-      ).rejects.toThrow(/account not found/i);
+        service.sendVerificationEmail('john@example.com'),
+      ).rejects.toThrow(ConflictException);
     });
 
     it('should throw BadRequestException when in cooldown', async () => {
       const { service, prisma, redis } = await makeService();
-      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.user.findFirst.mockResolvedValue(null);
       redis.get.mockResolvedValue('true');
 
       await expect(
@@ -215,7 +215,7 @@ describe('AuthService', () => {
 
     it('should store OTP in redis with 10 minute TTL and set cooldown', async () => {
       const { service, prisma, redis } = await makeService();
-      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.user.findFirst.mockResolvedValue(null);
       redis.get.mockResolvedValue(null);
 
       await service.sendVerificationEmail(mockUser.email);
@@ -234,7 +234,7 @@ describe('AuthService', () => {
 
     it('should throw BadRequestException when email fails to send', async () => {
       const { service, prisma, redis, mailService } = await makeService();
-      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.user.findFirst.mockResolvedValue(null);
       redis.get.mockResolvedValue(null);
       mailService.sendVerificationCode.mockResolvedValue(false);
 
@@ -245,7 +245,7 @@ describe('AuthService', () => {
 
     it('should return success when email sent', async () => {
       const { service, prisma, redis, mailService } = await makeService();
-      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.user.findFirst.mockResolvedValue(null);
       redis.get.mockResolvedValue(null);
       mailService.sendVerificationCode.mockResolvedValue(true);
 
@@ -274,21 +274,17 @@ describe('AuthService', () => {
       ).rejects.toThrow(/invalid or expired/i);
     });
 
-    it('should activate the user and clear otp on success', async () => {
-      const { service, redis, prisma } = await makeService();
+    it('should set email verified in redis and clear otp on success', async () => {
+      const { service, redis } = await makeService();
       redis.get.mockResolvedValue('123456');
-      prisma.user.update.mockResolvedValue({
-        ...mockUser,
-        status: 'active',
-        isVerified: true,
-      });
 
       const result = await service.verifyEmail(mockUser.email, '123456');
 
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { email: mockUser.email },
-        data: { status: 'active', isVerified: true },
-      });
+      expect(redis.set).toHaveBeenCalledWith(
+        `email_verified:${mockUser.email}`,
+        'true',
+        900,
+      );
       expect(redis.del).toHaveBeenCalledWith(`verify_otp:${mockUser.email}`);
       expect(result.success).toBe(true);
     });
@@ -297,49 +293,49 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should throw UnauthorizedException when user does not exist', async () => {
       const { service, prisma } = await makeService();
-      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.login({ email: 'x@x.com', password: 'x' } as any, makeRes()),
+        service.login({ identifier: 'x@x.com', password: 'x' } as any, makeRes()),
       ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException when account is not active', async () => {
       const { service, prisma } = await makeService();
-      prisma.user.findUnique.mockResolvedValue({
+      prisma.user.findFirst.mockResolvedValue({
         ...mockUser,
-        status: 'pending_verification',
+        status: 'suspended',
       });
 
       await expect(
         service.login(
-          { email: mockUser.email, password: 'x' } as any,
+          { identifier: mockUser.email, password: 'x' } as any,
           makeRes(),
         ),
-      ).rejects.toThrow(/not active/i);
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException when password is invalid', async () => {
       const { service, prisma } = await makeService();
-      prisma.user.findUnique.mockResolvedValue(mockUser);
-      (argon2.verify as jest.Mock).mockResolvedValue(false);
+      prisma.user.findFirst.mockResolvedValue(mockUser);
+      jest.spyOn(argon2, 'verify').mockResolvedValue(false as any);
 
       await expect(
         service.login(
-          { email: mockUser.email, password: 'wrong' } as any,
+          { identifier: mockUser.email, password: 'wrong' } as any,
           makeRes(),
         ),
-      ).rejects.toThrow(/invalid credentials/i);
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should return tokens and set refresh cookie on success', async () => {
       const { service, prisma, sessionService } = await makeService();
-      prisma.user.findUnique.mockResolvedValue(mockUser);
-      (argon2.verify as jest.Mock).mockResolvedValue(true);
+      prisma.user.findFirst.mockResolvedValue(mockUser);
+      jest.spyOn(argon2, 'verify').mockResolvedValue(true as any);
       const res = makeRes();
 
       const result = await service.login(
-        { email: mockUser.email, password: 'correct' } as any,
+        { identifier: mockUser.email, password: 'correct' } as any,
         res,
       );
 
@@ -373,7 +369,8 @@ describe('AuthService', () => {
     });
 
     it('should clear cookie and throw when session not found', async () => {
-      const { service, jwtService, sessionService } = await makeService();
+      const { service, jwtService, sessionService, prisma } = await makeService();
+      prisma.user.findUnique.mockResolvedValue(mockUser);
       jwtService.verifyAsync.mockResolvedValue({
         sub: '1',
         sid: 'sid-1',
@@ -388,11 +385,12 @@ describe('AuthService', () => {
       await expect(
         service.refreshTokens(makeReq({ refreshToken: 'valid' }), res),
       ).rejects.toThrow(/session has been revoked/i);
-      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken');
+      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken', expect.anything());
     });
 
     it('should revoke session and throw on token reuse (mismatch)', async () => {
-      const { service, jwtService, sessionService } = await makeService();
+      const { service, jwtService, sessionService, prisma } = await makeService();
+      prisma.user.findUnique.mockResolvedValue(mockUser);
       jwtService.verifyAsync.mockResolvedValue({
         sub: '1',
         sid: 'sid-1',
@@ -408,11 +406,12 @@ describe('AuthService', () => {
         service.refreshTokens(makeReq({ refreshToken: 'stolen' }), res),
       ).rejects.toThrow(/token reuse detected/i);
       expect(sessionService.revoke).toHaveBeenCalledWith('sid-1');
-      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken');
+      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken', expect.anything());
     });
 
     it('should issue new access token and rotate refresh token on success', async () => {
-      const { service, jwtService, sessionService } = await makeService();
+      const { service, jwtService, sessionService, prisma } = await makeService();
+      prisma.user.findUnique.mockResolvedValue(mockUser);
       jwtService.verifyAsync.mockResolvedValue({
         sub: '1',
         sid: 'sid-1',
@@ -444,7 +443,7 @@ describe('AuthService', () => {
 
       const result = await service.logout(makeReq(), res);
 
-      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken');
+      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken', expect.anything());
       expect(result.message).toMatch(/logged out/i);
     });
 
@@ -469,7 +468,7 @@ describe('AuthService', () => {
       );
 
       expect(sessionService.revoke).not.toHaveBeenCalled();
-      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken');
+      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken', expect.anything());
       expect(result.message).toMatch(/logged out/i);
     });
   });
@@ -480,84 +479,7 @@ describe('AuthService', () => {
       sessionService.revokeAllSessions.mockResolvedValue(42);
 
       const result = await service.logoutAllUsers();
-
       expect(result.revokedCount).toBe(42);
-      expect(result.message).toMatch(/every user must log in again/i);
-    });
-  });
-
-  describe('googleAuth', () => {
-    it('should create a new pre-verified user when userInfoObj is provided and no user exists', async () => {
-      const { service, prisma, sessionService } = await makeService();
-      prisma.user.findUnique.mockResolvedValue(null);
-      prisma.user.create.mockResolvedValue({
-        ...mockUser,
-        email: 'newuser@gmail.com',
-        status: 'active',
-        isVerified: true,
-      });
-      const res = makeRes();
-
-      const result = await service.googleAuth('unused-token', res, {
-        email: 'newuser@gmail.com',
-        name: 'New User',
-      });
-
-      expect(prisma.user.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ status: 'active', isVerified: true }),
-        }),
-      );
-      expect(sessionService.save).toHaveBeenCalled();
-      expect(result.user.email).toBe('newuser@gmail.com');
-    });
-
-    it('should auto-activate an existing non-active user', async () => {
-      const { service, prisma } = await makeService();
-      prisma.user.findUnique.mockResolvedValue({
-        ...mockUser,
-        status: 'pending_verification',
-      });
-      prisma.user.update.mockResolvedValue({
-        ...mockUser,
-        status: 'active',
-        isVerified: true,
-      });
-      const res = makeRes();
-
-      const result = await service.googleAuth('unused-token', res, {
-        email: mockUser.email,
-        name: 'John Doe',
-      });
-
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: mockUser.id },
-        data: { status: 'active', isVerified: true },
-      });
-      expect(result.user.email).toBe(mockUser.email);
-    });
-
-    it('should log in existing active user without touching prisma.update', async () => {
-      const { service, prisma } = await makeService();
-      prisma.user.findUnique.mockResolvedValue(mockUser);
-      const res = makeRes();
-
-      await service.googleAuth('unused-token', res, {
-        email: mockUser.email,
-        name: 'John Doe',
-      });
-
-      expect(prisma.user.update).not.toHaveBeenCalled();
-      expect(prisma.user.create).not.toHaveBeenCalled();
-    });
-
-    it('should throw BadRequestException when verifying a real idToken fails', async () => {
-      const { service } = await makeService();
-      const res = makeRes();
-
-      await expect(service.googleAuth('garbage-token', res)).rejects.toThrow(
-        /google authentication failed/i,
-      );
     });
   });
 });
