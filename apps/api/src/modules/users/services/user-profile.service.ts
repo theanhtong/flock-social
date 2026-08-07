@@ -76,7 +76,7 @@ export class UserProfileService {
     queryDto: SearchUsersQueryDto,
     currentUserId?: string,
   ) {
-    const limit = queryDto.limit || 20;
+    const limit = Number(queryDto.limit) || 20;
     const cursor = queryDto.cursor;
     const query = queryDto.q?.trim().replace(/^@/, '');
 

@@ -26,7 +26,7 @@ export class AdminUsersService {
   ) {}
 
   async getUsers(query: AdminQueryUsersDto) {
-    const limit = query.limit || 20;
+    const limit = Number(query.limit) || 20;
     const cursor = query.cursor;
 
     const where: any = {};
@@ -293,8 +293,9 @@ export class AdminUsersService {
   }
 
   async getAuditLogs(cursor?: string, limit: number = 20) {
+    const limitNum = Number(limit) || 20;
     const logs = await this.prisma.auditLog.findMany({
-      take: limit + 1,
+      take: limitNum + 1,
       cursor: cursor ? { id: BigInt(cursor) } : undefined,
       skip: cursor ? 1 : 0,
       orderBy: { id: 'desc' },
