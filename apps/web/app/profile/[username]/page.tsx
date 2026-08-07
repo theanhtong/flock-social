@@ -8,10 +8,11 @@ import { useAuthStore } from '@/store/auth-store';
 import { userService, UserProfile } from '@/services/user-service';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { RoleBadge } from '@/components/ui/role-badge';
 import { Spinner } from '@/components/ui/spinner';
 import { ImagePreviewModal } from '@/components/profile/image-preview-modal';
 import { toast } from 'sonner';
+
+import { SidebarLayout } from '@/components/layout/sidebar';
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -49,28 +50,32 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-blue-500">
-        <Spinner size="lg" />
-      </div>
+      <SidebarLayout>
+        <div className="flex items-center justify-center p-12 text-blue-500">
+          <Spinner size="lg" />
+        </div>
+      </SidebarLayout>
     );
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#0f172a] text-slate-100 flex flex-col items-center justify-center p-6 gap-4">
-        <p className="text-slate-400 text-sm">User @{username} not found.</p>
-        <Link href="/">
-          <Button variant="outline" size="sm">Back to Home</Button>
-        </Link>
-      </div>
+      <SidebarLayout>
+        <div className="bg-slate-900 border border-slate-800 rounded p-8 text-slate-100 flex flex-col items-center justify-center gap-4">
+          <p className="text-slate-400 text-sm">User @{username} not found.</p>
+          <Link href="/">
+            <Button variant="outline" size="sm">Back to Home</Button>
+          </Link>
+        </div>
+      </SidebarLayout>
     );
   }
 
   const isSelf = currentUser && currentUser.username.toLowerCase() === profile.username.toLowerCase();
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 flex flex-col items-center p-4 sm:p-8 font-sans">
-      <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded overflow-hidden shadow-xl flex flex-col">
+    <SidebarLayout>
+      <div className="bg-slate-900 border border-slate-800 rounded overflow-hidden shadow-xl flex flex-col font-sans">
         {/* Banner */}
         <div
           onClick={() => setImageModalState({ isOpen: true, type: 'banner' })}
@@ -116,7 +121,6 @@ export default function PublicProfilePage() {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-slate-100">{profile.displayName}</h1>
-                <RoleBadge role={profile.role} size="sm" />
               </div>
               <p className="text-xs text-slate-400 font-mono">@{profile.username}</p>
             </div>
@@ -171,6 +175,6 @@ export default function PublicProfilePage() {
         imageUrl={imageModalState.type === 'avatar' ? profile?.avatarUrl : profile?.bannerUrl}
         isEditable={false}
       />
-    </div>
+    </SidebarLayout>
   );
 }

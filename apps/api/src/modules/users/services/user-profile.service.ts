@@ -90,6 +90,7 @@ export class UserProfileService {
     const users = await this.prisma.user.findMany({
       where: {
         status: 'active',
+        id: currentUserId ? { not: BigInt(currentUserId) } : undefined,
         OR: [
           { username: { contains: query, mode: 'insensitive' } },
           { displayName: { contains: query, mode: 'insensitive' } },

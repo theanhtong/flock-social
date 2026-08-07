@@ -41,6 +41,7 @@ export const userService = {
   },
 
   searchUsers: async (query: string, token?: string | null): Promise<UserProfile[]> => {
-    return apiClient.get<UserProfile[]>(`/users/search/query?q=${encodeURIComponent(query)}`, { token });
+    const res = await apiClient.get<any>(`/users/search/query?q=${encodeURIComponent(query)}`, { token });
+    return Array.isArray(res) ? res : res?.data || [];
   },
 };

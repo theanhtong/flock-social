@@ -1,21 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import {
   Heart,
+  Loader2,
   MessageSquare,
   Repeat2,
   Search,
   TrendingUp,
   UserPlus,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
+import { userService, UserProfile } from '@/services/user-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar } from '@/components/ui/avatar';
-import { RoleBadge } from '@/components/ui/role-badge';
 import { SidebarLayout } from '@/components/layout/sidebar';
+import { RightPanel } from '@/components/layout/right-panel';
 
 interface PostItem {
   id: string;
@@ -38,8 +42,6 @@ export function UserHomeFeed() {
 
   const [postContent, setPostContent] = useState('');
   const [posts, setPosts] = useState<PostItem[]>([]);
-  const [trendingTopics] = useState<Array<{ tag: string; postsCount: string }>>([]);
-  const [suggestedUsers] = useState<Array<{ name: string; username: string; role: string }>>([]);
 
   const handleCreatePost = (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,66 +76,8 @@ export function UserHomeFeed() {
     );
   };
 
-  const rightPanel = (
-    <>
-      {/* Search */}
-      <div className="relative font-sans">
-        <Input placeholder="Search Flock..." className="text-xs font-sans pr-8" />
-        <Search className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
-      </div>
-
-      {/* Trending Topics */}
-      <div className="bg-slate-900 border border-slate-800 rounded p-4 flex flex-col gap-3 font-sans">
-        <div className="flex items-center gap-1.5">
-          <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
-          <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider font-sans">
-            Trending Topics
-          </h3>
-        </div>
-        {trendingTopics.length === 0 ? (
-          <span className="text-[11px] text-slate-500 font-sans">No trending topics yet</span>
-        ) : (
-          <div className="flex flex-col gap-2.5 font-sans">
-            {trendingTopics.map((t, i) => (
-              <div key={i} className="flex flex-col font-sans">
-                <span className="text-xs font-semibold text-blue-400 hover:underline cursor-pointer font-sans">{t.tag}</span>
-                <span className="text-[10px] text-slate-500 font-sans">{t.postsCount}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Suggested People */}
-      <div className="bg-slate-900 border border-slate-800 rounded p-4 flex flex-col gap-3 font-sans">
-        <div className="flex items-center gap-1.5">
-          <UserPlus className="w-3.5 h-3.5 text-slate-400" />
-          <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider font-sans">
-            Suggested People
-          </h3>
-        </div>
-        {suggestedUsers.length === 0 ? (
-          <span className="text-[11px] text-slate-500 font-sans">No suggestions yet</span>
-        ) : (
-          suggestedUsers.map((u, i) => (
-            <div key={i} className="flex items-center justify-between gap-2 py-1 font-sans">
-              <div className="flex items-center gap-2 min-w-0 font-sans">
-                <Avatar name={u.name} size="xs" />
-                <div className="flex flex-col min-w-0 font-sans">
-                  <span className="text-[11px] font-bold text-slate-200 truncate font-sans">{u.name}</span>
-                  <span className="text-[10px] text-slate-400 font-sans truncate">@{u.username}</span>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" className="px-2 py-0.5 text-[10px] font-sans">Follow</Button>
-            </div>
-          ))
-        )}
-      </div>
-    </>
-  );
-
   return (
-    <SidebarLayout rightPanel={rightPanel}>
+    <SidebarLayout rightPanel={<RightPanel />}>
       {/* Post Composer */}
       <div className="bg-slate-900 border border-slate-800 rounded p-4 flex flex-col gap-3 font-sans">
         <div className="flex gap-3 font-sans">
@@ -174,7 +118,6 @@ export function UserHomeFeed() {
                   <Avatar src={post.author.avatarUrl} name={post.author.name} size="sm" isVerified={post.author.isVerified} />
                   <div className="flex items-center gap-2 font-sans">
                     <span className="font-bold text-xs text-slate-100">{post.author.name}</span>
-                    <RoleBadge role={post.author.role} size="sm" />
                     <span className="text-[11px] text-slate-400">@{post.author.username}</span>
                   </div>
                 </div>
