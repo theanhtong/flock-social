@@ -70,6 +70,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^24.13.3",
     "@types/pg": "^8.20.3",
+    "@types/sharp": "^0.31.1",
     "@types/supertest": "^7.2.1",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",

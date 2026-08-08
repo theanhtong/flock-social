@@ -6,6 +6,7 @@ import { PrismaService } from '../../common/prisma/prisma.service.js';
 import { SnowflakeService } from '../../common/snowflake/snowflake.service.js';
 import { VideoQueueProcessor } from './queues/video-queue.processor.js';
 import { S3StorageService } from './services/s3-storage.service.js';
+import { ImageProcessorService } from './services/image-processor.service.js';
 
 export interface UploadResponse {
   mediaId: string;
@@ -16,6 +17,8 @@ export interface UploadResponse {
   status: 'pending' | 'processing' | 'ready' | 'failed';
   hlsManifestUrl?: string | null;
   thumbnailUrl?: string | null;
+  width?: number | null;
+  height?: number | null;
 }
 
 @Injectable()
@@ -26,28 +29,72 @@ export class UploadsService {
     private readonly prisma: PrismaService,
     private readonly snowflake: SnowflakeService,
     private readonly s3Storage: S3StorageService,
+    private readonly imageProcessor: ImageProcessorService,
     private readonly videoQueueProcessor: VideoQueueProcessor,
   ) {}
 
   async uploadFile(file: Express.Multer.File, uploaderId?: string): Promise<UploadResponse> {
     if (!file) throw new BadRequestException('No file provided');
 
-    const ext = path.extname(file.originalname).toLowerCase() || '.bin';
     const isVideo = file.mimetype.startsWith('video/');
+    const isImage = file.mimetype.startsWith('image/');
     const mediaIdBigInt = this.snowflake.generate();
     const mediaId = mediaIdBigInt.toString();
-
-    const key = isVideo
-      ? `uploads/raw/${mediaId}${ext}`
-      : `uploads/${Date.now()}-${randomUUID()}${ext}`;
-
-    const url = await this.s3Storage.uploadBuffer(key, file.buffer, file.mimetype);
 
     let fallbackUserId = uploaderId;
     if (!fallbackUserId) {
       const firstUser = await this.prisma.user.findFirst();
       fallbackUserId = firstUser?.id?.toString() || '1';
     }
+
+    if (isImage) {
+      // Process Image: Convert to WebP + generate 300x300 thumbnail
+      try {
+        const imageRes = await this.imageProcessor.processImage(file.buffer);
+
+        const imageKey = `uploads/images/${mediaId}.webp`;
+        const thumbKey = `uploads/images/thumb_${mediaId}.webp`;
+
+        const optimizedUrl = await this.s3Storage.uploadBuffer(imageKey, imageRes.optimizedBuffer, 'image/webp');
+        const thumbnailUrl = await this.s3Storage.uploadBuffer(thumbKey, imageRes.thumbnailBuffer, 'image/webp');
+
+        const mediaRecord = await this.prisma.media.create({
+          data: {
+            id: mediaIdBigInt,
+            uploaderId: BigInt(fallbackUserId),
+            mediaType: MediaType.image,
+            originalUrl: optimizedUrl,
+            thumbnailUrl,
+            width: imageRes.width,
+            height: imageRes.height,
+            status: MediaStatus.ready,
+          },
+        });
+
+        return {
+          mediaId,
+          url: optimizedUrl,
+          filename: imageKey,
+          mimetype: 'image/webp',
+          size: imageRes.optimizedBuffer.length,
+          status: 'ready',
+          thumbnailUrl: mediaRecord.thumbnailUrl,
+          width: imageRes.width,
+          height: imageRes.height,
+        };
+      } catch (err: any) {
+        this.logger.warn(`Sharp image optimization failed, falling back to raw upload: ${err?.message}`);
+        // Fallback to raw upload if Sharp fails
+      }
+    }
+
+    // Default Raw / Video Upload logic
+    const ext = path.extname(file.originalname).toLowerCase() || '.bin';
+    const key = isVideo
+      ? `uploads/raw/${mediaId}${ext}`
+      : `uploads/raw/${Date.now()}-${randomUUID()}${ext}`;
+
+    const url = await this.s3Storage.uploadBuffer(key, file.buffer, file.mimetype);
 
     const mediaRecord = await this.prisma.media.create({
       data: {
@@ -60,7 +107,6 @@ export class UploadsService {
     });
 
     if (isVideo) {
-      // Trigger background transcoding job
       await this.videoQueueProcessor.addJob(mediaId, key).catch((err) => {
         this.logger.error(`Failed to add video transcoding job: ${err?.message}`);
       });
