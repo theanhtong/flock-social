@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { PostsModule } from './modules/posts/posts.module.js';
 import { CommentsModule } from './modules/comments/comments.module.js';
+import { UploadsModule } from './modules/uploads/uploads.module.js';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CommentsModule } from './modules/comments/comments.module.js';
     UsersModule,
     PostsModule,
     CommentsModule,
+    UploadsModule,
   ],
   controllers: [],
   providers: [

@@ -359,7 +359,7 @@ export class PostsService {
     }
 
     const rows = await this.prisma.post.findMany({
-      where: { userId: user.id, postType: PostType.post, ...where },
+      where: { userId: user.id, ...where },
       orderBy: { id: 'desc' },
       include: postInclude(viewerId),
     });
