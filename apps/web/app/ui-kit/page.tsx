@@ -183,8 +183,8 @@ export default function UiKitPage() {
             </div>
 
             <div className="flex flex-col items-center gap-1.5">
-              <Avatar size="lg" name="Flock Admin" isVerified />
-              <span className="text-xs text-slate-500">lg + Verified</span>
+              <Avatar size="lg" name="Flock Admin" isOnline />
+              <span className="text-xs text-slate-500">lg + Online</span>
             </div>
 
             <div className="flex flex-col items-center gap-1.5">

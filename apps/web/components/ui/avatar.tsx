@@ -2,14 +2,12 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   src?: string | null;
   alt?: string;
   name?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  isVerified?: boolean;
   isOnline?: boolean;
 }
 
@@ -26,7 +24,6 @@ export const Avatar: React.FC<AvatarProps> = ({
   alt = 'User avatar',
   name,
   size = 'md',
-  isVerified = false,
   isOnline = false,
   className,
   ...props
@@ -62,15 +59,10 @@ export const Avatar: React.FC<AvatarProps> = ({
         )}
       </div>
 
-      {isVerified && (
-        <span className="absolute -bottom-0.5 -right-0.5 bg-blue-600 text-white rounded-full p-0.5">
-          <Check size={size === 'xs' ? 8 : size === 'sm' ? 10 : 12} strokeWidth={3} />
-        </span>
-      )}
-
-      {isOnline && !isVerified && (
+      {isOnline && (
         <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border border-slate-900 rounded-full" />
       )}
     </div>
   );
 };
+

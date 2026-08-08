@@ -39,7 +39,6 @@ export const Sidebar = () => {
                         src={user?.avatarUrl}
                         name={user?.displayName || user?.username || 'User'}
                         size="md"
-                        isVerified={user?.isVerified}
                     />
                     <div className="flex flex-col min-w-0 font-sans">
                         <span className="font-bold text-slate-100 text-xs truncate">

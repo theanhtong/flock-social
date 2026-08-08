@@ -130,7 +130,6 @@ export default function SelfProfilePage() {
                   src={profile.avatarUrl}
                   name={profile.displayName || profile.username}
                   size="xl"
-                  isVerified={profile.isVerified}
                   isOnline
                   className="ring-4 ring-slate-900"
                 />

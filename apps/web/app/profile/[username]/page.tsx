@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Camera } from 'lucide-react';
+import { Camera, Loader2, MoreHorizontal, Flag } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
-import { userService, UserProfile } from '@/services/user-service';
+import { userService, UserProfile, FollowStatus } from '@/services/user-service';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -21,7 +21,13 @@ export default function PublicProfilePage() {
   const currentUser = useAuthStore((s) => s.user);
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [followStatus, setFollowStatus] = useState<FollowStatus | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isFollowLoading, setIsFollowLoading] = useState<boolean>(false);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [showMoreMenu, setShowMoreMenu] = useState<boolean>(false);
+
+  const moreMenuRef = useRef<HTMLDivElement>(null);
 
   const [imageModalState, setImageModalState] = useState<{
     isOpen: boolean;
@@ -32,10 +38,32 @@ export default function PublicProfilePage() {
   });
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
         const data = await userService.getProfileByUsername(username, token);
         setProfile(data);
+
+        // Fetch follow status if logged in and not self profile
+        const isSelf = currentUser && currentUser.username.toLowerCase() === username.toLowerCase();
+        if (token && !isSelf) {
+          try {
+            const status = await userService.getFollowStatus(username, token);
+            setFollowStatus(status);
+          } catch (err) {
+            console.error('Failed to load follow status', err);
+          }
+        }
       } catch (err: any) {
         toast.error(`User @${username} not found`);
       } finally {
@@ -44,9 +72,46 @@ export default function PublicProfilePage() {
     };
 
     if (username) {
-      fetchProfile();
+      fetchData();
     }
-  }, [username, token]);
+  }, [username, token, currentUser]);
+
+  const isSelf = currentUser && currentUser.username.toLowerCase() === username?.toLowerCase();
+
+  const handleToggleFollow = async () => {
+    if (!token) {
+      toast.error('Please log in to follow users');
+      return;
+    }
+    if (!profile) return;
+
+    setIsFollowLoading(true);
+    try {
+      const res = await userService.toggleFollow(username, token);
+      
+      setFollowStatus((prev) => ({
+        isFollowing: res.isFollowing,
+        isPending: res.isPending,
+        followsYou: prev?.followsYou ?? false,
+      }));
+
+      setProfile((prev) =>
+        prev ? { ...prev, followersCount: res.followersCount } : null
+      );
+
+      if (res.isPending) {
+        toast.info(`Follow request sent to @${username}`);
+      } else if (res.isFollowing) {
+        toast.success(`You are now following @${username}`);
+      } else {
+        toast.info(`Unfollowed @${username}`);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update follow state');
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -71,7 +136,75 @@ export default function PublicProfilePage() {
     );
   }
 
-  const isSelf = currentUser && currentUser.username.toLowerCase() === profile.username.toLowerCase();
+  const renderFollowButton = () => {
+    if (isSelf) {
+      return (
+        <Link href="/profile">
+          <Button variant="secondary" size="sm" className="w-32 justify-center font-sans">
+            Edit Profile
+          </Button>
+        </Link>
+      );
+    }
+
+    if (isFollowLoading) {
+      return (
+        <Button variant="secondary" size="sm" disabled className="w-32 justify-center font-sans">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        </Button>
+      );
+    }
+
+    if (followStatus?.isFollowing) {
+      return (
+        <button
+          onClick={handleToggleFollow}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="w-32 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 border-slate-700 bg-slate-800/80 text-slate-200 hover:border-rose-500/50 hover:bg-rose-500/10 hover:text-rose-400 text-center shrink-0 font-sans"
+        >
+          {isHovered ? 'Unfollow' : 'Following'}
+        </button>
+      );
+    }
+
+    if (followStatus?.isPending) {
+      return (
+        <button
+          onClick={handleToggleFollow}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="w-32 py-1.5 text-xs font-semibold rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:border-rose-500/50 hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-150 text-center shrink-0 font-sans"
+        >
+          {isHovered ? 'Cancel Request' : 'Requested'}
+        </button>
+      );
+    }
+
+    if (followStatus?.followsYou) {
+      return (
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={handleToggleFollow}
+          className="w-32 justify-center font-sans"
+        >
+          Follow Back
+        </Button>
+      );
+    }
+
+    return (
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={handleToggleFollow}
+        className="w-32 justify-center font-sans"
+      >
+        Follow
+      </Button>
+    );
+  };
 
   return (
     <SidebarLayout>
@@ -106,7 +239,6 @@ export default function PublicProfilePage() {
                 src={profile.avatarUrl}
                 name={profile.displayName || profile.username}
                 size="xl"
-                isVerified={profile.isVerified}
                 isOnline
                 className="ring-4 ring-slate-900"
               />
@@ -118,22 +250,48 @@ export default function PublicProfilePage() {
 
           {/* User Names, Role Badge & Action button in same row */}
           <div className="flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-slate-100">{profile.displayName}</h1>
+                <h1 className="text-xl font-bold text-slate-100 truncate">{profile.displayName}</h1>
               </div>
-              <p className="text-xs text-slate-400 font-mono">@{profile.username}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-slate-400 font-mono truncate">@{profile.username}</p>
+                {followStatus?.followsYou && !isSelf && (
+                  <span className="text-[10px] bg-slate-800 text-slate-400 font-medium px-1.5 py-0.5 rounded border border-slate-700/60 shrink-0">
+                    Follows you
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div>
-              {isSelf ? (
-                <Link href="/profile">
-                  <Button variant="secondary" size="sm">Edit Profile</Button>
-                </Link>
-              ) : (
-                <Button variant="primary" size="sm" onClick={() => toast.info(`Following @${profile.username}`)}>
-                  Follow
-                </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              {renderFollowButton()}
+
+              {!isSelf && (
+                <div className="relative" ref={moreMenuRef}>
+                  <button
+                    onClick={() => setShowMoreMenu((prev) => !prev)}
+                    className="p-2 text-slate-400 hover:text-slate-200 bg-slate-800/80 hover:bg-slate-800 border border-slate-700 rounded-md transition-colors flex items-center justify-center"
+                    title="More options"
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+
+                  {showMoreMenu && (
+                    <div className="absolute right-0 mt-2 w-44 bg-slate-900 border border-slate-800 rounded-md shadow-xl py-1 z-20 font-sans">
+                      <button
+                        onClick={() => {
+                          setShowMoreMenu(false);
+                          toast.info(`Reported @${profile.username}`);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 transition-colors font-sans"
+                      >
+                        <Flag className="w-3.5 h-3.5" />
+                        <span>Report User</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

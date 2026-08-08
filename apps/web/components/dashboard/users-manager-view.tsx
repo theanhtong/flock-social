@@ -229,7 +229,6 @@ export function UsersManagerView() {
                             src={u.avatarUrl}
                             name={u.displayName || u.username}
                             size="sm"
-                            isVerified={u.isVerified}
                           />
                           <div className="flex flex-col">
                             <span className="font-bold text-slate-100">

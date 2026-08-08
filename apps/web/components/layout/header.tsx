@@ -74,7 +74,6 @@ export function Header() {
                   src={user.avatarUrl}
                   name={user.displayName || user.username}
                   size="xs"
-                  isVerified={user.isVerified}
                 />
                 <span className="hidden sm:inline-block text-xs font-bold text-slate-200">
                   {user.displayName}
