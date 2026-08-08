@@ -59,8 +59,13 @@ export const postService = {
     return apiClient.get<FeedResponse>(`/posts${queryStr}`, { token });
   },
 
-  createPost: async (content: string, mediaUrls?: string[], token?: string | null): Promise<Post> => {
-    return apiClient.post<Post>('/posts', { content, mediaUrls }, { token });
+  createPost: async (
+    content: string,
+    mediaUrls?: string[],
+    repostOfId?: string,
+    token?: string | null
+  ): Promise<Post> => {
+    return apiClient.post<Post>('/posts', { content, mediaUrls, repostOfId }, { token });
   },
 
   toggleLike: async (postId: string, token?: string | null): Promise<{ liked: boolean; likeCount: number }> => {
@@ -73,5 +78,9 @@ export const postService = {
 
   deletePost: async (postId: string, token?: string | null): Promise<{ success: boolean }> => {
     return apiClient.delete<{ success: boolean }>(`/posts/${postId}`, { token });
+  },
+
+  getPostById: async (postId: string, token?: string | null): Promise<Post> => {
+    return apiClient.get<Post>(`/posts/${postId}`, { token });
   },
 };

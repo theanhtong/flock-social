@@ -32,7 +32,7 @@ export const Sidebar = () => {
     };
 
     return (
-        <aside className="hidden md:flex flex-col gap-4 col-span-1 sticky top-20 self-start h-fit font-sans">
+        <aside className="hidden md:block md:col-span-3 sticky top-[72px] font-sans">
             <div className="bg-slate-900 border border-slate-800 rounded p-4 flex flex-col gap-3 font-sans">
                 <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
                     <Avatar
@@ -77,15 +77,15 @@ interface SidebarLayoutProps {
 
 export function SidebarLayout({ children, rightPanel }: SidebarLayoutProps) {
     return (
-        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 grid grid-cols-1 md:grid-cols-4 gap-6 font-sans">
+        <div className="max-w-[1536px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-start font-sans">
             <Sidebar />
 
-            <main className={`col-span-1 ${rightPanel ? 'md:col-span-2' : 'md:col-span-3'} flex flex-col gap-4 font-sans`}>
+            <main className={`col-span-1 ${rightPanel ? 'md:col-span-6' : 'md:col-span-9'} flex flex-col gap-4 font-sans`}>
                 {children}
             </main>
 
             {rightPanel && (
-                <aside className="hidden md:flex flex-col gap-4 col-span-1 font-sans">
+                <aside className="hidden md:block md:col-span-3 sticky top-[72px] font-sans">
                     {rightPanel}
                 </aside>
             )}
