@@ -63,8 +63,8 @@ export const LoginModal: React.FC = () => {
       maxWidth="md"
       title="Sign In"
     >
-      <div className="flex flex-col gap-4 max-w-sm mx-auto py-1 font-sans">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 font-sans">
+      <div className="flex flex-col gap-3.5 max-w-sm mx-auto py-0.5 font-sans">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2.5 font-sans">
           <Input
             label="Email or Username"
             placeholder="e.g. alex or alex@domain.com"
@@ -93,7 +93,7 @@ export const LoginModal: React.FC = () => {
           </Button>
         </form>
 
-        <div className="flex items-center gap-3 my-1 font-sans">
+        <div className="flex items-center gap-3 my-0.5 font-sans">
           <div className="flex-1 h-[1px] bg-slate-800" />
           <span className="text-[11px] text-slate-500 uppercase font-medium font-sans">OR</span>
           <div className="flex-1 h-[1px] bg-slate-800" />
@@ -108,7 +108,7 @@ export const LoginModal: React.FC = () => {
           Sign in with Google
         </Button>
 
-        <div className="text-xs text-slate-400 text-center mt-2 font-sans">
+        <div className="text-xs text-slate-400 text-center mt-1 font-sans">
           Don't have an account?{' '}
           <button
             type="button"

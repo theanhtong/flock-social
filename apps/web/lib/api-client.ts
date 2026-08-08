@@ -40,12 +40,13 @@ export async function request<T = any>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { token, headers: customHeaders, body, ...customOptions } = options;
-
+  const { headers: customHeaders, body, token, ...customOptions } = options;
   const currentToken = token ?? useAuthStore.getState().token;
 
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(customHeaders as Record<string, string>),
   };
 
@@ -58,7 +59,7 @@ export async function request<T = any>(
   const response = await fetch(fullUrl, {
     headers,
     credentials: 'include', // Needed for HttpOnly refresh cookies
-    body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+    body: body ? (isFormData ? (body as FormData) : typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
     ...customOptions,
   });
 
@@ -99,7 +100,7 @@ export async function request<T = any>(
             const retryResponse = await fetch(fullUrl, {
               headers,
               credentials: 'include',
-              body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+              body: body ? (isFormData ? (body as FormData) : typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
               ...customOptions,
             });
 

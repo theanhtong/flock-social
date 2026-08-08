@@ -57,11 +57,25 @@ export const userService = {
     return Array.isArray(res) ? res : res?.data || [];
   },
 
+  getFollowers: async (username: string, token?: string | null): Promise<UserProfile[]> => {
+    const res = await apiClient.get<any>(`/users/${username}/followers`, { token });
+    return Array.isArray(res) ? res : res?.data || [];
+  },
+
+  getFollowing: async (username: string, token?: string | null): Promise<UserProfile[]> => {
+    const res = await apiClient.get<any>(`/users/${username}/following`, { token });
+    return Array.isArray(res) ? res : res?.data || [];
+  },
+
   getFollowStatus: async (username: string, token?: string | null): Promise<FollowStatus> => {
     return apiClient.get<FollowStatus>(`/users/${username}/follow-status`, { token });
   },
 
   toggleFollow: async (username: string, token?: string | null): Promise<ToggleFollowResponse> => {
     return apiClient.post<ToggleFollowResponse>(`/users/${username}/toggle-follow`, {}, { token });
+  },
+
+  removeFollower: async (username: string, token?: string | null): Promise<{ success: boolean; followersCount: number }> => {
+    return apiClient.delete<{ success: boolean; followersCount: number }>(`/users/${username}/followers`, { token });
   },
 };

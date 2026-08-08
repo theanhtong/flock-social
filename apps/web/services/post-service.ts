@@ -47,6 +47,13 @@ export interface FeedResponse {
   nextCursor?: string;
 }
 
+export interface UpdatePostPayload {
+  content?: string;
+  mediaUrls?: string[];
+  audience?: string;
+  status?: string;
+}
+
 export const postService = {
   getPosts: async (
     cursor?: string,
@@ -59,6 +66,14 @@ export const postService = {
     return apiClient.get<FeedResponse>(`/posts${queryStr}`, { token });
   },
 
+  getUserPosts: async (
+    username: string,
+    tab: 'posts' | 'replies' | 'likes' = 'posts',
+    token?: string | null
+  ): Promise<Post[]> => {
+    return apiClient.get<Post[]>(`/posts/user/${username}?tab=${tab}`, { token });
+  },
+
   createPost: async (
     content: string,
     mediaUrls?: string[],
@@ -66,6 +81,14 @@ export const postService = {
     token?: string | null
   ): Promise<Post> => {
     return apiClient.post<Post>('/posts', { content, mediaUrls, repostOfId }, { token });
+  },
+
+  updatePost: async (
+    postId: string,
+    payload: UpdatePostPayload,
+    token?: string | null
+  ): Promise<Post> => {
+    return apiClient.patch<Post>(`/posts/${postId}`, payload, { token });
   },
 
   toggleLike: async (postId: string, token?: string | null): Promise<{ liked: boolean; likeCount: number }> => {

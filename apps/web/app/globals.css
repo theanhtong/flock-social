@@ -16,6 +16,13 @@
 
 html {
   overflow-y: scroll; /* Always show scrollbar to prevent layout shift on route change */
+  font-size: 102%;
+}
+
+@media (min-width: 1024px) {
+  html {
+    zoom: 1.12;
+  }
 }
 
 body {

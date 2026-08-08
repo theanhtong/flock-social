@@ -11,6 +11,7 @@ import {
   Repeat2,
   Trash2,
   Bookmark,
+  Pencil,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
@@ -20,6 +21,7 @@ import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
 import { PostComments } from '@/components/comments/post-comments';
 import { RepostModal } from '@/components/posts/repost-modal';
+import { EditPostModal } from '@/components/posts/edit-post-modal';
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
@@ -34,6 +36,13 @@ function formatRelativeTime(dateString: string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+function isVideoUrl(url: string, mediaType?: string): boolean {
+  if (mediaType === 'video') return true;
+  if (/\.(mp4|webm|mov|mkv)(\?.*)?$/i.test(url)) return true;
+  if (url.startsWith('data:video/')) return true;
+  return false;
+}
+
 export default function PostDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -45,6 +54,7 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRepostModalOpen, setIsRepostModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const fetchPost = async () => {
     if (!postId) return;
@@ -170,18 +180,43 @@ export default function PostDetailPage() {
                   </span>
                 </div>
               </Link>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <span className="text-[11px] text-slate-500">
                   {formatRelativeTime(post.createdAt)}
                 </span>
+                {post.isEdited && (
+                  <span className="text-[10px] text-slate-500 italic">
+                    (Edited)
+                  </span>
+                )}
+                {post.audience && post.audience !== 'everyone' && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-medium border border-slate-700">
+                    {post.audience === 'followers'
+                      ? '👥 Followers'
+                      : post.audience === 'close_friends'
+                      ? '⭐ Close Friends'
+                      : post.audience === 'restricted'
+                      ? '🔒 Restricted'
+                      : post.audience}
+                  </span>
+                )}
                 {isOwner && (
-                  <button
-                    onClick={handleDeletePost}
-                    className="text-slate-500 hover:text-rose-400 transition-colors p-1"
-                    title="Delete post"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setIsEditModalOpen(true)}
+                      className="text-slate-500 hover:text-blue-400 transition-colors p-1"
+                      title="Edit post"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={handleDeletePost}
+                      className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                      title="Delete post"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -200,14 +235,24 @@ export default function PostDetailPage() {
                   post.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
                 }`}
               >
-                {post.media.map((m) => (
-                  <img
-                    key={m.id}
-                    src={m.url}
-                    alt="Attachment"
-                    className="w-full max-h-96 object-cover rounded border border-slate-800"
-                  />
-                ))}
+                {post.media.map((m) => {
+                  const isVideo = isVideoUrl(m.url, m.mediaType);
+                  return isVideo ? (
+                    <video
+                      key={m.id}
+                      src={m.url}
+                      controls
+                      className="w-full max-h-96 object-cover rounded border border-slate-800 bg-black"
+                    />
+                  ) : (
+                    <img
+                      key={m.id}
+                      src={m.url}
+                      alt="Attachment"
+                      className="w-full max-h-96 object-cover rounded border border-slate-800"
+                    />
+                  );
+                })}
               </div>
             )}
 
@@ -243,14 +288,25 @@ export default function PostDetailPage() {
                 )}
                 {post.repostOf.media && post.repostOf.media.length > 0 && (
                   <div className="grid gap-2 grid-cols-2 pl-7 mt-1">
-                    {post.repostOf.media.map((m) => (
-                      <img
-                        key={m.id}
-                        src={m.url}
-                        alt="Repost attachment"
-                        className="w-full max-h-40 object-cover rounded border border-slate-800"
-                      />
-                    ))}
+                    {post.repostOf.media.map((m) => {
+                      const isVideo = isVideoUrl(m.url, m.mediaType);
+                      return isVideo ? (
+                        <video
+                          key={m.id}
+                          src={m.url}
+                          controls
+                          className="w-full max-h-40 object-cover rounded border border-slate-800 bg-black"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <img
+                          key={m.id}
+                          src={m.url}
+                          alt="Repost attachment"
+                          className="w-full max-h-40 object-cover rounded border border-slate-800"
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -309,6 +365,15 @@ export default function PostDetailPage() {
                 setPost((prev) =>
                   prev ? { ...prev, repostCount: prev.repostCount + 1 } : null
                 );
+              }}
+            />
+
+            <EditPostModal
+              post={post}
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              onSuccess={(updatedPost) => {
+                setPost(updatedPost);
               }}
             />
           </div>
