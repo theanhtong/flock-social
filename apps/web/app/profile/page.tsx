@@ -10,6 +10,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { SidebarLayout } from '@/components/layout/sidebar';
+import { RightPanel } from '@/components/layout/right-panel';
 import { EditProfileModal } from '@/components/profile/edit-profile-modal';
 import { ImagePreviewModal } from '@/components/profile/image-preview-modal';
 import { FollowersModal } from '@/components/profile/followers-modal';
@@ -109,7 +110,7 @@ export default function SelfProfilePage() {
 
   return (
     <>
-      <SidebarLayout>
+      <SidebarLayout rightPanel={<RightPanel />}>
         <div className="flex flex-col gap-4 font-sans">
           {/* Profile Header Card */}
           <div className="bg-slate-900 border border-slate-800 rounded overflow-hidden shadow-xl flex flex-col font-sans">

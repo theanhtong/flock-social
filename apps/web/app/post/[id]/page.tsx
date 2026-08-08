@@ -149,7 +149,7 @@ export default function PostDetailPage() {
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <h1 className="font-bold text-sm">Post</h1>
+          <h1 className="font-bold text-sm">@{post?.user?.username}</h1>
         </div>
 
         {/* Post Detail Card */}
@@ -167,13 +167,6 @@ export default function PostDetailPage() {
           </div>
         ) : (
           <div className="bg-slate-900 border border-slate-800 rounded p-4 flex flex-col gap-4">
-            {/* Repost Header Badge if this post is a Repost */}
-            {post.repostOf && (
-              <div className="flex items-center gap-1.5 text-xs text-green-400 font-medium pb-1 border-b border-slate-800/60">
-                <Repeat2 className="w-3.5 h-3.5" />
-                <span>{authorName} reposted</span>
-              </div>
-            )}
 
             {/* Header: Author & Options */}
             <div className="flex items-center justify-between">
@@ -256,12 +249,14 @@ export default function PostDetailPage() {
             {/* Media grid if any */}
             {post.media && post.media.length > 0 && (
               <div
-                className={`grid gap-2 rounded overflow-hidden mt-1 ${
-                  post.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
-                }`}
+                className={`grid gap-2 rounded-xl overflow-hidden mt-1 ${post.media.length === 1 ? 'grid-cols-1 max-w-md sm:max-w-lg' : 'grid-cols-2 max-w-xl'
+                  }`}
               >
                 {post.media.map((m) => {
                   const isVideo = isVideoUrl(m.url, m.mediaType);
+                  const isSingle = post.media.length === 1;
+                  const mediaHeight = isSingle ? 'max-h-60 sm:max-h-64' : 'max-h-48 sm:max-h-52';
+
                   return isVideo ? (
                     <VideoPlayer
                       key={m.id}
@@ -269,14 +264,14 @@ export default function PostDetailPage() {
                       hlsUrl={m.hlsManifestUrl}
                       poster={m.thumbnailUrl}
                       status={m.status}
-                      className="w-full max-h-96 object-cover rounded border border-slate-800"
+                      className={`w-full ${mediaHeight} object-cover rounded-xl border border-slate-800`}
                     />
                   ) : (
                     <img
                       key={m.id}
                       src={m.thumbnailUrl || m.url}
                       alt="Attachment"
-                      className="w-full max-h-96 object-cover rounded border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity"
+                      className={`w-full ${mediaHeight} object-cover rounded-xl border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity`}
                       onClick={(e) => {
                         e.stopPropagation();
                         const imageMedia = post.media.filter((item) => !isVideoUrl(item.url, item.mediaType));
@@ -297,7 +292,7 @@ export default function PostDetailPage() {
             {post.repostOf && (
               <div
                 onClick={() => router.push(`/post/${post.repostOf?.id}`)}
-                className="bg-slate-950/70 border border-slate-800 rounded-lg p-3 flex flex-col gap-2 hover:border-slate-700 transition-colors cursor-pointer"
+                className="bg-slate-950/70 border border-slate-800 rounded-lg p-3 flex flex-col gap-2 hover:border-slate-700 transition-colors cursor-pointer max-w-xl"
               >
                 <div className="flex items-center gap-2">
                   <Avatar
@@ -325,12 +320,14 @@ export default function PostDetailPage() {
                 )}
                 {post.repostOf.media && post.repostOf.media.length > 0 && (
                   <div
-                    className={`grid gap-2 mt-1 ${
-                      post.repostOf.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
-                    }`}
+                    className={`grid gap-2 mt-1 ${post.repostOf.media.length === 1 ? 'grid-cols-1 max-w-sm sm:max-w-md' : 'grid-cols-2 max-w-lg'
+                      }`}
                   >
                     {post.repostOf.media.map((m) => {
                       const isVideo = isVideoUrl(m.url, m.mediaType);
+                      const isSingle = post.repostOf!.media.length === 1;
+                      const mediaHeight = isSingle ? 'max-h-48 sm:max-h-52' : 'max-h-40 sm:max-h-44';
+
                       return isVideo ? (
                         <VideoPlayer
                           key={m.id}
@@ -338,7 +335,7 @@ export default function PostDetailPage() {
                           hlsUrl={m.hlsManifestUrl}
                           poster={m.thumbnailUrl}
                           status={m.status}
-                          className="w-full max-h-60 object-cover rounded border border-slate-800"
+                          className={`w-full ${mediaHeight} object-cover rounded-xl border border-slate-800`}
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
@@ -346,7 +343,7 @@ export default function PostDetailPage() {
                           key={m.id}
                           src={m.thumbnailUrl || m.url}
                           alt="Repost attachment"
-                          className="w-full max-h-60 object-cover rounded border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity"
+                          className={`w-full ${mediaHeight} object-cover rounded-xl border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity`}
                           onClick={(e) => {
                             e.stopPropagation();
                             const imageMedia = post.repostOf!.media.filter(
@@ -372,9 +369,8 @@ export default function PostDetailPage() {
               <div className="flex items-center gap-6">
                 <button
                   onClick={toggleLike}
-                  className={`flex items-center gap-1.5 transition-colors ${
-                    post.isLiked ? 'text-rose-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                  className={`flex items-center gap-1.5 transition-colors ${post.isLiked ? 'text-rose-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+                    }`}
                 >
                   <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-rose-400 text-rose-400' : ''}`} />
                   <span>{post.likeCount}</span>
@@ -397,9 +393,8 @@ export default function PostDetailPage() {
 
               <button
                 onClick={toggleBookmark}
-                className={`transition-colors ${
-                  post.isBookmarked ? 'text-amber-400' : 'text-slate-500 hover:text-slate-200'
-                }`}
+                className={`transition-colors ${post.isBookmarked ? 'text-amber-400' : 'text-slate-500 hover:text-slate-200'
+                  }`}
                 title={post.isBookmarked ? 'Remove bookmark' : 'Bookmark post'}
               >
                 <Bookmark className={`w-4 h-4 ${post.isBookmarked ? 'fill-amber-400 text-amber-400' : ''}`} />

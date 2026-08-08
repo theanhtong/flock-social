@@ -128,7 +128,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       : levels.find((l) => l.index === selectedLevel)?.label || 'Auto';
 
   return (
-    <div className="relative w-full max-h-96 rounded-lg overflow-hidden bg-slate-950 border border-slate-800 group">
+    <div className={cn("relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group", className)}>
       <video
         ref={videoRef}
         poster={poster || undefined}
@@ -144,7 +144,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             setIsError(true);
           }
         }}
-        className={cn('w-full max-h-96 object-cover rounded-lg', className)}
+        className="w-full h-full object-cover rounded-xl"
         {...props}
       />
 

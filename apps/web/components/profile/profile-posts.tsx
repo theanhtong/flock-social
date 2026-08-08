@@ -168,31 +168,28 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
       <div className="bg-slate-900 border border-slate-800 rounded p-1 flex items-center gap-1 font-sans text-xs">
         <button
           onClick={() => setActiveTab('posts')}
-          className={`flex-1 py-2 text-center font-medium rounded transition-colors ${
-            activeTab === 'posts'
+          className={`flex-1 py-2 text-center font-medium rounded transition-colors ${activeTab === 'posts'
               ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-          }`}
+            }`}
         >
           Posts
         </button>
         <button
           onClick={() => setActiveTab('replies')}
-          className={`flex-1 py-2 text-center font-medium rounded transition-colors ${
-            activeTab === 'replies'
+          className={`flex-1 py-2 text-center font-medium rounded transition-colors ${activeTab === 'replies'
               ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-          }`}
+            }`}
         >
           Replies
         </button>
         <button
           onClick={() => setActiveTab('likes')}
-          className={`flex-1 py-2 text-center font-medium rounded transition-colors ${
-            activeTab === 'likes'
+          className={`flex-1 py-2 text-center font-medium rounded transition-colors ${activeTab === 'likes'
               ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-          }`}
+            }`}
         >
           Likes
         </button>
@@ -223,14 +220,6 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
               key={post.id}
               className="bg-slate-900 border border-slate-800 rounded p-4 flex flex-col gap-3 font-sans hover:border-slate-700/60 transition-colors"
             >
-              {/* Repost Header Badge if this post is a Repost */}
-              {post.repostOf && (
-                <div className="flex items-center gap-1.5 text-xs text-green-400 font-medium pb-1 border-b border-slate-800/60">
-                  <Repeat2 className="w-3.5 h-3.5" />
-                  <span>{authorName} reposted</span>
-                </div>
-              )}
-
               {/* Clickable Post Content Area */}
               <div
                 onClick={() => router.push(`/post/${post.id}`)}
@@ -322,12 +311,14 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
                 {/* Media grid if any */}
                 {post.media && post.media.length > 0 && (
                   <div
-                    className={`grid gap-2 rounded overflow-hidden mt-1 ${
-                      post.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
-                    }`}
+                    className={`grid gap-2 rounded-xl overflow-hidden mt-1 ${post.media.length === 1 ? 'grid-cols-1 max-w-md sm:max-w-lg' : 'grid-cols-2 max-w-xl'
+                      }`}
                   >
                     {post.media.map((m) => {
                       const isVideo = isVideoUrl(m.url, m.mediaType);
+                      const isSingle = post.media.length === 1;
+                      const mediaHeight = isSingle ? 'max-h-60 sm:max-h-64' : 'max-h-48 sm:max-h-52';
+
                       return isVideo ? (
                         <VideoPlayer
                           key={m.id}
@@ -335,7 +326,7 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
                           hlsUrl={m.hlsManifestUrl}
                           poster={m.thumbnailUrl}
                           status={m.status}
-                          className="w-full max-h-80 object-cover rounded border border-slate-800"
+                          className={`w-full ${mediaHeight} object-cover rounded-xl border border-slate-800`}
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
@@ -343,7 +334,7 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
                           key={m.id}
                           src={m.thumbnailUrl || m.url}
                           alt="Post attachment"
-                          className="w-full max-h-80 object-cover rounded border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity"
+                          className={`w-full ${mediaHeight} object-cover rounded-xl border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity`}
                           onClick={(e) => {
                             e.stopPropagation();
                             const imageMedia = post.media.filter((item) => !isVideoUrl(item.url, item.mediaType));
@@ -367,7 +358,7 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
                       e.stopPropagation();
                       router.push(`/post/${post.repostOf?.id}`);
                     }}
-                    className="bg-slate-950/70 border border-slate-800 rounded-lg p-3 mt-1 flex flex-col gap-2 hover:border-slate-700 transition-colors"
+                    className="bg-slate-950/70 border border-slate-800 rounded-lg p-3 mt-1 flex flex-col gap-2 hover:border-slate-700 transition-colors max-w-xl"
                   >
                     <div className="flex items-center gap-2">
                       <Avatar
@@ -395,12 +386,14 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
                     )}
                     {post.repostOf.media && post.repostOf.media.length > 0 && (
                       <div
-                        className={`grid gap-2 mt-1 ${
-                          post.repostOf.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
-                        }`}
+                        className={`grid gap-2 mt-1 ${post.repostOf.media.length === 1 ? 'grid-cols-1 max-w-sm sm:max-w-md' : 'grid-cols-2 max-w-lg'
+                          }`}
                       >
                         {post.repostOf.media.map((m) => {
                           const isVideo = isVideoUrl(m.url, m.mediaType);
+                          const isSingle = post.repostOf!.media.length === 1;
+                          const mediaHeight = isSingle ? 'max-h-48 sm:max-h-52' : 'max-h-40 sm:max-h-44';
+
                           return isVideo ? (
                             <VideoPlayer
                               key={m.id}
@@ -408,7 +401,7 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
                               hlsUrl={m.hlsManifestUrl}
                               poster={m.thumbnailUrl}
                               status={m.status}
-                              className="w-full max-h-60 object-cover rounded border border-slate-800"
+                              className={`w-full ${mediaHeight} object-cover rounded-xl border border-slate-800`}
                               onClick={(e) => e.stopPropagation()}
                             />
                           ) : (
@@ -416,7 +409,7 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
                               key={m.id}
                               src={m.thumbnailUrl || m.url}
                               alt="Repost attachment"
-                              className="w-full max-h-60 object-cover rounded border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity"
+                              className={`w-full ${mediaHeight} object-cover rounded-xl border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const imageMedia = post.repostOf!.media.filter(
@@ -443,16 +436,14 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
                 <div className="flex items-center gap-5">
                   <button
                     onClick={() => toggleLike(post.id)}
-                    className={`flex items-center gap-1.5 transition-colors ${
-                      post.isLiked
+                    className={`flex items-center gap-1.5 transition-colors ${post.isLiked
                         ? 'text-rose-400 font-semibold'
                         : 'text-slate-400 hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     <Heart
-                      className={`w-3.5 h-3.5 ${
-                        post.isLiked ? 'fill-rose-400 text-rose-400' : ''
-                      }`}
+                      className={`w-3.5 h-3.5 ${post.isLiked ? 'fill-rose-400 text-rose-400' : ''
+                        }`}
                     />
                     <span>{post.likeCount < 0 ? '—' : post.likeCount}</span>
                   </button>
@@ -477,17 +468,15 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
 
                 <button
                   onClick={() => toggleBookmark(post.id)}
-                  className={`transition-colors ${
-                    post.isBookmarked
+                  className={`transition-colors ${post.isBookmarked
                       ? 'text-amber-400'
                       : 'text-slate-500 hover:text-slate-200'
-                  }`}
+                    }`}
                   title={post.isBookmarked ? 'Remove bookmark' : 'Bookmark post'}
                 >
                   <Bookmark
-                    className={`w-3.5 h-3.5 ${
-                      post.isBookmarked ? 'fill-amber-400 text-amber-400' : ''
-                    }`}
+                    className={`w-3.5 h-3.5 ${post.isBookmarked ? 'fill-amber-400 text-amber-400' : ''
+                      }`}
                   />
                 </button>
               </div>

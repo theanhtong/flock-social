@@ -14,6 +14,7 @@ import { FollowersModal } from '@/components/profile/followers-modal';
 import { ProfileUserPosts } from '@/components/profile/profile-posts';
 import { toast } from 'sonner';
 import { SidebarLayout } from '@/components/layout/sidebar';
+import { RightPanel } from '@/components/layout/right-panel';
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -141,7 +142,7 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <SidebarLayout>
+    <SidebarLayout rightPanel={<RightPanel />}>
       <div className="flex flex-col gap-4 font-sans">
         {/* Profile Header Card */}
         <div className="bg-slate-900 border border-slate-800 rounded overflow-hidden shadow-xl flex flex-col font-sans">
