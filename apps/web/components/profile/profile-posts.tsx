@@ -21,6 +21,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { postService, Post } from '@/services/post-service';
 import { Avatar } from '@/components/ui/avatar';
 import { VideoPlayer } from '@/components/ui/video-player';
+import { ImageLightbox } from '@/components/ui/image-lightbox';
 import { CommentModal } from '@/components/comments/comment-modal';
 import { RepostModal } from '@/components/posts/repost-modal';
 import { EditPostModal } from '@/components/posts/edit-post-modal';
@@ -61,6 +62,11 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
   const [activeModalPost, setActiveModalPost] = useState<Post | null>(null);
   const [repostTargetPost, setRepostTargetPost] = useState<Post | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [lightboxState, setLightboxState] = useState<{ mediaList: any[]; index: number; isOpen: boolean }>({
+    mediaList: [],
+    index: 0,
+    isOpen: false,
+  });
 
   const fetchUserPosts = async () => {
     if (!username) return;
@@ -335,9 +341,19 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
                       ) : (
                         <img
                           key={m.id}
-                          src={m.url}
+                          src={m.thumbnailUrl || m.url}
                           alt="Post attachment"
-                          className="w-full max-h-80 object-cover rounded border border-slate-800"
+                          className="w-full max-h-80 object-cover rounded border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const imageMedia = post.media.filter((item) => !isVideoUrl(item.url, item.mediaType));
+                            const imgIdx = imageMedia.findIndex((item) => item.id === m.id);
+                            setLightboxState({
+                              mediaList: imageMedia,
+                              index: imgIdx >= 0 ? imgIdx : 0,
+                              isOpen: true,
+                            });
+                          }}
                         />
                       );
                     })}
@@ -373,28 +389,46 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
                       </div>
                     </div>
                     {post.repostOf.content && (
-                      <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap pl-7">
+                      <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
                         {post.repostOf.content}
                       </p>
                     )}
                     {post.repostOf.media && post.repostOf.media.length > 0 && (
-                      <div className="grid gap-2 grid-cols-2 pl-7 mt-1">
+                      <div
+                        className={`grid gap-2 mt-1 ${
+                          post.repostOf.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+                        }`}
+                      >
                         {post.repostOf.media.map((m) => {
                           const isVideo = isVideoUrl(m.url, m.mediaType);
                           return isVideo ? (
-                            <video
+                            <VideoPlayer
                               key={m.id}
                               src={m.url}
-                              controls
-                              className="w-full max-h-40 object-cover rounded border border-slate-800 bg-black"
+                              hlsUrl={m.hlsManifestUrl}
+                              poster={m.thumbnailUrl}
+                              status={m.status}
+                              className="w-full max-h-60 object-cover rounded border border-slate-800"
                               onClick={(e) => e.stopPropagation()}
                             />
                           ) : (
                             <img
                               key={m.id}
-                              src={m.url}
+                              src={m.thumbnailUrl || m.url}
                               alt="Repost attachment"
-                              className="w-full max-h-40 object-cover rounded border border-slate-800"
+                              className="w-full max-h-60 object-cover rounded border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const imageMedia = post.repostOf!.media.filter(
+                                  (item) => !isVideoUrl(item.url, item.mediaType)
+                                );
+                                const imgIdx = imageMedia.findIndex((item) => item.id === m.id);
+                                setLightboxState({
+                                  mediaList: imageMedia,
+                                  index: imgIdx >= 0 ? imgIdx : 0,
+                                  isOpen: true,
+                                });
+                              }}
                             />
                           );
                         })}
@@ -494,6 +528,13 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
             prev.map((p) => (p.id === updatedPost.id ? updatedPost : p))
           );
         }}
+      />
+
+      <ImageLightbox
+        mediaList={lightboxState.mediaList}
+        initialIndex={lightboxState.index}
+        isOpen={lightboxState.isOpen}
+        onClose={() => setLightboxState((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
