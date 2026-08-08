@@ -1,10 +1,14 @@
 import { apiClient } from '@/lib/api-client';
 
 export interface UploadResult {
+  mediaId?: string;
   url: string;
   filename: string;
   mimetype: string;
   size: number;
+  status?: 'pending' | 'processing' | 'ready' | 'failed' | string;
+  hlsManifestUrl?: string | null;
+  thumbnailUrl?: string | null;
 }
 
 export const uploadService = {

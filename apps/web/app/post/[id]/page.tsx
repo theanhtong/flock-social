@@ -12,11 +12,16 @@ import {
   Trash2,
   Bookmark,
   Pencil,
+  Users,
+  Star,
+  Lock,
+  Globe,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import { postService, Post } from '@/services/post-service';
 import { Avatar } from '@/components/ui/avatar';
+import { VideoPlayer } from '@/components/ui/video-player';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
 import { PostComments } from '@/components/comments/post-comments';
@@ -190,14 +195,28 @@ export default function PostDetailPage() {
                   </span>
                 )}
                 {post.audience && post.audience !== 'everyone' && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-medium border border-slate-700">
-                    {post.audience === 'followers'
-                      ? '👥 Followers'
-                      : post.audience === 'close_friends'
-                      ? '⭐ Close Friends'
-                      : post.audience === 'restricted'
-                      ? '🔒 Restricted'
-                      : post.audience}
+                  <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-medium border border-slate-700">
+                    {post.audience === 'followers' ? (
+                      <>
+                        <Users className="w-3 h-3 text-blue-400" />
+                        <span>Followers</span>
+                      </>
+                    ) : post.audience === 'close_friends' ? (
+                      <>
+                        <Star className="w-3 h-3 text-amber-400 fill-amber-400/20" />
+                        <span>Close Friends</span>
+                      </>
+                    ) : post.audience === 'restricted' ? (
+                      <>
+                        <Lock className="w-3 h-3 text-rose-400" />
+                        <span>Restricted</span>
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-3 h-3 text-slate-400" />
+                        <span className="capitalize">{post.audience}</span>
+                      </>
+                    )}
                   </span>
                 )}
                 {isOwner && (
@@ -238,11 +257,13 @@ export default function PostDetailPage() {
                 {post.media.map((m) => {
                   const isVideo = isVideoUrl(m.url, m.mediaType);
                   return isVideo ? (
-                    <video
+                    <VideoPlayer
                       key={m.id}
                       src={m.url}
-                      controls
-                      className="w-full max-h-96 object-cover rounded border border-slate-800 bg-black"
+                      hlsUrl={m.hlsManifestUrl}
+                      poster={m.thumbnailUrl}
+                      status={m.status}
+                      className="w-full max-h-96 object-cover rounded border border-slate-800"
                     />
                   ) : (
                     <img

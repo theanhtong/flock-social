@@ -16,6 +16,8 @@ export interface PostMedia {
   url: string;
   mediaType: 'image' | 'video';
   thumbnailUrl?: string | null;
+  hlsManifestUrl?: string | null;
+  status?: 'pending' | 'processing' | 'ready' | 'failed' | string;
   width?: number | null;
   height?: number | null;
   durationSeconds?: number | null;
