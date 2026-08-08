@@ -17,7 +17,9 @@ import {
   Star,
   Lock,
   Globe,
+  Sparkles,
 } from 'lucide-react';
+import { io } from 'socket.io-client';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import { postService, Post } from '@/services/post-service';
@@ -61,6 +63,7 @@ export function UserHomeFeed() {
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [pendingPosts, setPendingPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeModalPost, setActiveModalPost] = useState<Post | null>(null);
@@ -73,6 +76,25 @@ export function UserHomeFeed() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'http://localhost:4000';
+    const socket = io(`${socketUrl}/ws/posts`, {
+      transports: ['websocket', 'polling'],
+    });
+
+    socket.on('new_post_created', (newPost: Post) => {
+      if (newPost.user?.id === user?.id) return;
+      setPendingPosts((prev) => {
+        if (prev.some((p) => p.id === newPost.id)) return prev;
+        return [newPost, ...prev];
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user?.id]);
 
   const handleCommentCountDelta = (postId: string, delta: number) => {
     setPosts((prev) =>
@@ -312,6 +334,24 @@ export function UserHomeFeed() {
 
       {/* Feed Posts */}
       <div className="flex flex-col gap-3 font-sans">
+        {/* Floating Realtime New Posts Notification Banner */}
+        {pendingPosts.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setPosts((prev) => [...pendingPosts, ...prev]);
+              setPendingPosts([]);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer border border-blue-400/40 animate-in fade-in slide-in-from-top-2"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300 animate-bounce" />
+            <span>
+              {pendingPosts.length} new {pendingPosts.length === 1 ? 'post' : 'posts'} available • Click to view
+            </span>
+          </button>
+        )}
+
         {isLoading ? (
           <div className="bg-slate-900 border border-slate-800 rounded p-12 text-center flex flex-col items-center justify-center gap-3 font-sans">
             <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
