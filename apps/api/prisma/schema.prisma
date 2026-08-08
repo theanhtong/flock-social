@@ -48,6 +48,7 @@ enum MediaType {
 enum MediaStatus {
   pending
   processing
+  ready
   failed
 }
 

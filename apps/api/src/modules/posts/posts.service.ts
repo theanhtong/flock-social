@@ -104,17 +104,25 @@ export class PostsService {
 
       if (dto.mediaUrls?.length) {
         for (let i = 0; i < dto.mediaUrls.length; i++) {
-          const isVideo = /\.(mp4|webm|mov|mkv)(\?.*)?$/i.test(dto.mediaUrls[i]);
-          const media = await tx.media.create({
-            data: {
-              id: this.snowflake.generate(),
-              uploaderId: authorId,
-              mediaType: isVideo ? MediaType.video : MediaType.image,
-              originalUrl: dto.mediaUrls[i],
-            },
+          const mediaUrl = dto.mediaUrls[i];
+          let existingMedia = await tx.media.findFirst({
+            where: { originalUrl: mediaUrl },
           });
+
+          if (!existingMedia) {
+            const isVideo = /\.(mp4|webm|mov|mkv)(\?.*)?$/i.test(mediaUrl);
+            existingMedia = await tx.media.create({
+              data: {
+                id: this.snowflake.generate(),
+                uploaderId: authorId,
+                mediaType: isVideo ? MediaType.video : MediaType.image,
+                originalUrl: mediaUrl,
+              },
+            });
+          }
+
           await tx.postMedia.create({
-            data: { postId, mediaId: media.id, displayOrder: i },
+            data: { postId, mediaId: existingMedia.id, displayOrder: i },
           });
         }
       }

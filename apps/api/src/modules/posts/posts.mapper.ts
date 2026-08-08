@@ -44,6 +44,8 @@ export function formatPost(post: any, currentUserId?: string): PostDto {
     url: m.media?.originalUrl || m.url || '',
     mediaType: (m.media?.mediaType || m.mediaType || MediaType.image) as MediaType,
     thumbnailUrl: m.media?.thumbnailUrl ?? m.thumbnailUrl ?? null,
+    hlsManifestUrl: m.media?.hlsManifestUrl ?? m.hlsManifestUrl ?? null,
+    status: m.media?.status ?? m.status ?? 'ready',
     width: m.media?.width ?? m.width ?? null,
     height: m.media?.height ?? m.height ?? null,
     durationSeconds: m.media?.durationSeconds ?? m.durationSeconds ?? null,

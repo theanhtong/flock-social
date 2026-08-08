@@ -85,6 +85,8 @@ export class PostMediaDto {
   url: string;
   mediaType: MediaType;
   thumbnailUrl?: string | null;
+  hlsManifestUrl?: string | null;
+  status?: string;
   width?: number | null;
   height?: number | null;
   durationSeconds?: number | null;

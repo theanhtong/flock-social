@@ -6,6 +6,7 @@ import {
   UploadedFiles,
   UseGuards,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiBody, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -17,7 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class UploadsController {
-  constructor(private readonly uploadsService: UploadsService) { }
+  constructor(private readonly uploadsService: UploadsService) {}
 
   @Post('file')
   @ApiOperation({ summary: 'Upload a single file to MinIO' })
@@ -34,9 +35,10 @@ export class UploadsController {
       },
     },
   })
-  async uploadSingle(@UploadedFile() file: Express.Multer.File) {
+  async uploadSingle(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
     if (!file) throw new BadRequestException('File is required');
-    return this.uploadsService.uploadFile(file);
+    const uploaderId = req.user?.id ? req.user.id.toString() : undefined;
+    return this.uploadsService.uploadFile(file, uploaderId);
   }
 
   @Post('multiple')
@@ -57,8 +59,9 @@ export class UploadsController {
       },
     },
   })
-  async uploadMultiple(@UploadedFiles() files: Express.Multer.File[]) {
+  async uploadMultiple(@UploadedFiles() files: Express.Multer.File[], @Req() req: any) {
     if (!files || files.length === 0) throw new BadRequestException('Files are required');
-    return this.uploadsService.uploadMultipleFiles(files);
+    const uploaderId = req.user?.id ? req.user.id.toString() : undefined;
+    return this.uploadsService.uploadMultipleFiles(files, uploaderId);
   }
 }
