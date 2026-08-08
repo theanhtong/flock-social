@@ -67,12 +67,10 @@ export class PostsService {
     if (repostOfId) {
       const target = await this.prisma.post.findUnique({
         where: { id: repostOfId },
-        select: { repostOfId: true, content: true },
+        select: { id: true },
       });
       if (!target) {
         repostOfId = null;
-      } else if (target.repostOfId && !target.content?.trim()) {
-        repostOfId = target.repostOfId;
       }
     }
 
@@ -127,25 +125,13 @@ export class PostsService {
       });
 
       if (repostOfId) {
-        const targetPost = await tx.post.findUnique({
-          where: { id: repostOfId },
-          select: { userId: true },
+        const count = await tx.post.count({
+          where: { repostOfId, status: PostStatus.active },
         });
-
-        if (targetPost) {
-          await tx.post.update({
-            where: { id: repostOfId },
-            data: { repostCount: { increment: 1 } },
-          });
-
-          // Notification placeholder
-          // await this.notificationsService.createNotification(
-          //   targetPost.userId,
-          //   authorId,
-          //   'repost',
-          //   postId,
-          // );
-        }
+        await tx.post.update({
+          where: { id: repostOfId },
+          data: { repostCount: count },
+        });
       }
 
       return tx.post.findUniqueOrThrow({

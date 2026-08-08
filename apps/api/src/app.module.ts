@@ -8,6 +8,7 @@ import { HealthModule } from './health/health.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { PostsModule } from './modules/posts/posts.module.js';
+import { CommentsModule } from './modules/comments/comments.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PostsModule } from './modules/posts/posts.module.js';
     AuthModule,
     UsersModule,
     PostsModule,
+    CommentsModule,
   ],
   controllers: [],
   providers: [

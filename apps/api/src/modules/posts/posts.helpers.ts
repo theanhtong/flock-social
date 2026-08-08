@@ -136,6 +136,15 @@ export function postInclude(viewerId?: bigint) {
           include: { media: true },
           orderBy: { displayOrder: 'asc' as const },
         },
+        repostOf: {
+          include: {
+            user: { include: { settings: true } },
+            media: {
+              include: { media: true },
+              orderBy: { displayOrder: 'asc' as const },
+            },
+          },
+        },
       },
     },
     _count: { select: { bookmarks: true } },
