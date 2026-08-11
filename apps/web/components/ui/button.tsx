@@ -61,7 +61,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ) : leftIcon ? (
           <span className="inline-flex items-center shrink-0">{leftIcon}</span>
         ) : null}
-        <span>{children}</span>
+        <span className="inline-flex items-center justify-center gap-1.5">{children}</span>
         {!isLoading && rightIcon && (
           <span className="inline-flex items-center shrink-0">{rightIcon}</span>
         )}

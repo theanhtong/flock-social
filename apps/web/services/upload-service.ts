@@ -1,0 +1,26 @@
+import { apiClient } from '@/lib/api-client';
+
+export interface UploadResult {
+  mediaId?: string;
+  url: string;
+  filename: string;
+  mimetype: string;
+  size: number;
+  status?: 'pending' | 'processing' | 'ready' | 'failed' | string;
+  hlsManifestUrl?: string | null;
+  thumbnailUrl?: string | null;
+}
+
+export const uploadService = {
+  uploadFile: async (file: File, token?: string | null): Promise<UploadResult> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post<UploadResult>('/uploads/file', formData, { token });
+  },
+
+  uploadMultipleFiles: async (files: File[], token?: string | null): Promise<UploadResult[]> => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+    return apiClient.post<UploadResult[]>('/uploads/multiple', formData, { token });
+  },
+};

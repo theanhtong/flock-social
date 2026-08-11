@@ -21,7 +21,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800 font-sans">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between font-sans">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between font-sans">
         {/* Brand Logo & Section Badge */}
         <div className="flex items-center gap-3 font-sans">
           <Link

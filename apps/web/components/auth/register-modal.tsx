@@ -117,23 +117,25 @@ export const RegisterModal: React.FC = () => {
       title={step === 1 ? 'Create Account' : 'Verify Email OTP'}
     >
       {step === 1 ? (
-        <div className="flex flex-col gap-4 max-w-sm mx-auto py-1">
+        <div className="flex flex-col gap-3.5 py-0.5">
           <form onSubmit={handleStep1Submit} className="flex flex-col gap-3">
-            <Input
-              label="Display Name"
-              placeholder="e.g. John Doe"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              error={errors.displayName}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Display Name"
+                placeholder="e.g. John Doe"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                error={errors.displayName}
+              />
 
-            <Input
-              label="Username (@username)"
-              placeholder="e.g. johndoe"
-              value={username}
-              onChange={(e) => setUsername(e.target.value.toLowerCase())}
-              error={errors.username}
-            />
+              <Input
+                label="Username (@username)"
+                placeholder="e.g. johndoe"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                error={errors.username}
+              />
+            </div>
 
             <Input
               label="Email Address"
@@ -144,29 +146,31 @@ export const RegisterModal: React.FC = () => {
               error={errors.email}
             />
 
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Minimum 6 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={errors.password}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Password"
+                type="password"
+                placeholder="Min. 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={errors.password}
+              />
 
-            <Input
-              label="Confirm Password"
-              type="password"
-              placeholder="Re-enter password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              error={errors.confirmPassword}
-            />
+              <Input
+                label="Confirm Password"
+                type="password"
+                placeholder="Re-enter password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                error={errors.confirmPassword}
+              />
+            </div>
 
             <Button
               type="submit"
               variant="primary"
               size="md"
-              className="w-full mt-2"
+              className="w-full mt-1"
               isLoading={loading}
             >
               Continue

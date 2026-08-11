@@ -93,9 +93,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 flex flex-col items-center justify-center p-6 font-sans">
-      <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded p-6 shadow-xl flex flex-col gap-5">
-        <div className="flex flex-col gap-1">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 font-sans">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-xl flex flex-col gap-4">
+        <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-bold text-slate-100">
             {step === 1 ? 'Create Account' : 'Verify Email OTP'}
           </h1>
@@ -107,22 +107,24 @@ export default function RegisterPage() {
         </div>
 
         {step === 1 ? (
-          <form onSubmit={handleStep1Submit} className="flex flex-col gap-3.5">
-            <Input
-              label="Display Name"
-              placeholder="e.g. John Doe"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              error={errors.displayName}
-            />
+          <form onSubmit={handleStep1Submit} className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Display Name"
+                placeholder="e.g. John Doe"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                error={errors.displayName}
+              />
 
-            <Input
-              label="Username (@username)"
-              placeholder="e.g. johndoe"
-              value={username}
-              onChange={(e) => setUsername(e.target.value.toLowerCase())}
-              error={errors.username}
-            />
+              <Input
+                label="Username (@username)"
+                placeholder="e.g. johndoe"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                error={errors.username}
+              />
+            </div>
 
             <Input
               label="Email Address"
@@ -133,23 +135,25 @@ export default function RegisterPage() {
               error={errors.email}
             />
 
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Minimum 6 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={errors.password}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Password"
+                type="password"
+                placeholder="Min. 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={errors.password}
+              />
 
-            <Input
-              label="Confirm Password"
-              type="password"
-              placeholder="Re-enter password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              error={errors.confirmPassword}
-            />
+              <Input
+                label="Confirm Password"
+                type="password"
+                placeholder="Re-enter password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                error={errors.confirmPassword}
+              />
+            </div>
 
             <Button
               type="submit"
@@ -162,8 +166,8 @@ export default function RegisterPage() {
             </Button>
           </form>
         ) : (
-          <div className="flex flex-col gap-5">
-            <form onSubmit={handleVerifyAndRegister} className="flex flex-col gap-5 items-center">
+          <div className="flex flex-col gap-4">
+            <form onSubmit={handleVerifyAndRegister} className="flex flex-col gap-4 items-center">
               <OtpInput
                 length={6}
                 value={otpCode}
@@ -207,7 +211,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <div className="text-xs text-slate-400 text-center mt-1">
+        <div className="text-xs text-slate-400 text-center">
           Already have an account?{' '}
           <Link href="/login" className="text-blue-400 font-medium hover:underline">
             Sign In

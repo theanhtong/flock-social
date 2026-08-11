@@ -48,6 +48,7 @@ enum MediaType {
 enum MediaStatus {
   pending
   processing
+  ready
   failed
 }
 
@@ -192,7 +193,7 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  sessions Session[]
+  sessions              Session[]
   settings              UserSettings?
   posts                 Post[]
   comments              Comment[]
@@ -470,11 +471,11 @@ model Message {
   sharePostId      BigInt?     @map("share_post_id")
   createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz
 
-  conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  replyToMessage Message?          @relation("replies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
-  replies        Message[]         @relation("replies")
-  sharedPost     Post?             @relation(fields: [sharePostId], references: [id], onDelete: SetNull)
+  conversation   Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User           @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyToMessage Message?       @relation("replies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies        Message[]      @relation("replies")
+  sharedPost     Post?          @relation(fields: [sharePostId], references: [id], onDelete: SetNull)
   media          MessageMedia[]
 
   @@index([conversationId, id(sort: Desc)])

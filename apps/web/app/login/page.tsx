@@ -50,14 +50,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 flex flex-col items-center justify-center p-6 font-sans">
-      <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded p-6 shadow-xl flex flex-col gap-5">
-        <div className="flex flex-col gap-1">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 font-sans">
+      <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-xl flex flex-col gap-4">
+        <div className="flex flex-col gap-0.5">
           <h1 className="text-xl font-bold text-slate-100">Sign In to Flock</h1>
           <p className="text-xs text-slate-400">Enter your credentials to access your account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <Input
             label="Email or Username"
             placeholder="e.g. alex or alex@domain.com"
@@ -101,7 +101,7 @@ export default function LoginPage() {
           Sign in with Google
         </Button>
 
-        <div className="text-xs text-slate-400 text-center mt-1">
+        <div className="text-xs text-slate-400 text-center">
           Don't have an account?{' '}
           <Link href="/register" className="text-blue-400 font-medium hover:underline">
             Sign Up
