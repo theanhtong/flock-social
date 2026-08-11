@@ -100,14 +100,16 @@ export class UserBlockService {
             },
           },
         });
-        await tx.user.update({
-          where: { id: blockerBigInt },
-          data: { followingCount: { decrement: 1 } },
-        });
-        await tx.user.update({
-          where: { id: targetUser.id },
-          data: { followersCount: { decrement: 1 } },
-        });
+        if (!follow1.isPending) {
+          await tx.user.update({
+            where: { id: blockerBigInt },
+            data: { followingCount: { decrement: 1 } },
+          });
+          await tx.user.update({
+            where: { id: targetUser.id },
+            data: { followersCount: { decrement: 1 } },
+          });
+        }
       }
 
       const follow2 = await tx.follow.findUnique({
@@ -128,14 +130,16 @@ export class UserBlockService {
             },
           },
         });
-        await tx.user.update({
-          where: { id: targetUser.id },
-          data: { followingCount: { decrement: 1 } },
-        });
-        await tx.user.update({
-          where: { id: blockerBigInt },
-          data: { followersCount: { decrement: 1 } },
-        });
+        if (!follow2.isPending) {
+          await tx.user.update({
+            where: { id: targetUser.id },
+            data: { followingCount: { decrement: 1 } },
+          });
+          await tx.user.update({
+            where: { id: blockerBigInt },
+            data: { followersCount: { decrement: 1 } },
+          });
+        }
       }
 
       await tx.userBlock.create({

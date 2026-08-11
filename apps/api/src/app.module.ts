@@ -7,6 +7,11 @@ import { RedisModule } from './common/redis/redis.module.js';
 import { HealthModule } from './health/health.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { UsersModule } from './modules/users/users.module.js';
+import { PostsModule } from './modules/posts/posts.module.js';
+import { CommentsModule } from './modules/comments/comments.module.js';
+import { UploadsModule } from './modules/uploads/uploads.module.js';
+import { MessagesModule } from './modules/messages/messages.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 
 @Module({
   imports: [
@@ -21,7 +26,12 @@ import { UsersModule } from './modules/users/users.module.js';
     RedisModule,
     HealthModule,
     AuthModule,
-    UsersModule
+    UsersModule,
+    PostsModule,
+    CommentsModule,
+    UploadsModule,
+    MessagesModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [

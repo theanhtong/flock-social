@@ -18,5 +18,7 @@ export function formatProfile(user: any): UserProfileDto {
     followingCount: user.followingCount,
     postsCount: user.postsCount,
     createdAt: user.createdAt.toISOString(),
+    isPrivateProfile: Boolean(user.settings?.isPrivateProfile),
+    whoCanMessageMe: user.settings?.whoCanMessageMe || 'everyone',
   };
 }

@@ -87,10 +87,6 @@ export class UpdateUserSettingDto {
 
   @IsOptional()
   @IsBoolean()
-  allowFollowersOnlyDMs?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
   showReadReceipts?: boolean;
 
   @IsOptional()
@@ -98,12 +94,20 @@ export class UpdateUserSettingDto {
   showOnlineStatus?: boolean;
 
   @IsOptional()
-  @IsBoolean()
-  emailNotifications?: boolean;
+  @IsString()
+  allowTagging?: string;
 
   @IsOptional()
-  @IsBoolean()
-  pushNotifications?: boolean;
+  @IsString()
+  whoCanReplyPosts?: string;
+
+  @IsOptional()
+  @IsString()
+  whoCanMessageMe?: string;
+
+  @IsOptional()
+  @IsString()
+  whoCanAddToGroup?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -119,15 +123,15 @@ export class UpdateUserSettingDto {
 
   @IsOptional()
   @IsBoolean()
-  notifyOnMentions?: boolean;
+  notifyOnTagging?: boolean;
 
   @IsOptional()
-  @IsString()
-  theme?: string;
+  @IsBoolean()
+  notifyOnReposts?: boolean;
 
   @IsOptional()
-  @IsString()
-  language?: string;
+  @IsBoolean()
+  autoplayVideos?: boolean;
 }
 
 export class UserProfileDto {
@@ -147,23 +151,26 @@ export class UserProfileDto {
   followingCount: number;
   postsCount: number;
   createdAt: string;
+  isPrivateProfile?: boolean;
+  whoCanMessageMe?: string;
 }
 
 export class UserSettingDto {
   userId: string;
   isPrivateProfile: boolean;
   requireFollowApproval: boolean;
-  allowFollowersOnlyDMs: boolean;
   showReadReceipts: boolean;
   showOnlineStatus: boolean;
-  emailNotifications: boolean;
-  pushNotifications: boolean;
+  allowTagging: string;
+  whoCanReplyPosts: string;
+  whoCanMessageMe: string;
+  whoCanAddToGroup: string;
   notifyOnLikes: boolean;
   notifyOnComments: boolean;
   notifyOnFollows: boolean;
-  notifyOnMentions: boolean;
-  theme: string;
-  language: string;
+  notifyOnTagging: boolean;
+  notifyOnReposts: boolean;
+  autoplayVideos: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

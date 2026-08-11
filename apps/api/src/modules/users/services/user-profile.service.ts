@@ -11,6 +11,7 @@ export class UserProfileService {
     const userBigInt = BigInt(userId);
     const user = await this.prisma.user.findUnique({
       where: { id: userBigInt },
+      include: { settings: true },
     });
 
     if (!user) {
@@ -32,6 +33,7 @@ export class UserProfileService {
   async getProfileByUsername(username: string): Promise<UserProfileDto> {
     const user = await this.prisma.user.findFirst({
       where: { username: { equals: username, mode: 'insensitive' } },
+      include: { settings: true },
     });
 
     if (!user) {
@@ -87,10 +89,28 @@ export class UserProfileService {
       };
     }
 
+    let excludedUserIds: bigint[] = [];
+    if (currentUserId) {
+      const viewerBigInt = BigInt(currentUserId);
+      excludedUserIds.push(viewerBigInt);
+
+      const blocks = await this.prisma.userBlock.findMany({
+        where: {
+          OR: [{ blockerId: viewerBigInt }, { blockedId: viewerBigInt }],
+        },
+        select: { blockerId: true, blockedId: true },
+      });
+      for (const b of blocks) {
+        excludedUserIds.push(b.blockerId === viewerBigInt ? b.blockedId : b.blockerId);
+      }
+    }
+
     const users = await this.prisma.user.findMany({
       where: {
         status: 'active',
-        id: currentUserId ? { not: BigInt(currentUserId) } : undefined,
+        ...(excludedUserIds.length > 0 && {
+          id: { notIn: excludedUserIds },
+        }),
         OR: [
           { username: { contains: query, mode: 'insensitive' } },
           { displayName: { contains: query, mode: 'insensitive' } },

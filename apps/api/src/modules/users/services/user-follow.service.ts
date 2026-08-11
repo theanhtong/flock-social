@@ -4,11 +4,15 @@ import { CursorQueryDto, ToggleFollowResult } from '../users.dto.js';
 import { UserBlockService } from './user-block.service.js';
 import { formatProfile } from '../users.mapper.js';
 
+import { NotificationsService } from '../../notifications/notifications.service.js';
+import { NotificationType } from '../../../generated/prisma/client.js';
+
 @Injectable()
 export class UserFollowService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly userBlockService: UserBlockService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getPendingFollowRequests(userId: string, queryDto?: CursorQueryDto) {
@@ -62,12 +66,23 @@ export class UserFollowService {
   async getFollowStatus(
     currentUserId: string,
     username: string,
-  ): Promise<{ isFollowing: boolean; isPending: boolean; followsYou: boolean }> {
+  ): Promise<{
+    isFollowing: boolean;
+    isPending: boolean;
+    followsYou: boolean;
+    hasRequestedToFollowYou: boolean;
+  }> {
     const targetUser = await this.prisma.user.findFirst({
       where: { username: { equals: username, mode: 'insensitive' } },
     });
 
-    if (!targetUser) return { isFollowing: false, isPending: false, followsYou: false };
+    if (!targetUser)
+      return {
+        isFollowing: false,
+        isPending: false,
+        followsYou: false,
+        hasRequestedToFollowYou: false,
+      };
 
     const currentBigInt = BigInt(currentUserId);
 
@@ -93,8 +108,11 @@ export class UserFollowService {
     const isFollowing = follow ? !follow.isPending : false;
     const isPending = follow ? follow.isPending : false;
     const followsYou = followsYouRecord ? !followsYouRecord.isPending : false;
+    const hasRequestedToFollowYou = followsYouRecord
+      ? followsYouRecord.isPending
+      : false;
 
-    return { isFollowing, isPending, followsYou };
+    return { isFollowing, isPending, followsYou, hasRequestedToFollowYou };
   }
 
   async getUserFollowers(username: string, queryDto?: CursorQueryDto) {
@@ -323,7 +341,7 @@ export class UserFollowService {
 
     const settings = await this.prisma.userSettings.findUnique({
       where: { userId: targetUser.id },
-      select: { requireFollowApproval: true },
+      select: { requireFollowApproval: true, isPrivateProfile: true },
     });
 
     await this.userBlockService.ensureNotBlocked(followerBigInt, targetUser.id);
@@ -341,10 +359,12 @@ export class UserFollowService {
       return this.unfollow(followerBigInt, targetUser.id, follow.isPending);
     }
 
+    const requireApproval = Boolean(settings?.requireFollowApproval || settings?.isPrivateProfile);
+
     return this.follow(
       followerBigInt,
       targetUser.id,
-      settings?.requireFollowApproval ?? false,
+      requireApproval,
     );
   }
 
@@ -357,6 +377,14 @@ export class UserFollowService {
       await this.prisma.follow.create({
         data: { followerId, followingId: targetUserId, isPending: true },
       });
+
+      try {
+        await this.notificationsService.createNotification({
+          receiverId: targetUserId.toString(),
+          actorId: followerId.toString(),
+          type: NotificationType.follow_request,
+        });
+      } catch (err) {}
 
       return { isFollowing: false, isPending: true, followersCount: 0 };
     }
@@ -374,6 +402,14 @@ export class UserFollowService {
         data: { followersCount: { increment: 1 } },
       }),
     ]);
+
+    try {
+      await this.notificationsService.createNotification({
+        receiverId: targetUserId.toString(),
+        actorId: followerId.toString(),
+        type: NotificationType.follow,
+      });
+    } catch (err) {}
 
     const targetUser = await this.prisma.user.findUnique({
       where: { id: targetUserId },

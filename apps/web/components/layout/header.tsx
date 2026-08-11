@@ -3,14 +3,16 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Shield, Home, Palette, LogOut } from 'lucide-react';
+import { Shield, Home, Palette, LogOut, Bell } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import { useNotificationStore } from '@/store/notification-store';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 
 export function Header() {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
+  const unreadNotificationsCount = useNotificationStore((s) => s.unreadCount);
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
   const openRegisterModal = useAuthStore((s) => s.openRegisterModal);
   const logout = useAuthStore((s) => s.logout);
@@ -26,21 +28,8 @@ export function Header() {
             href="/"
             className="flex items-center gap-2 font-bold text-base text-slate-100 hover:text-white transition-colors font-sans"
           >
-            {/* <div className="w-7 h-7 rounded bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-sm">
-              F
-            </div> */}
             <span>Flock Social</span>
           </Link>
-
-          {/* {pathname === '/dashboard' ? (
-            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-red-950/80 border border-red-800/80 text-red-400 font-semibold font-sans">
-              Admin Console
-            </span>
-          ) : (
-            <span className="hidden sm:inline-block text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-semibold font-sans">
-              Social Network
-            </span>
-          )} */}
         </div>
 
         {/* Navigation & User Actions */}
@@ -48,14 +37,34 @@ export function Header() {
           <nav className="flex items-center gap-1 font-sans">
             <Link
               href="/"
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs transition-colors font-medium ${pathname === '/'
-                ? 'text-blue-400 bg-blue-500/10'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                }`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs transition-colors font-medium ${
+                pathname === '/'
+                  ? 'text-blue-400 bg-blue-500/10'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`}
             >
               <Home className="w-3.5 h-3.5" />
               <span>Home</span>
             </Link>
+
+            {user && (
+              <Link
+                href="/notifications"
+                className={`relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs transition-colors font-medium ${
+                  pathname === '/notifications'
+                    ? 'text-blue-400 bg-blue-500/10'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span>Notifications</span>
+                {unreadNotificationsCount > 0 && (
+                  <span className="ml-1 px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-blue-500 text-white">
+                    {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                  </span>
+                )}
+              </Link>
+            )}
           </nav>
 
           <div className="h-4 w-[1px] bg-slate-800 mx-1 hidden sm:block" />

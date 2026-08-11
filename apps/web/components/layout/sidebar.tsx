@@ -3,20 +3,22 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, Shield, Users, FileText } from 'lucide-react';
+import { Home, User, Shield, Users, FileText, MessageSquare, Settings, Bell } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import { useNotificationStore } from '@/store/notification-store';
 import { Avatar } from '@/components/ui/avatar';
 
 export const Sidebar = () => {
     const pathname = usePathname();
     const user = useAuthStore((s) => s.user);
+    const unreadCount = useNotificationStore((s) => s.unreadCount);
 
-    const navItem = (href: string, icon: React.ReactNode, label: string, danger = false) => {
-        const isActive = pathname === href;
+    const navItem = (href: string, icon: React.ReactNode, label: string, danger = false, badge?: number) => {
+        const isActive = pathname === href || (href === '/messages' && pathname?.startsWith('/messages')) || (href === '/notifications' && pathname?.startsWith('/notifications'));
         return (
             <Link
                 href={href}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium transition-colors ${isActive
+                className={`flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition-colors ${isActive
                     ? danger
                         ? 'text-red-400 bg-red-500/10'
                         : 'text-blue-400 bg-blue-500/10'
@@ -25,14 +27,21 @@ export const Sidebar = () => {
                         : 'text-slate-300 hover:bg-slate-800'
                     }`}
             >
-                {icon}
-                <span>{label}</span>
+                <div className="flex items-center gap-2.5">
+                    {icon}
+                    <span>{label}</span>
+                </div>
+                {badge && badge > 0 ? (
+                    <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-blue-500 text-white">
+                        {badge > 99 ? '99+' : badge}
+                    </span>
+                ) : null}
             </Link>
         );
     };
 
     return (
-        <aside className="hidden md:flex flex-col gap-4 col-span-1 sticky top-20 self-start h-fit font-sans">
+        <aside className="hidden md:block md:col-span-3 sticky top-[72px] font-sans">
             <div className="bg-slate-900 border border-slate-800 rounded p-4 flex flex-col gap-3 font-sans">
                 <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
                     <Avatar
@@ -50,7 +59,10 @@ export const Sidebar = () => {
 
                 <nav className="flex flex-col gap-1 font-sans">
                     {navItem('/', <Home className="w-4 h-4" />, 'Home Feed')}
+                    {navItem('/notifications', <Bell className="w-4 h-4" />, 'Notifications', false, unreadCount)}
+                    {navItem('/messages', <MessageSquare className="w-4 h-4" />, 'Messages')}
                     {navItem('/profile', <User className="w-4 h-4" />, 'My Profile')}
+                    {navItem('/settings', <Settings className="w-4 h-4" />, 'Settings')}
 
                     {(user?.role === 'admin' || user?.role === 'moderator') && (
                         <>
@@ -73,19 +85,23 @@ export const Sidebar = () => {
 interface SidebarLayoutProps {
     children: React.ReactNode;
     rightPanel?: React.ReactNode;
+    childrenSpan?: string;
+    rightPanelSpan?: string;
+    fullWidth?: boolean;
+    fixedHeight?: boolean;
 }
 
-export function SidebarLayout({ children, rightPanel }: SidebarLayoutProps) {
+export function SidebarLayout({ children, rightPanel, childrenSpan, rightPanelSpan, fullWidth }: SidebarLayoutProps) {
     return (
-        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 grid grid-cols-1 md:grid-cols-4 gap-6 font-sans">
+        <div className={`${fullWidth ? 'max-w-full px-4' : 'max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8'} py-4 w-full grid grid-cols-1 md:grid-cols-12 gap-4 items-start font-sans`}>
             <Sidebar />
 
-            <main className={`col-span-1 ${rightPanel ? 'md:col-span-2' : 'md:col-span-3'} flex flex-col gap-4 font-sans`}>
+            <main className={`col-span-1 ${childrenSpan || (rightPanel ? 'md:col-span-6' : 'md:col-span-9')} flex flex-col gap-4 font-sans`}>
                 {children}
             </main>
 
             {rightPanel && (
-                <aside className="hidden md:flex flex-col gap-4 col-span-1 font-sans">
+                <aside className={`hidden md:block ${rightPanelSpan || 'md:col-span-3'} sticky top-[72px] font-sans`}>
                     {rightPanel}
                 </aside>
             )}
