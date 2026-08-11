@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service.js';
 import { SnowflakeService } from '../../../common/snowflake/snowflake.service.js';
 import {
@@ -302,14 +302,23 @@ export class AdminUsersService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    // Soft Delete: Deactivate account status and update displayName while preserving database references
-    await this.prisma.user.update({
-      where: { id: targetId },
-      data: {
-        status: UserStatus.banned,
-        displayName: '[Deleted User]',
-      },
-    });
+    if (user.isDeleted) {
+      throw new BadRequestException(`User @${user.username} is already soft-deleted`);
+    }
+
+    // Soft Delete: Set isDeleted = true and deletedAt timestamp, and revoke active sessions
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: targetId },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
+      }),
+      this.prisma.session.deleteMany({
+        where: { userId: targetId },
+      }),
+    ]);
 
     await this.logAudit({
       adminId,
@@ -319,7 +328,7 @@ export class AdminUsersService {
       metadata: { action: 'soft_delete', username: user.username, role: user.role, email: user.email },
     });
 
-    return { message: `User @${user.username} soft-deleted successfully (account deactivated)` };
+    return { message: `User @${user.username} soft-deleted successfully` };
   }
 
   async getAuditLogs(cursor?: string, limit: number = 20) {

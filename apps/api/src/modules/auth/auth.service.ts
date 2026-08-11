@@ -292,6 +292,18 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (user.isDeleted || user.deletedAt) {
+      throw new UnauthorizedException('This account has been deleted.');
+    }
+
+    if (user.status === 'banned') {
+      throw new UnauthorizedException('Your account has been banned due to policy violations.');
+    }
+
+    if (user.status === 'suspended') {
+      throw new UnauthorizedException('Your account is currently suspended.');
+    }
+
     if (user.status !== 'active') {
       throw new UnauthorizedException(
         'Account is not active. Please verify your email.',

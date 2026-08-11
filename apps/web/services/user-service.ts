@@ -13,6 +13,8 @@ export interface UserProfile {
   role: 'customer' | 'bot_system' | 'moderator' | 'admin';
   status: 'pending_verification' | 'active' | 'suspended' | 'banned';
   isVerified: boolean;
+  isDeleted?: boolean;
+  deletedAt?: string | null;
   followersCount: number;
   followingCount: number;
   postsCount: number;

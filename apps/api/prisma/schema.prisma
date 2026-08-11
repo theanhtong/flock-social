@@ -184,6 +184,8 @@ model User {
   role         UserRole   @default(customer)
   status       UserStatus @default(active)
   isVerified   Boolean    @default(false) @map("is_verified")
+  isDeleted    Boolean    @default(false) @map("is_deleted")
+  deletedAt    DateTime?  @map("deleted_at") @db.Timestamptz
 
   followersCount Int @default(0) @map("followers_count")
   followingCount Int @default(0) @map("following_count")

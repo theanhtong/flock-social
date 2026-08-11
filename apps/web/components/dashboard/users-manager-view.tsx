@@ -274,16 +274,23 @@ export function UsersManagerView() {
                         <RoleBadge role={u.role} size="sm" />
                       </td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase font-sans ${u.status === 'active'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : u.status === 'suspended'
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                        {u.isDeleted ? (
+                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-slate-800 text-slate-400 border border-slate-700">
+                            Soft Deleted
+                          </span>
+                        ) : (
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase font-sans ${
+                              u.status === 'active'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : u.status === 'suspended'
+                                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                             }`}
-                        >
-                          {u.status}
-                        </span>
+                          >
+                            {u.status}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-slate-400 font-sans text-[11px]">
                         {u.followersCount} followers • {u.postsCount} posts
@@ -427,18 +434,20 @@ export function UsersManagerView() {
         </div>
       </Modal>
 
-      {/* Delete User Confirmation Modal */}
+      {/* Soft Delete User Confirmation Modal */}
       <Modal
         isOpen={!!selectedUserForDelete}
         onClose={() => setSelectedUserForDelete(null)}
-        title={`Delete User @${selectedUserForDelete?.username}`}
+        title={`Soft Delete User @${selectedUserForDelete?.username}`}
       >
         <div className="flex flex-col gap-4 py-2 font-sans">
-          <div className="p-3 rounded bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-2">
+          <div className="p-3 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-start gap-2">
             <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
             <div className="flex flex-col gap-1">
-              <span className="font-bold">Permanent Action Warning</span>
-              <span>Are you sure you want to permanently delete @{selectedUserForDelete?.username}? All associated posts, comments, messages, and profile data will be permanently erased. This action CANNOT be undone.</span>
+              <span className="font-bold">Soft Delete Account Warning</span>
+              <span>
+                Are you sure you want to soft-delete <strong className="text-white">@{selectedUserForDelete?.username}</strong>? Account access and sessions will be revoked immediately while preserving posts, comments, and audit trails for compliance.
+              </span>
             </div>
           </div>
 
@@ -447,7 +456,7 @@ export function UsersManagerView() {
               Cancel
             </Button>
             <Button variant="danger" size="sm" isLoading={isDeletingUser} onClick={handleConfirmDeleteUser}>
-              Permanently Delete
+              Confirm Soft Delete
             </Button>
           </div>
         </div>
