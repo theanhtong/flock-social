@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Shield, Home, Palette, LogOut, Bell } from 'lucide-react';
+import { Shield, Home, Palette, LogOut, Bell, Flag } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useNotificationStore } from '@/store/notification-store';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ export function Header() {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const unreadNotificationsCount = useNotificationStore((s) => s.unreadCount);
+  const pendingReportsCount = useNotificationStore((s) => s.pendingReportsCount);
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
   const openRegisterModal = useAuthStore((s) => s.openRegisterModal);
   const logout = useAuthStore((s) => s.logout);
@@ -61,6 +62,25 @@ export function Header() {
                 {unreadNotificationsCount > 0 && (
                   <span className="ml-1 px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-blue-500 text-white">
                     {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {isAdminOrMod && (
+              <Link
+                href="/dashboard/reports"
+                className={`relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs transition-colors font-medium ${
+                  pathname === '/dashboard/reports'
+                    ? 'text-rose-400 bg-rose-500/10'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <Flag className="w-3.5 h-3.5 text-rose-400" />
+                <span>Reports</span>
+                {pendingReportsCount > 0 && (
+                  <span className="ml-1 px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-rose-600 text-white animate-pulse">
+                    {pendingReportsCount > 99 ? '99+' : pendingReportsCount}
                   </span>
                 )}
               </Link>

@@ -60,6 +60,10 @@ export const reportService = {
     return apiClient.get(`/admin/reports${q ? `?${q}` : ''}`, { token });
   },
 
+  getPendingReportsCount: async (token?: string | null): Promise<{ pendingCount: number }> => {
+    return apiClient.get('/admin/reports/pending-count', { token });
+  },
+
   resolveReport: async (
     id: string,
     data: { resolution?: string; deleteContent?: boolean },

@@ -51,6 +51,15 @@ export class ReportsController {
     return this.reportsService.getReports(query);
   }
 
+  @Get('admin/reports/pending-count')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.MODERATOR)
+  @ApiOperation({ summary: 'Get pending reports count' })
+  @ApiResponse({ status: 200 })
+  async getPendingReportsCount() {
+    return this.reportsService.getPendingReportsCount();
+  }
+
   @Patch('admin/reports/:id/resolve')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)

@@ -11,12 +11,14 @@ export type NotificationCategory = 'all' | 'likes' | 'comments' | 'follows' | 's
 interface NotificationState {
   notifications: NotificationItem[];
   unreadCount: number;
+  pendingReportsCount: number;
   activeCategory: NotificationCategory;
   cursor: string | null;
   isLoading: boolean;
 
   setActiveCategory: (category: NotificationCategory) => void;
   fetchNotifications: (reset?: boolean) => Promise<void>;
+  fetchPendingReportsCount: () => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
@@ -29,6 +31,7 @@ interface NotificationState {
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
   unreadCount: 0,
+  pendingReportsCount: 0,
   activeCategory: 'all',
   cursor: null,
   isLoading: false,
@@ -36,6 +39,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   setActiveCategory: (category: NotificationCategory) => {
     set({ activeCategory: category, cursor: null });
     get().fetchNotifications(true);
+  },
+
+  fetchPendingReportsCount: async () => {
+    const { token, user } = useAuthStore.getState();
+    if (!token || (user?.role !== 'admin' && user?.role !== 'moderator')) return;
+    try {
+      const { reportService } = await import('@/services/report-service');
+      const res = await reportService.getPendingReportsCount(token);
+      set({ pendingReportsCount: res.pendingCount });
+    } catch (err) {}
   },
 
   fetchNotifications: async (reset = false) => {
@@ -120,6 +133,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     socket.off('notification_read');
     socket.off('notification_read_all');
     socket.off('notification_deleted');
+    socket.off('pending_reports_count');
+
+    get().fetchPendingReportsCount();
 
     socket.on('notification_received', (data: { notification: NotificationItem; unreadCount: number }) => {
       set((state) => ({
@@ -150,6 +166,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         unreadCount: data.unreadCount,
       }));
     });
+
+    socket.on('pending_reports_count', (data: { pendingCount: number }) => {
+      set({ pendingReportsCount: data.pendingCount });
+    });
   },
 
   cleanSocketListeners: () => {
@@ -160,5 +180,6 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     socket.off('notification_read');
     socket.off('notification_read_all');
     socket.off('notification_deleted');
+    socket.off('pending_reports_count');
   },
 }));

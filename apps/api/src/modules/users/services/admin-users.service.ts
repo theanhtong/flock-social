@@ -302,8 +302,13 @@ export class AdminUsersService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    await this.prisma.user.delete({
+    // Soft Delete: Deactivate account status and update displayName while preserving database references
+    await this.prisma.user.update({
       where: { id: targetId },
+      data: {
+        status: UserStatus.banned,
+        displayName: '[Deleted User]',
+      },
     });
 
     await this.logAudit({
@@ -311,10 +316,10 @@ export class AdminUsersService {
       action: AuditActionType.delete,
       targetId: userId,
       targetType: AuditLogType.user,
-      metadata: { username: user.username, role: user.role, email: user.email },
+      metadata: { action: 'soft_delete', username: user.username, role: user.role, email: user.email },
     });
 
-    return { message: `User @${user.username} deleted permanently` };
+    return { message: `User @${user.username} soft-deleted successfully (account deactivated)` };
   }
 
   async getAuditLogs(cursor?: string, limit: number = 20) {

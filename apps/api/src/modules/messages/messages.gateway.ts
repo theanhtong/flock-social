@@ -48,7 +48,10 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
 
       client.data.user = payload;
       client.join(`user_${payload.sub}`);
-      this.logger.log(`Authenticated WebSocket client connected: ${client.id} (user: ${payload.sub})`);
+      if (payload.role === 'admin' || payload.role === 'moderator') {
+        client.join('moderators_room');
+      }
+      this.logger.log(`Authenticated WebSocket client connected: ${client.id} (user: ${payload.sub}, role: ${payload.role})`);
     } catch (err: any) {
       this.logger.warn(`WebSocket auth verification failed for ${client.id}: ${err.message}`);
       client.disconnect();
@@ -57,6 +60,10 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
+  }
+
+  emitPendingReportsCount(count: number) {
+    this.server.to('moderators_room').emit('pending_reports_count', { pendingCount: count });
   }
 
   @SubscribeMessage('join_conversation')

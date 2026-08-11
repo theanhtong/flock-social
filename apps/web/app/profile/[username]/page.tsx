@@ -17,6 +17,7 @@ import { ProfileUserPosts } from '@/components/profile/profile-posts';
 import { toast } from 'sonner';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
+import { ReportModal } from '@/components/reports/report-modal';
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -33,6 +34,7 @@ export default function PublicProfilePage() {
   const [isFollowLoading, setIsFollowLoading] = useState<boolean>(false);
   const [isBlockLoading, setIsBlockLoading] = useState<boolean>(false);
   const [showMoreMenu, setShowMoreMenu] = useState<boolean>(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const [followModal, setFollowModal] = useState<{
     isOpen: boolean;
@@ -378,12 +380,12 @@ export default function PublicProfilePage() {
                           <button
                             onClick={() => {
                               setShowMoreMenu(false);
-                              toast.info(`User @${username} reported`);
+                              setIsReportModalOpen(true);
                             }}
                             className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 flex items-center gap-2"
                           >
                             <Flag className="w-3.5 h-3.5 text-amber-400" />
-                            Report
+                            Report @{username}
                           </button>
                         </div>
                       )}
@@ -480,12 +482,12 @@ export default function PublicProfilePage() {
                           <button
                             onClick={() => {
                               setShowMoreMenu(false);
-                              toast.info(`User @${username} reported`);
+                              setIsReportModalOpen(true);
                             }}
                             className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 flex items-center gap-2"
                           >
                             <Flag className="w-3.5 h-3.5 text-amber-400" />
-                            Report
+                            Report @{username}
                           </button>
                         </div>
                       )}
@@ -625,6 +627,15 @@ export default function PublicProfilePage() {
           }
         }}
       />
+      {profile && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          targetType="user"
+          targetId={profile.id}
+          targetName={`@${profile.username}`}
+        />
+      )}
     </SidebarLayout>
   );
 }

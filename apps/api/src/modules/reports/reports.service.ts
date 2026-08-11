@@ -10,6 +10,7 @@ import {
   QueryReportsDto,
   ResolveReportDto,
 } from './reports.dto.js';
+import { MessagesGateway } from '../messages/messages.gateway.js';
 import { ReportStatus, ReportType, AuditActionType, AuditLogType } from '../../generated/prisma/enums.js';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class ReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly snowflakeService: SnowflakeService,
+    private readonly messagesGateway: MessagesGateway,
   ) {}
 
   async createReport(reporterId: string, dto: CreateReportDto) {
@@ -46,6 +48,8 @@ export class ReportsService {
         status: ReportStatus.pending,
       },
     });
+
+    await this.notifyPendingReportsCount();
 
     return {
       ...created,
@@ -209,6 +213,8 @@ export class ReportsService {
       },
     });
 
+    await this.notifyPendingReportsCount();
+
     return {
       ...updated,
       id: updated.id.toString(),
@@ -233,6 +239,8 @@ export class ReportsService {
       },
     });
 
+    await this.notifyPendingReportsCount();
+
     return {
       ...updated,
       id: updated.id.toString(),
@@ -240,5 +248,21 @@ export class ReportsService {
       targetId: updated.targetId.toString(),
       reviewedById: updated.reviewedById?.toString() || null,
     };
+  }
+
+  async getPendingReportsCount(): Promise<{ pendingCount: number }> {
+    const count = await this.prisma.report.count({
+      where: { status: ReportStatus.pending },
+    });
+    return { pendingCount: count };
+  }
+
+  private async notifyPendingReportsCount() {
+    try {
+      const count = await this.prisma.report.count({
+        where: { status: ReportStatus.pending },
+      });
+      this.messagesGateway.emitPendingReportsCount(count);
+    } catch (err) {}
   }
 }

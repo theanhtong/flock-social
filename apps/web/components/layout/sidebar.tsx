@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, Shield, Users, FileText, MessageSquare, Settings, Bell } from 'lucide-react';
+import { Home, User, Shield, Users, FileText, MessageSquare, Settings, Bell, Flag } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useNotificationStore } from '@/store/notification-store';
 import { Avatar } from '@/components/ui/avatar';
@@ -12,6 +12,7 @@ export const Sidebar = () => {
     const pathname = usePathname();
     const user = useAuthStore((s) => s.user);
     const unreadCount = useNotificationStore((s) => s.unreadCount);
+    const pendingReportsCount = useNotificationStore((s) => s.pendingReportsCount);
 
     const navItem = (href: string, icon: React.ReactNode, label: string, danger = false, badge?: number) => {
         const isActive = pathname === href || (href === '/messages' && pathname?.startsWith('/messages')) || (href === '/notifications' && pathname?.startsWith('/notifications'));
@@ -68,12 +69,17 @@ export const Sidebar = () => {
                         <>
                             <div className="my-1.5 border-t border-slate-800/80 pt-1.5 font-sans">
                                 <span className="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-                                    Administration
+                                    Moderation & Admin
                                 </span>
                             </div>
-                            {navItem('/dashboard', <Shield className="w-4 h-4" />, 'Admin Console', true)}
-                            {navItem('/dashboard/users', <Users className="w-4 h-4" />, 'Users Manager', true)}
-                            {navItem('/dashboard/audit-logs', <FileText className="w-4 h-4" />, 'Audit Logs', true)}
+                            {navItem('/dashboard', <Shield className="w-4 h-4" />, 'Console Overview')}
+                            {navItem('/dashboard/reports', <Flag className="w-4 h-4" />, 'Reports Queue', false, pendingReportsCount)}
+                            {user?.role === 'admin' && (
+                                <>
+                                    {navItem('/dashboard/users', <Users className="w-4 h-4" />, 'Users Manager')}
+                                    {navItem('/dashboard/audit-logs', <FileText className="w-4 h-4" />, 'Audit Logs')}
+                                </>
+                            )}
                         </>
                     )}
                 </nav>

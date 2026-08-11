@@ -18,6 +18,7 @@ import {
   Lock,
   Globe,
   Sparkles,
+  Flag,
 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ import { RightPanel } from '@/components/layout/right-panel';
 import { CommentModal } from '@/components/comments/comment-modal';
 import { RepostModal } from '@/components/posts/repost-modal';
 import { EditPostModal } from '@/components/posts/edit-post-modal';
+import { ReportModal } from '@/components/reports/report-modal';
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
@@ -69,6 +71,7 @@ export function UserHomeFeed() {
   const [activeModalPost, setActiveModalPost] = useState<Post | null>(null);
   const [repostTargetPost, setRepostTargetPost] = useState<Post | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [reportTarget, setReportTarget] = useState<{ targetType: 'user' | 'post' | 'comment'; targetId: string; targetName?: string } | null>(null);
   const [lightboxState, setLightboxState] = useState<{ mediaList: any[]; index: number; isOpen: boolean }>({
     mediaList: [],
     index: 0,
@@ -431,7 +434,7 @@ export function UserHomeFeed() {
                           )}
                         </span>
                       )}
-                      {isOwner && (
+                      {isOwner ? (
                         <>
                           <button
                             onClick={(e) => {
@@ -454,6 +457,21 @@ export function UserHomeFeed() {
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReportTarget({
+                              targetType: 'post',
+                              targetId: post.id,
+                              targetName: `Post by @${authorUsername}`,
+                            });
+                          }}
+                          className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                          title="Report Post"
+                        >
+                          <Flag className="w-3.5 h-3.5" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -682,6 +700,16 @@ export function UserHomeFeed() {
         isOpen={lightboxState.isOpen}
         onClose={() => setLightboxState((prev) => ({ ...prev, isOpen: false }))}
       />
+
+      {reportTarget && (
+        <ReportModal
+          isOpen={!!reportTarget}
+          onClose={() => setReportTarget(null)}
+          targetType={reportTarget.targetType}
+          targetId={reportTarget.targetId}
+          targetName={reportTarget.targetName}
+        />
+      )}
     </SidebarLayout>
   );
 }
