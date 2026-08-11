@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Users, Shield } from 'lucide-react';
+import { Users, Shield, Trash2, AlertTriangle, ShieldAlert, CheckCircle2, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import { adminUserService } from '@/services/admin-user-service';
@@ -35,9 +35,18 @@ export function UsersManagerView() {
   const [banDuration, setBanDuration] = useState('');
   const [isBanning, setIsBanning] = useState(false);
 
-  // Role Modal state
+  // Unban Confirm Modal state
+  const [selectedUserForUnban, setSelectedUserForUnban] = useState<UserProfile | null>(null);
+  const [isUnbanning, setIsUnbanning] = useState(false);
+
+  // Delete User Confirm Modal state
+  const [selectedUserForDelete, setSelectedUserForDelete] = useState<UserProfile | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+
+  // Role Select & Confirm Modal state
   const [selectedUserForRole, setSelectedUserForRole] = useState<UserProfile | null>(null);
   const [newRole, setNewRole] = useState<'customer' | 'moderator' | 'admin' | 'bot_system'>('customer');
+  const [showRoleConfirm, setShowRoleConfirm] = useState(false);
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
 
   const fetchUsers = (cursor?: string) => {
@@ -112,21 +121,41 @@ export function UsersManagerView() {
     }
   };
 
-  const handleUnbanUser = async (user: UserProfile) => {
+  const handleConfirmUnban = async () => {
+    if (!selectedUserForUnban) return;
+    setIsUnbanning(true);
     try {
       await adminUserService.unbanUser(
-        user.id,
+        selectedUserForUnban.id,
         { liftReason: 'Restored by admin' },
         token,
       );
-      toast.success(`User @${user.username} unbanned`);
+      toast.success(`User @${selectedUserForUnban.username} unbanned successfully`);
+      setSelectedUserForUnban(null);
       fetchUsers(cursorHistory[currentCursorIndex]);
     } catch (err: any) {
       toast.error(err.message || 'Failed to unban user');
+    } finally {
+      setIsUnbanning(false);
     }
   };
 
-  const handleUpdateRole = async () => {
+  const handleConfirmDeleteUser = async () => {
+    if (!selectedUserForDelete) return;
+    setIsDeletingUser(true);
+    try {
+      await adminUserService.deleteUser(selectedUserForDelete.id, token);
+      toast.success(`User @${selectedUserForDelete.username} permanently deleted`);
+      setSelectedUserForDelete(null);
+      fetchUsers(cursorHistory[currentCursorIndex]);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete user');
+    } finally {
+      setIsDeletingUser(false);
+    }
+  };
+
+  const handleConfirmRoleUpdate = async () => {
     if (!selectedUserForRole) return;
     setIsUpdatingRole(true);
     try {
@@ -136,6 +165,7 @@ export function UsersManagerView() {
         token,
       );
       toast.success(`User @${selectedUserForRole.username} role updated to ${newRole}`);
+      setShowRoleConfirm(false);
       setSelectedUserForRole(null);
       fetchUsers(cursorHistory[currentCursorIndex]);
     } catch (err: any) {
@@ -262,22 +292,24 @@ export function UsersManagerView() {
                         {new Date(u.createdAt).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div className="flex justify-end gap-1.5">
+                        <div className="flex justify-end gap-1.5 items-center">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
                               setSelectedUserForRole(u);
                               setNewRole(u.role as any);
+                              setShowRoleConfirm(false);
                             }}
                           >
                             Role
                           </Button>
+
                           {u.status === 'banned' || u.status === 'suspended' ? (
                             <Button
                               variant="secondary"
                               size="sm"
-                              onClick={() => handleUnbanUser(u)}
+                              onClick={() => setSelectedUserForUnban(u)}
                             >
                               Unban
                             </Button>
@@ -290,6 +322,16 @@ export function UsersManagerView() {
                               Ban
                             </Button>
                           )}
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 p-1.5 h-7 w-7"
+                            onClick={() => setSelectedUserForDelete(u)}
+                            title="Delete User"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -331,9 +373,14 @@ export function UsersManagerView() {
         title={`Ban User @${selectedUserForBan?.username}`}
       >
         <div className="flex flex-col gap-4 py-2 font-sans">
+          <div className="p-3 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>This will restrict user @{selectedUserForBan?.username} from logging in or creating content.</span>
+          </div>
+
           <Input
             label="Ban Reason *"
-            placeholder="e.g. Violation of terms"
+            placeholder="e.g. Violation of community guidelines"
             value={banReason}
             onChange={(e) => setBanReason(e.target.value)}
           />
@@ -357,35 +404,135 @@ export function UsersManagerView() {
         </div>
       </Modal>
 
-      {/* Update Role Modal */}
+      {/* Unban User Confirmation Modal */}
       <Modal
-        isOpen={!!selectedUserForRole}
-        onClose={() => setSelectedUserForRole(null)}
-        title={`Change Role for @${selectedUserForRole?.username}`}
+        isOpen={!!selectedUserForUnban}
+        onClose={() => setSelectedUserForUnban(null)}
+        title={`Unban User @${selectedUserForUnban?.username}`}
       >
         <div className="flex flex-col gap-4 py-2 font-sans">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-slate-300 font-sans">Select Role</label>
-            <select
-              value={newRole}
-              onChange={(e) => setNewRole(e.target.value as any)}
-              className="bg-slate-900 border border-slate-800 text-xs text-slate-200 rounded p-2 focus:outline-none focus:border-blue-500 font-sans"
-            >
-              <option value="customer">Customer</option>
-              <option value="moderator">Moderator</option>
-              <option value="admin">Admin</option>
-              <option value="bot_system">System Bot</option>
-            </select>
+          <div className="p-3 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
+            <UserCheck className="w-4 h-4 shrink-0" />
+            <span>Are you sure you want to lift restrictions and restore full active access for @{selectedUserForUnban?.username}?</span>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setSelectedUserForRole(null)}>
+            <Button variant="outline" size="sm" onClick={() => setSelectedUserForUnban(null)}>
               Cancel
             </Button>
-            <Button variant="primary" size="sm" isLoading={isUpdatingRole} onClick={handleUpdateRole}>
-              Save Role
+            <Button variant="primary" size="sm" isLoading={isUnbanning} onClick={handleConfirmUnban}>
+              Confirm Unban
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Delete User Confirmation Modal */}
+      <Modal
+        isOpen={!!selectedUserForDelete}
+        onClose={() => setSelectedUserForDelete(null)}
+        title={`Delete User @${selectedUserForDelete?.username}`}
+      >
+        <div className="flex flex-col gap-4 py-2 font-sans">
+          <div className="p-3 rounded bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-2">
+            <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="flex flex-col gap-1">
+              <span className="font-bold">Permanent Action Warning</span>
+              <span>Are you sure you want to permanently delete @{selectedUserForDelete?.username}? All associated posts, comments, messages, and profile data will be permanently erased. This action CANNOT be undone.</span>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setSelectedUserForDelete(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" size="sm" isLoading={isDeletingUser} onClick={handleConfirmDeleteUser}>
+              Permanently Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Select & Confirm Role Change Modal */}
+      <Modal
+        isOpen={!!selectedUserForRole}
+        onClose={() => {
+          setSelectedUserForRole(null);
+          setShowRoleConfirm(false);
+        }}
+        title={showRoleConfirm ? `Confirm Role Change` : `Change Role for @${selectedUserForRole?.username}`}
+      >
+        <div className="flex flex-col gap-4 py-2 font-sans">
+          {!showRoleConfirm ? (
+            <>
+              <div className="flex items-center gap-3 p-3 bg-slate-950/60 rounded border border-slate-800">
+                <Avatar
+                  src={selectedUserForRole?.avatarUrl}
+                  name={selectedUserForRole?.displayName || selectedUserForRole?.username}
+                  size="sm"
+                />
+                <div className="flex flex-col">
+                  <span className="font-bold text-slate-100 text-xs">
+                    {selectedUserForRole?.displayName || selectedUserForRole?.username}
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[11px] text-slate-400">Current Role:</span>
+                    <RoleBadge role={selectedUserForRole?.role || 'customer'} size="sm" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-300 font-sans">Select New Role</label>
+                <select
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value as any)}
+                  className="bg-slate-900 border border-slate-800 text-xs text-slate-200 rounded p-2 focus:outline-none focus:border-blue-500 font-sans"
+                >
+                  <option value="customer">Customer (Standard User)</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="admin">Admin (Full System Control)</option>
+                  <option value="bot_system">System Bot</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setSelectedUserForRole(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={newRole === selectedUserForRole?.role}
+                  onClick={() => setShowRoleConfirm(true)}
+                >
+                  Continue to Confirmation
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-3 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div className="flex flex-col gap-1">
+                  <span className="font-bold">Role Upgrade/Downgrade Confirmation</span>
+                  <span>
+                    You are about to change the system role of <strong className="text-white">@{selectedUserForRole?.username}</strong> from <strong className="uppercase">{selectedUserForRole?.role}</strong> to <strong className="uppercase">{newRole}</strong>.
+                    {newRole === 'admin' && ' WARNING: This grants full administrative permissions across all platform resources.'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setShowRoleConfirm(false)}>
+                  Back
+                </Button>
+                <Button variant="primary" size="sm" isLoading={isUpdatingRole} onClick={handleConfirmRoleUpdate}>
+                  Confirm Role Update
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </SidebarLayout>

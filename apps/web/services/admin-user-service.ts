@@ -120,4 +120,11 @@ export const adminUserService = {
   ): Promise<any> => {
     return apiClient.post(`/admin/users/${userId}/unban`, data, { token });
   },
+
+  deleteUser: async (
+    userId: string,
+    token?: string | null,
+  ): Promise<{ message: string }> => {
+    return apiClient.delete<{ message: string }>(`/admin/users/${userId}`, { token });
+  },
 };

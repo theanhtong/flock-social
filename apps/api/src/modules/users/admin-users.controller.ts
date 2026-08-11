@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Query,
   Body,
@@ -34,7 +35,7 @@ import { UserProfileDto } from './users.dto.js';
 @ApiTags('Admin Users')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN)
+@Roles(Role.ADMIN, Role.MODERATOR)
 @Controller('admin/users')
 export class AdminUsersController {
   constructor(private readonly adminUsersService: AdminUsersService) { }
@@ -54,6 +55,7 @@ export class AdminUsersController {
   }
 
   @Get('audit-logs')
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Get audit logs' })
   @ApiResponse({ status: 200 })
   async getAuditLogs(
@@ -79,6 +81,7 @@ export class AdminUsersController {
   }
 
   @Patch(':id/role')
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Update user role' })
   @ApiResponse({ status: 200, type: UserProfileDto })
   async updateUserRole(
@@ -120,5 +123,16 @@ export class AdminUsersController {
     @CurrentUser('id') adminId: string,
   ) {
     return this.adminUsersService.unbanUser(id, dto, adminId);
+  }
+
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Delete user account' })
+  @ApiResponse({ status: 200 })
+  async deleteUser(
+    @Param('id') id: string,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.adminUsersService.deleteUser(id, adminId);
   }
 }

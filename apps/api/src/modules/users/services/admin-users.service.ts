@@ -292,6 +292,31 @@ export class AdminUsersService {
     }));
   }
 
+  async deleteUser(userId: string, adminId: string): Promise<{ message: string }> {
+    const targetId = BigInt(userId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    await this.prisma.user.delete({
+      where: { id: targetId },
+    });
+
+    await this.logAudit({
+      adminId,
+      action: AuditActionType.delete,
+      targetId: userId,
+      targetType: AuditLogType.user,
+      metadata: { username: user.username, role: user.role, email: user.email },
+    });
+
+    return { message: `User @${user.username} deleted permanently` };
+  }
+
   async getAuditLogs(cursor?: string, limit: number = 20) {
     const limitNum = Number(limit) || 20;
     const logs = await this.prisma.auditLog.findMany({

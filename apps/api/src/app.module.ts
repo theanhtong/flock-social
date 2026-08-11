@@ -12,6 +12,7 @@ import { CommentsModule } from './modules/comments/comments.module.js';
 import { UploadsModule } from './modules/uploads/uploads.module.js';
 import { MessagesModule } from './modules/messages/messages.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
+import { ReportsModule } from './modules/reports/reports.module.js';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     UploadsModule,
     MessagesModule,
     NotificationsModule,
+    ReportsModule,
   ],
   controllers: [],
   providers: [
