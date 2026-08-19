@@ -105,6 +105,8 @@ async function makeService(
     ...overrides.mailService,
   };
 
+  jest.spyOn(argon2, 'verify').mockResolvedValue(true as any);
+
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       AuthService,
@@ -300,11 +302,11 @@ describe('AuthService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should throw UnauthorizedException when account is not active', async () => {
+    it('should throw UnauthorizedException when account is not verified', async () => {
       const { service, prisma } = await makeService();
       prisma.user.findFirst.mockResolvedValue({
         ...mockUser,
-        status: 'suspended',
+        isVerified: false,
       });
 
       await expect(

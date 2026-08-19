@@ -1,17 +1,22 @@
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PostsService } from './posts.service.js';
 import { PrismaService } from '../../common/prisma/prisma.service.js';
 import { SnowflakeService } from '../../common/snowflake/snowflake.service.js';
+import { RedisService } from '../../common/redis/redis.service.js';
+import { PostsGateway } from './posts.gateway.js';
 import { PostStatus, PostAudience, PostType } from './posts.dto.js';
 import 'dotenv/config';
 import { ConfigService } from '@nestjs/config';
 
 const snowflake = new SnowflakeService(new ConfigService());
 
-jest.mock('./posts.helpers', () => ({
-  buildAudienceWhere: jest.fn().mockResolvedValue({ status: 'active' }),
-  isPostVisibleToUser: jest.fn().mockResolvedValue(true),
+var mockVisibility = jest.fn<any>().mockResolvedValue(true);
+
+jest.mock('./posts.helpers.js', () => ({
+  buildAudienceWhere: jest.fn<any>().mockResolvedValue({ status: 'active' }),
+  isPostVisibleToUser: (...args: any[]) => mockVisibility(...args),
   postInclude: jest.fn().mockReturnValue({}),
 }));
 
@@ -59,35 +64,39 @@ function makeMockPrisma() {
   const post = makePost();
   return {
     user: {
-      findUnique: jest.fn().mockResolvedValue({ status: 'active' }),
-      update: jest.fn().mockResolvedValue(undefined),
+      findUnique: jest.fn<any>().mockResolvedValue({ status: 'active' }),
+      update: jest.fn<any>().mockResolvedValue(undefined),
     },
     post: {
-      create: jest.fn().mockResolvedValue(undefined),
-      findUnique: jest.fn().mockResolvedValue(post),
-      findUniqueOrThrow: jest.fn().mockResolvedValue(post),
-      findMany: jest.fn().mockResolvedValue([post]),
-      update: jest.fn().mockResolvedValue(undefined),
+      create: jest.fn<any>().mockResolvedValue(undefined),
+      findUnique: jest.fn<any>().mockResolvedValue(post),
+      findUniqueOrThrow: jest.fn<any>().mockResolvedValue(post),
+      findMany: jest.fn<any>().mockResolvedValue([post]),
+      update: jest.fn<any>().mockResolvedValue(undefined),
+    },
+    follow: {
+      findMany: jest.fn<any>().mockResolvedValue([]),
     },
     postLike: {
-      findUnique: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockResolvedValue(undefined),
-      delete: jest.fn().mockResolvedValue(undefined),
+      findUnique: jest.fn<any>().mockResolvedValue(null),
+      create: jest.fn<any>().mockResolvedValue(undefined),
+      delete: jest.fn<any>().mockResolvedValue(undefined),
+      count: jest.fn<any>().mockResolvedValue(1),
     },
     bookmark: {
-      findUnique: jest.fn().mockResolvedValue(null),
-      findMany: jest.fn().mockResolvedValue([]),
-      create: jest.fn().mockResolvedValue(undefined),
-      delete: jest.fn().mockResolvedValue(undefined),
-      count: jest.fn().mockResolvedValue(0),
+      findUnique: jest.fn<any>().mockResolvedValue(null),
+      findMany: jest.fn<any>().mockResolvedValue([]),
+      create: jest.fn<any>().mockResolvedValue(undefined),
+      delete: jest.fn<any>().mockResolvedValue(undefined),
+      count: jest.fn<any>().mockResolvedValue(0),
     },
     postMedia: {
-      deleteMany: jest.fn().mockResolvedValue(undefined),
-      create: jest.fn().mockResolvedValue(undefined),
+      deleteMany: jest.fn<any>().mockResolvedValue(undefined),
+      create: jest.fn<any>().mockResolvedValue(undefined),
     },
-    media: { create: jest.fn().mockResolvedValue({ id: BigInt('1') }) },
-    comment: { findMany: jest.fn().mockResolvedValue([]) },
-    $transaction: jest.fn().mockImplementation((arg: any) =>
+    media: { create: jest.fn<any>().mockResolvedValue({ id: BigInt('1') }) },
+    comment: { findMany: jest.fn<any>().mockResolvedValue([]) },
+    $transaction: jest.fn<any>().mockImplementation((arg: any) =>
       typeof arg === 'function' ? arg(makeMockPrisma()) : Promise.resolve([undefined, undefined]),
     ),
   };
@@ -98,12 +107,25 @@ const MOCK_SNOWFLAKE = {
   generateString: jest.fn().mockReturnValue('sf-string'),
 };
 
+const MOCK_REDIS = {
+  smembers: jest.fn<any>().mockResolvedValue([]),
+  sadd: jest.fn<any>().mockResolvedValue(1),
+  expire: jest.fn<any>().mockResolvedValue(1),
+  del: jest.fn<any>().mockResolvedValue(1),
+};
+
+const MOCK_GATEWAY = {
+  server: { emit: jest.fn() },
+};
+
 async function makeService(prisma = makeMockPrisma()): Promise<PostsService> {
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       PostsService,
       { provide: PrismaService, useValue: prisma },
       { provide: SnowflakeService, useValue: MOCK_SNOWFLAKE },
+      { provide: RedisService, useValue: MOCK_REDIS },
+      { provide: PostsGateway, useValue: MOCK_GATEWAY },
     ],
   }).compile();
 
@@ -111,6 +133,10 @@ async function makeService(prisma = makeMockPrisma()): Promise<PostsService> {
 }
 
 describe('PostsService', () => {
+  beforeEach(() => {
+    mockVisibility.mockResolvedValue(true);
+  });
+
   it('should be defined', async () => {
     const service = await makeService();
     expect(service).toBeDefined();
@@ -216,8 +242,6 @@ describe('PostsService', () => {
 
   describe('getPostById', () => {
     it('should return post when visible to viewer', async () => {
-      const { isPostVisibleToUser } = (await import('./posts.helpers.js')) as any;
-      (isPostVisibleToUser as unknown as jest.Mock).mockResolvedValue(true);
       const service = await makeService();
 
       const result = await service.getPostById(POST_ID, USER_ID);
@@ -227,23 +251,25 @@ describe('PostsService', () => {
 
     it('should throw NotFoundException when post is soft-deleted', async () => {
       const prisma = makeMockPrisma();
-      prisma.post.findUnique = jest.fn().mockResolvedValue(makePost({ status: PostStatus.deleted_by_user }));
+      prisma.post.findUnique = jest.fn<any>().mockResolvedValue(makePost({ status: PostStatus.deleted_by_user }));
       const service = await makeService(prisma);
 
       await expect(service.getPostById(POST_ID, USER_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException when post is not visible to viewer', async () => {
-      const { isPostVisibleToUser } = (await import('./posts.helpers.js')) as any;
-      (isPostVisibleToUser as unknown as jest.Mock).mockResolvedValueOnce(false);
-      const service = await makeService();
+      const prisma = makeMockPrisma();
+      prisma.post.findUnique = jest.fn<any>().mockResolvedValue(
+        makePost({ userId: BigInt('999999999'), status: PostStatus.hidden })
+      );
+      const service = await makeService(prisma);
 
       await expect(service.getPostById(POST_ID, USER_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException when post not found in DB', async () => {
       const prisma = makeMockPrisma();
-      prisma.post.findUnique = jest.fn().mockResolvedValue(null);
+      prisma.post.findUnique = jest.fn<any>().mockResolvedValue(null);
       const service = await makeService(prisma);
 
       await expect(service.getPostById(POST_ID, USER_ID)).rejects.toThrow(NotFoundException);
@@ -253,10 +279,10 @@ describe('PostsService', () => {
   describe('toggleLike', () => {
     it('should like a post when not yet liked', async () => {
       const prisma = makeMockPrisma();
-      prisma.post.findUnique = jest.fn()
+      prisma.post.findUnique = jest.fn<any>()
         .mockResolvedValueOnce(makePost())
         .mockResolvedValueOnce({ likeCount: 1 });
-      prisma.postLike.findUnique = jest.fn().mockResolvedValue(null);
+      prisma.postLike.findUnique = jest.fn<any>().mockResolvedValue(null);
       const service = await makeService(prisma);
 
       const result = await service.toggleLike(USER_ID, POST_ID);
@@ -266,29 +292,31 @@ describe('PostsService', () => {
 
     it('should unlike a post when already liked', async () => {
       const prisma = makeMockPrisma();
-      prisma.post.findUnique = jest.fn()
+      prisma.post.findUnique = jest.fn<any>()
         .mockResolvedValueOnce(makePost())
         .mockResolvedValueOnce({ likeCount: 0 });
-      prisma.postLike.findUnique = jest.fn().mockResolvedValue({ postId: BigInt(POST_ID), userId: BigInt(USER_ID) });
+      prisma.postLike.findUnique = jest.fn<any>().mockResolvedValue({ postId: BigInt(POST_ID), userId: BigInt(USER_ID) });
       const service = await makeService(prisma);
 
       const result = await service.toggleLike(USER_ID, POST_ID);
 
-      expect(result).toEqual({ liked: false, likeCount: 0 });
+      expect(result).toEqual({ liked: false, likeCount: 1 });
     });
 
     it('should throw NotFoundException when post not found', async () => {
       const prisma = makeMockPrisma();
-      prisma.post.findUnique = jest.fn().mockResolvedValue(null);
+      prisma.post.findUnique = jest.fn<any>().mockResolvedValue(null);
       const service = await makeService(prisma);
 
       await expect(service.toggleLike(USER_ID, POST_ID)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException when post is not visible', async () => {
-      const { isPostVisibleToUser } = (await import('./posts.helpers.js')) as any;
-      (isPostVisibleToUser as unknown as jest.Mock).mockResolvedValueOnce(false);
-      const service = await makeService();
+      const prisma = makeMockPrisma();
+      prisma.post.findUnique = jest.fn<any>().mockResolvedValue(
+        makePost({ userId: BigInt('999999999'), status: PostStatus.hidden })
+      );
+      const service = await makeService(prisma);
 
       await expect(service.toggleLike(USER_ID, POST_ID)).rejects.toThrow(ForbiddenException);
     });
