@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -19,6 +19,7 @@ import {
   Globe,
   Sparkles,
   Flag,
+  CheckCircle2,
 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
@@ -35,6 +36,7 @@ import { CommentModal } from '@/components/comments/comment-modal';
 import { RepostModal } from '@/components/posts/repost-modal';
 import { EditPostModal } from '@/components/posts/edit-post-modal';
 import { ReportModal } from '@/components/reports/report-modal';
+import { PostCardSkeleton } from '@/components/ui/skeleton';
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
@@ -78,6 +80,10 @@ export function UserHomeFeed() {
     isOpen: false,
   });
 
+  const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -111,15 +117,58 @@ export function UserHomeFeed() {
 
   const fetchPosts = async () => {
     setIsLoading(true);
+    const minDelay = new Promise((resolve) => setTimeout(resolve, 200));
     try {
-      const data = await postService.getPosts(undefined, token);
+      const [data] = await Promise.all([
+        postService.getPosts(undefined, token),
+        minDelay,
+      ]);
       setPosts(data.posts || []);
+      setNextCursor(data.nextCursor);
+      setHasMore(!!data.nextCursor);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to load posts feed');
     } finally {
       setIsLoading(false);
     }
   };
+
+  const observerRef = useRef<HTMLDivElement | null>(null);
+
+  const fetchMorePosts = useCallback(async () => {
+    if (!nextCursor || isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    try {
+      const data = await postService.getPosts(nextCursor, token);
+      setPosts((prev) => [...prev, ...(data.posts || [])]);
+      setNextCursor(data.nextCursor);
+      setHasMore(!!data.nextCursor);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to load more posts');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [nextCursor, isLoadingMore, hasMore, token]);
+
+  useEffect(() => {
+    if (!hasMore || isLoadingMore || !nextCursor) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchMorePosts();
+        }
+      },
+      { threshold: 0.1, rootMargin: '300px' }
+    );
+
+    const currentTarget = observerRef.current;
+    if (currentTarget) observer.observe(currentTarget);
+
+    return () => {
+      if (currentTarget) observer.unobserve(currentTarget);
+    };
+  }, [hasMore, isLoadingMore, nextCursor, fetchMorePosts]);
 
   useEffect(() => {
     fetchPosts();
@@ -356,9 +405,10 @@ export function UserHomeFeed() {
         )}
 
         {isLoading ? (
-          <div className="bg-slate-900 border border-slate-800 rounded p-12 text-center flex flex-col items-center justify-center gap-3 font-sans">
-            <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-            <p className="text-xs text-slate-400">Loading feed...</p>
+          <div className="flex flex-col gap-3 font-sans">
+            <PostCardSkeleton />
+            <PostCardSkeleton />
+            <PostCardSkeleton />
           </div>
         ) : posts.length === 0 ? (
           <div className="bg-slate-900 border border-slate-800 rounded p-8 text-center flex flex-col items-center gap-2 font-sans">
@@ -657,6 +707,40 @@ export function UserHomeFeed() {
               </div>
             );
           })
+        )}
+
+        {hasMore && posts.length > 0 && (
+          <div ref={observerRef} className="flex justify-center py-6 min-h-[40px]">
+            {isLoadingMore && (
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                <span>Loading more posts...</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!hasMore && posts.length > 0 && (
+          <div className="flex flex-col items-center justify-center py-10 px-4 text-center border-t border-slate-800/60 mt-4 font-sans">
+            <div className="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3">
+              <CheckCircle2 className="w-5 h-5 text-blue-400" />
+            </div>
+            <h4 className="font-bold text-sm text-slate-100 mb-1">You're all caught up!</h4>
+            <p className="text-xs text-slate-400 max-w-sm mb-4">
+              You've seen all available posts on Flock Social. Check back later for new updates!
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                fetchPosts();
+              }}
+              className="text-xs border-slate-800 bg-slate-900/80 hover:bg-slate-800 text-slate-200 rounded-xl px-4 py-2"
+            >
+              Refresh Feed
+            </Button>
+          </div>
         )}
       </div>
 

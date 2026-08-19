@@ -56,11 +56,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     const { activeCategory, cursor, notifications, isLoading } = get();
 
     if (isLoading) return;
-    set({ isLoading: true });
+    set({ isLoading: true, notifications: reset ? [] : notifications });
 
     try {
       const currentCursor = reset ? undefined : cursor || undefined;
-      const res = await notificationService.getNotifications(activeCategory, currentCursor, token);
+      const minDelay = reset ? new Promise((resolve) => setTimeout(resolve, 180)) : Promise.resolve();
+      
+      const [res] = await Promise.all([
+        notificationService.getNotifications(activeCategory, currentCursor, token),
+        minDelay,
+      ]);
 
       set({
         notifications: reset ? res.notifications : [...notifications, ...res.notifications],

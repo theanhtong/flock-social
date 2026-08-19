@@ -233,32 +233,25 @@ export class PostsService {
     return { success: true };
   }
 
-  async getPosts(
+  async getHomeFeed(
     userId?: string,
     cursor?: string,
-    limit = 20,
+    limit = 10,
   ): Promise<{ posts: PostDto[]; nextCursor?: string }> {
     const viewerId = userId ? BigInt(userId) : undefined;
     const baseWhere = await buildAudienceWhere(this.prisma, userId, 'feed');
 
     let viewedPostIds: bigint[] = [];
-    const followingIdsSet = new Set<string>();
 
-    if (viewerId) {
-      const follows = await this.prisma.follow.findMany({
-        where: { followerId: viewerId, isPending: false },
-        select: { followingId: true },
-      });
-      follows.forEach((f) => followingIdsSet.add(f.followingId.toString()));
-      followingIdsSet.add(viewerId.toString());
-
+    // Filter out posts that user has already seen (stored in Redis) on initial load
+    if (userId && !cursor) {
       const seenStrList = await this.redisService.smembers(`user:seen:${userId}`);
-      if (seenStrList?.length > 0) {
+      if (seenStrList && seenStrList.length > 0) {
         viewedPostIds = seenStrList.map((idStr) => BigInt(idStr));
       }
     }
 
-    let whereCondition: any = { ...baseWhere };
+    let whereCondition: any = baseWhere;
     if (viewedPostIds.length > 0) {
       whereCondition = {
         AND: [
@@ -271,38 +264,31 @@ export class PostsService {
     let rows = await this.prisma.post.findMany({
       where: whereCondition,
       orderBy: { id: 'desc' },
-      take: limit * 2,
+      take: limit + 1,
       cursor: cursor ? { id: BigInt(cursor) } : undefined,
+      skip: cursor ? 1 : 0,
       include: postInclude(viewerId),
     });
 
+    // Fallback: If all available posts have been seen, reset Redis seen cache & return fresh feed
     if (rows.length === 0 && viewedPostIds.length > 0) {
+      const redisKey = `user:seen:${userId}`;
+      await this.redisService.del(redisKey).catch(() => {});
+
       rows = await this.prisma.post.findMany({
         where: baseWhere,
         orderBy: { id: 'desc' },
         take: limit + 1,
         cursor: cursor ? { id: BigInt(cursor) } : undefined,
+        skip: cursor ? 1 : 0,
         include: postInclude(viewerId),
       });
     }
 
-    const now = Date.now();
-    const scoredRows = rows.map((post) => {
-      const isFollowingAuthor = followingIdsSet.has(post.userId.toString());
-      const followBoost = isFollowingAuthor ? 50 : 0;
-      const engagement = (post.likeCount || 0) * 3 + (post.commentCount || 0) * 5 + (post.repostCount || 0) * 4 + (post.viewsCount || 0) * 0.1;
-      const ageHours = (now - new Date(post.createdAt).getTime()) / (1000 * 60 * 60);
-      const recencyScore = Math.max(0, 100 - ageHours * 2);
-
-      const totalScore = followBoost + engagement + recencyScore;
-      return { post, totalScore };
-    });
-
-    scoredRows.sort((a, b) => b.totalScore - a.totalScore || (b.post.id > a.post.id ? 1 : -1));
-
-    const pageRows = scoredRows.slice(0, limit).map((r) => r.post);
-    let nextCursor: string | undefined;
-    if (scoredRows.length > limit) {
+    let nextCursor: string | undefined = undefined;
+    const pageRows = [...rows];
+    if (pageRows.length > limit) {
+      pageRows.pop();
       nextCursor = pageRows[pageRows.length - 1].id.toString();
     }
 
@@ -314,6 +300,14 @@ export class PostsService {
     }
 
     return { posts: pageRows.map((p) => formatPost(p, userId)), nextCursor };
+  }
+
+  async getPosts(
+    userId?: string,
+    cursor?: string,
+    limit = 20,
+  ): Promise<{ posts: PostDto[]; nextCursor?: string }> {
+    return this.getHomeFeed(userId, cursor, limit);
   }
 
   async getUserPosts(

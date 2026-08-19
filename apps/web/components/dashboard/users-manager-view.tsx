@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Users, Shield, Trash2, AlertTriangle, ShieldAlert, CheckCircle2, UserCheck } from 'lucide-react';
+import { Users, Shield, Trash2, AlertTriangle, ShieldAlert, UserCheck, ShieldOff, ShieldCheck, UserCog, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import { adminUserService } from '@/services/admin-user-service';
@@ -13,6 +13,7 @@ import { RoleBadge } from '@/components/ui/role-badge';
 import { Spinner } from '@/components/ui/spinner';
 import { Modal } from '@/components/ui/modal';
 import { SidebarLayout } from '@/components/layout/sidebar';
+import { TableRowSkeleton } from '@/components/ui/skeleton';
 
 export function UsersManagerView() {
   const token = useAuthStore((s) => s.token);
@@ -32,8 +33,14 @@ export function UsersManagerView() {
   // Ban Modal state
   const [selectedUserForBan, setSelectedUserForBan] = useState<UserProfile | null>(null);
   const [banReason, setBanReason] = useState('');
-  const [banDuration, setBanDuration] = useState('');
   const [isBanning, setIsBanning] = useState(false);
+  const [sanctionAction, setSanctionAction] = useState<'suspension' | 'ban'>('suspension');
+  const todayStr = new Date().toLocaleDateString('sv-SE');
+  const [suspendStartDate, setSuspendStartDate] = useState(todayStr);
+  const [suspendEndDate, setSuspendEndDate] = useState('');
+
+  const [selectedUserForRestore, setSelectedUserForRestore] = useState<UserProfile | null>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
 
   // Unban Confirm Modal state
   const [selectedUserForUnban, setSelectedUserForUnban] = useState<UserProfile | null>(null);
@@ -51,8 +58,9 @@ export function UsersManagerView() {
 
   const fetchUsers = (cursor?: string) => {
     setIsLoadingUsers(true);
-    adminUserService
-      .getUsers(
+    const minDelay = new Promise((resolve) => setTimeout(resolve, 180));
+    Promise.all([
+      adminUserService.getUsers(
         {
           cursor,
           limit: 10,
@@ -61,8 +69,10 @@ export function UsersManagerView() {
           role: roleFilter || undefined,
         },
         token,
-      )
-      .then((res) => {
+      ),
+      minDelay,
+    ])
+      .then(([res]) => {
         setUsers(res.data);
         setUsersNextCursor(res.meta.nextCursor);
         setUsersHasNextPage(res.meta.hasNextPage);
@@ -96,28 +106,49 @@ export function UsersManagerView() {
   const handleBanUser = async () => {
     if (!selectedUserForBan) return;
     if (!banReason.trim()) {
-      toast.error('Please enter a ban reason');
+      toast.error('Please enter a reason');
       return;
     }
+    if (sanctionAction === 'suspension' && (!suspendStartDate || !suspendEndDate)) {
+      toast.error('Please select suspension start and end date');
+      return;
+    }
+
     setIsBanning(true);
     try {
-      await adminUserService.banUser(
+      const durationDays =
+        sanctionAction === 'suspension'
+          ? Math.ceil((new Date(suspendEndDate).getTime() - new Date(suspendStartDate).getTime()) / 86400000)
+          : undefined;
+
+      await adminUserService.sanctionUser(
         selectedUserForBan.id,
-        {
-          reason: banReason,
-          durationDays: banDuration ? parseInt(banDuration, 10) : undefined,
-        },
+        { type: sanctionAction, reason: banReason, durationDays },
         token,
       );
-      toast.success(`User @${selectedUserForBan.username} banned`);
+      toast.success(`User @${selectedUserForBan.username} ${sanctionAction === 'ban' ? 'banned' : 'suspended'}`);
       setSelectedUserForBan(null);
       setBanReason('');
-      setBanDuration('');
       fetchUsers(cursorHistory[currentCursorIndex]);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to ban user');
+      toast.error(err.message || 'Failed to apply sanction');
     } finally {
       setIsBanning(false);
+    }
+  };
+
+  const handleConfirmRestore = async () => {
+    if (!selectedUserForRestore) return;
+    setIsRestoring(true);
+    try {
+      await adminUserService.restoreUser(selectedUserForRestore.id, token);
+      toast.success(`User @${selectedUserForRestore.username} restored`);
+      setSelectedUserForRestore(null);
+      fetchUsers(cursorHistory[currentCursorIndex]);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to restore user');
+    } finally {
+      setIsRestoring(false);
     }
   };
 
@@ -230,8 +261,10 @@ export function UsersManagerView() {
         {/* Users Table */}
         <div className="bg-slate-900 border border-slate-800 rounded overflow-hidden font-sans">
           {isLoadingUsers ? (
-            <div className="py-16 flex items-center justify-center text-blue-500 font-sans">
-              <Spinner size="lg" />
+            <div className="divide-y divide-slate-800/60 font-sans">
+              <TableRowSkeleton />
+              <TableRowSkeleton />
+              <TableRowSkeleton />
             </div>
           ) : users.length === 0 ? (
             <div className="py-16 text-center text-slate-400 text-xs font-sans">
@@ -280,13 +313,12 @@ export function UsersManagerView() {
                           </span>
                         ) : (
                           <span
-                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase font-sans ${
-                              u.status === 'active'
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                : u.status === 'suspended'
-                                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                            }`}
+                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase font-sans ${u.status === 'active'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : u.status === 'suspended'
+                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              }`}
                           >
                             {u.status}
                           </span>
@@ -299,47 +331,75 @@ export function UsersManagerView() {
                         {new Date(u.createdAt).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div className="flex justify-end gap-1.5 items-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUserForRole(u);
-                              setNewRole(u.role as any);
-                              setShowRoleConfirm(false);
-                            }}
-                          >
-                            Role
-                          </Button>
 
-                          {u.status === 'banned' || u.status === 'suspended' ? (
+                        <div className="flex justify-end gap-1.5 items-center">
+                          {u.isDeleted ? (
                             <Button
                               variant="secondary"
                               size="sm"
-                              onClick={() => setSelectedUserForUnban(u)}
+                              className="p-1.5 h-7 w-7"
+                              onClick={() => setSelectedUserForRestore(u)}
+                              title="Restore User"
                             >
-                              Unban
+                              <RotateCcw className="w-3.5 h-3.5" />
                             </Button>
                           ) : (
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              onClick={() => setSelectedUserForBan(u)}
-                            >
-                              Ban
-                            </Button>
-                          )}
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="p-1.5 h-7 w-7"
+                                onClick={() => {
+                                  setSelectedUserForRole(u);
+                                  setNewRole(u.role as any);
+                                  setShowRoleConfirm(false);
+                                }}
+                                title="Change Role"
+                              >
+                                <UserCog className="w-3.5 h-3.5" />
+                              </Button>
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 p-1.5 h-7 w-7"
-                            onClick={() => setSelectedUserForDelete(u)}
-                            title="Delete User"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                              {u.status === 'banned' || u.status === 'suspended' ? (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  className="p-1.5 h-7 w-7"
+                                  onClick={() => setSelectedUserForUnban(u)}
+                                  title="Unban User"
+                                >
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="danger"
+                                  size="sm"
+                                  className="p-1.5 h-7 w-7"
+                                  onClick={() => {
+                                    setSelectedUserForBan(u);
+                                    setSanctionAction('suspension');
+                                    setBanReason('');
+                                    setSuspendStartDate(todayStr);
+                                    setSuspendEndDate('');
+                                  }}
+                                  title="Ban User"
+                                >
+                                  <ShieldOff className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 p-1.5 h-7 w-7"
+                                onClick={() => setSelectedUserForDelete(u)}
+                                title="Delete User"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </>
+                          )}
                         </div>
+
                       </td>
                     </tr>
                   ))}
@@ -377,35 +437,104 @@ export function UsersManagerView() {
       <Modal
         isOpen={!!selectedUserForBan}
         onClose={() => setSelectedUserForBan(null)}
-        title={`Ban User @${selectedUserForBan?.username}`}
+        title={`${sanctionAction === 'ban' ? 'Ban' : 'Suspend'} User @${selectedUserForBan?.username}`}
       >
         <div className="flex flex-col gap-4 py-2 font-sans">
           <div className="p-3 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>This will restrict user @{selectedUserForBan?.username} from logging in or creating content.</span>
+            <span>
+              {sanctionAction === 'ban'
+                ? `This will permanently restrict @${selectedUserForBan?.username} from logging in or creating content.`
+                : `This will temporarily restrict @${selectedUserForBan?.username} for the selected period.`}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-slate-300 font-sans">Action Type</label>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => setSanctionAction('suspension')}
+                className={`flex-1 px-2 py-1.5 rounded text-[11px] font-bold uppercase border transition-colors ${sanctionAction === 'suspension'
+                  ? 'bg-amber-600 border-amber-600 text-white'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+              >
+                Suspend
+              </button>
+              <button
+                onClick={() => setSanctionAction('ban')}
+                className={`flex-1 px-2 py-1.5 rounded text-[11px] font-bold uppercase border transition-colors ${sanctionAction === 'ban'
+                  ? 'bg-rose-600 border-rose-600 text-white'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+              >
+                Ban Permanently
+              </button>
+            </div>
           </div>
 
           <Input
-            label="Ban Reason *"
+            label="Reason *"
             placeholder="e.g. Violation of community guidelines"
             value={banReason}
             onChange={(e) => setBanReason(e.target.value)}
           />
 
-          <Input
-            label="Duration in Days (Optional, blank = Permanent)"
-            type="number"
-            placeholder="7"
-            value={banDuration}
-            onChange={(e) => setBanDuration(e.target.value)}
-          />
+          {sanctionAction === 'suspension' && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-slate-300 font-sans">Suspension Period</label>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="date"
+                  defaultValue={new Date().toISOString().split('T')[0]}
+                  disabled
+                  className="flex-1 bg-slate-950/60 border border-slate-800 rounded p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                />
+                <span className="text-slate-500 text-[11px]">to</span>
+                <input
+                  type="date"
+                  value={suspendEndDate}
+                  onChange={(e) => setSuspendEndDate(e.target.value)}
+                  min={suspendStartDate || undefined}
+                  className="flex-1 bg-slate-950/60 border border-slate-800 rounded p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" size="sm" onClick={() => setSelectedUserForBan(null)}>
               Cancel
             </Button>
-            <Button variant="danger" size="sm" isLoading={isBanning} onClick={handleBanUser}>
-              Confirm Ban
+            <Button
+              variant="danger"
+              size="sm"
+              isLoading={isBanning}
+              onClick={handleBanUser}
+              disabled={!banReason.trim() || (sanctionAction === 'suspension' && (!suspendStartDate || !suspendEndDate))}
+            >
+              {sanctionAction === 'ban' ? 'Confirm Ban' : 'Confirm Suspend'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={!!selectedUserForRestore}
+        onClose={() => setSelectedUserForRestore(null)}
+        title={`Restore User @${selectedUserForRestore?.username}`}
+      >
+        <div className="flex flex-col gap-4 py-2 font-sans">
+          <div className="p-3 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
+            <UserCheck className="w-4 h-4 shrink-0" />
+            <span>Restore access for @{selectedUserForRestore?.username}? This reverses the soft delete and reactivates the account.</span>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setSelectedUserForRestore(null)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" isLoading={isRestoring} onClick={handleConfirmRestore}>
+              Confirm Restore
             </Button>
           </div>
         </div>

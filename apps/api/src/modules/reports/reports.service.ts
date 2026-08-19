@@ -9,9 +9,19 @@ import {
   CreateReportDto,
   QueryReportsDto,
   ResolveReportDto,
+  DismissReportDto,
+  SanctionPayloadDto,
 } from './reports.dto.js';
 import { MessagesGateway } from '../messages/messages.gateway.js';
-import { ReportStatus, ReportType, AuditActionType, AuditLogType } from '../../generated/prisma/enums.js';
+import {
+  ReportStatus,
+  ReportType,
+  AuditActionType,
+  AuditLogType,
+  SanctionType,
+  SanctionStatus,
+  UserStatus,
+} from '../../generated/prisma/enums.js';
 
 @Injectable()
 export class ReportsService {
@@ -25,7 +35,6 @@ export class ReportsService {
     const reportId = this.snowflakeService.generate();
     const targetBigInt = BigInt(dto.targetId);
 
-    // Verify target entity exists
     if (dto.targetType === ReportType.post) {
       const post = await this.prisma.post.findUnique({ where: { id: targetBigInt } });
       if (!post) throw new NotFoundException('Reported post does not exist');
@@ -95,7 +104,6 @@ export class ReportsService {
       nextCursor = nextItem!.id.toString();
     }
 
-    // Hydrate target details (Post, Comment, or User)
     const hydratedData = await Promise.all(
       reports.map(async (rep) => {
         let targetDetails: any = null;
@@ -144,7 +152,7 @@ export class ReportsService {
               };
             }
           }
-        } catch (err) {}
+        } catch {}
 
         return {
           ...rep,
@@ -190,6 +198,10 @@ export class ReportsService {
       }
     }
 
+    if (dto.sanction) {
+      await this.applyUserSanction(dto.sanction, moderatorId, rId);
+    }
+
     const updated = await this.prisma.report.update({
       where: { id: rId },
       data: {
@@ -200,7 +212,6 @@ export class ReportsService {
       },
     });
 
-    // Log Audit
     const auditId = this.snowflakeService.generate();
     await this.prisma.auditLog.create({
       data: {
@@ -209,7 +220,12 @@ export class ReportsService {
         action: AuditActionType.update,
         targetId: rId,
         targetType: AuditLogType.report,
-        metadata: { action: 'resolve_report', deleteContent: !!dto.deleteContent, resolution: dto.resolution },
+        metadata: {
+          action: 'resolve_report',
+          deleteContent: !!dto.deleteContent,
+          resolution: dto.resolution,
+          sanction: dto.sanction ? { type: dto.sanction.type, targetUserId: dto.sanction.targetUserId } : null,
+        },
       },
     });
 
@@ -224,10 +240,14 @@ export class ReportsService {
     };
   }
 
-  async dismissReport(reportId: string, moderatorId: string) {
+  async dismissReport(reportId: string, moderatorId: string, dto: DismissReportDto) {
     const rId = BigInt(reportId);
     const report = await this.prisma.report.findUnique({ where: { id: rId } });
     if (!report) throw new NotFoundException('Report not found');
+
+    if (dto.sanction) {
+      await this.applyUserSanction(dto.sanction, moderatorId, rId);
+    }
 
     const updated = await this.prisma.report.update({
       where: { id: rId },
@@ -235,7 +255,23 @@ export class ReportsService {
         status: ReportStatus.dismissed,
         reviewedById: BigInt(moderatorId),
         reviewedAt: new Date(),
-        resolution: 'Dismissed as invalid or non-violating',
+        resolution: dto.resolution || 'Dismissed as invalid or non-violating',
+      },
+    });
+
+    const auditId = this.snowflakeService.generate();
+    await this.prisma.auditLog.create({
+      data: {
+        id: auditId,
+        adminId: BigInt(moderatorId),
+        action: AuditActionType.update,
+        targetId: rId,
+        targetType: AuditLogType.report,
+        metadata: {
+          action: 'dismiss_report',
+          resolution: dto.resolution,
+          sanction: dto.sanction ? { type: dto.sanction.type, targetUserId: dto.sanction.targetUserId } : null,
+        },
       },
     });
 
@@ -257,12 +293,70 @@ export class ReportsService {
     return { pendingCount: count };
   }
 
+  private async applyUserSanction(
+    payload: SanctionPayloadDto,
+    issuedById: string,
+    reportId: bigint,
+  ) {
+    const userId = BigInt(payload.targetUserId);
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException(`Target user ${payload.targetUserId} not found`);
+
+    const sanctionId = this.snowflakeService.generate();
+
+    let expiresAt: Date | undefined;
+    if (payload.durationDays && payload.durationDays > 0) {
+      expiresAt = new Date(Date.now() + payload.durationDays * 24 * 60 * 60 * 1000);
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.userSanction.create({
+        data: {
+          id: sanctionId,
+          userId,
+          issuedById: BigInt(issuedById),
+          reportId,
+          type: payload.type,
+          reason: payload.reason,
+          status: SanctionStatus.active,
+          expiresAt,
+        },
+      });
+
+      if (payload.type === SanctionType.warning) {
+        const notifId = this.snowflakeService.generate();
+        await tx.notification.create({
+          data: {
+            id: notifId,
+            receiverId: userId,
+            actorId: BigInt(issuedById),
+            type: 'system_warning' as any,
+            isRead: false,
+            isDeleted: false,
+          },
+        });
+      } else if (payload.type === SanctionType.suspension) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { status: UserStatus.suspended },
+        });
+        await tx.session.deleteMany({ where: { userId } });
+      } else if (payload.type === SanctionType.ban) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { status: UserStatus.banned },
+        });
+        await tx.session.deleteMany({ where: { userId } });
+      }
+    });
+  }
+
   private async notifyPendingReportsCount() {
     try {
       const count = await this.prisma.report.count({
         where: { status: ReportStatus.pending },
       });
       this.messagesGateway.emitPendingReportsCount(count);
-    } catch (err) {}
+    } catch {}
   }
 }

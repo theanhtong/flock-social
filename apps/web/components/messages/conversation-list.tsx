@@ -195,7 +195,11 @@ export function ConversationList() {
             return (
               <div
                 key={conv.id}
-                onClick={() => setActiveConversationId(conv.id)}
+                onClick={() => {
+                  if (activeConversationId !== conv.id) {
+                    setActiveConversationId(conv.id);
+                  }
+                }}
                 className={`group/conv relative p-3 flex items-center gap-3 cursor-pointer transition-all hover:bg-slate-800/60 ${isSelected ? 'bg-blue-950/40 border-l-4 border-blue-500 pl-2' : ''
                   }`}
               >
@@ -264,7 +268,7 @@ export function ConversationList() {
                       className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40 rounded-sm transition-colors text-left font-medium"
                     >
                       <Trash2 className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>Xóa lịch sử</span>
+                      <span>Delete</span>
                     </button>
                   </div>
                 )}

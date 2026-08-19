@@ -33,7 +33,7 @@ export class UploadsService {
     private readonly videoQueueProcessor: VideoQueueProcessor,
   ) {}
 
-  async uploadFile(file: Express.Multer.File, uploaderId?: string): Promise<UploadResponse> {
+  async uploadFile(file: Express.Multer.File, uploaderId?: string, folderParam?: string): Promise<UploadResponse> {
     if (!file) throw new BadRequestException('No file provided');
 
     const isVideo = file.mimetype.startsWith('video/');
@@ -47,13 +47,29 @@ export class UploadsService {
       fallbackUserId = firstUser?.id?.toString() || '1';
     }
 
+    // Determine scientific domain folder structure: 'users', 'posts', 'messages'
+    const domain = (folderParam || '').toLowerCase();
+    let imagePrefix = 'posts/images';
+    let rawPrefix = 'posts/videos/raw';
+
+    if (domain === 'avatar' || domain === 'avatars') {
+      imagePrefix = `users/${fallbackUserId}/avatars`;
+    } else if (domain === 'banner' || domain === 'banners') {
+      imagePrefix = `users/${fallbackUserId}/banners`;
+    } else if (domain === 'user' || domain === 'users') {
+      imagePrefix = `users/${fallbackUserId}/uploads`;
+    } else if (domain === 'messages' || domain === 'chat') {
+      imagePrefix = 'messages/images';
+      rawPrefix = 'messages/videos/raw';
+    }
+
     if (isImage) {
       // Process Image: Convert to WebP + generate 300x300 thumbnail
       try {
         const imageRes = await this.imageProcessor.processImage(file.buffer);
 
-        const imageKey = `uploads/images/${mediaId}.webp`;
-        const thumbKey = `uploads/images/thumb_${mediaId}.webp`;
+        const imageKey = `${imagePrefix}/${mediaId}.webp`;
+        const thumbKey = `${imagePrefix}/thumb_${mediaId}.webp`;
 
         const optimizedUrl = await this.s3Storage.uploadBuffer(imageKey, imageRes.optimizedBuffer, 'image/webp');
         const thumbnailUrl = await this.s3Storage.uploadBuffer(thumbKey, imageRes.thumbnailBuffer, 'image/webp');
@@ -91,8 +107,8 @@ export class UploadsService {
     // Default Raw / Video Upload logic
     const ext = path.extname(file.originalname).toLowerCase() || '.bin';
     const key = isVideo
-      ? `uploads/raw/${mediaId}${ext}`
-      : `uploads/raw/${Date.now()}-${randomUUID()}${ext}`;
+      ? `${rawPrefix}/${mediaId}${ext}`
+      : `posts/raw/${Date.now()}-${randomUUID()}${ext}`;
 
     const url = await this.s3Storage.uploadBuffer(key, file.buffer, file.mimetype);
 
@@ -124,8 +140,8 @@ export class UploadsService {
     };
   }
 
-  async uploadMultipleFiles(files: Express.Multer.File[], uploaderId?: string): Promise<UploadResponse[]> {
+  async uploadMultipleFiles(files: Express.Multer.File[], uploaderId?: string, folder?: string): Promise<UploadResponse[]> {
     if (!files || files.length === 0) throw new BadRequestException('No files provided');
-    return Promise.all(files.map((file) => this.uploadFile(file, uploaderId)));
+    return Promise.all(files.map((file) => this.uploadFile(file, uploaderId, folder)));
   }
 }

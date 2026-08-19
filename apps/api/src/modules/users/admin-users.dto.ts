@@ -5,6 +5,7 @@ import {
   IsString,
   Min,
   Max,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { UserRole, UserStatus, SanctionType } from '../../generated/prisma/enums.js';
@@ -62,6 +63,25 @@ export class BanUserDto {
 export class UnbanUserDto {
   @IsString()
   liftReason: string;
+}
+
+
+export class SanctionUserDto {
+  @IsEnum(SanctionType)
+  type: SanctionType;
+
+  @IsString()
+  @MinLength(3)
+  reason: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  durationDays?: number;
+
+  @IsOptional()
+  @IsString()
+  reportId?: string;
 }
 
 export class SystemStatsDto {

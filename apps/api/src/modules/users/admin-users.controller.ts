@@ -29,6 +29,7 @@ import {
   BanUserDto,
   UnbanUserDto,
   SystemStatsDto,
+  SanctionUserDto,
 } from './admin-users.dto.js';
 import { UserProfileDto } from './users.dto.js';
 
@@ -71,6 +72,17 @@ export class AdminUsersController {
   @ApiResponse({ status: 404, description: 'Not found' })
   async getUserById(@Param('id') id: string) {
     return this.adminUsersService.getUserById(id);
+  }
+
+  @Post(':id/sanction')
+  @ApiOperation({ summary: 'Sanction user: warning, suspension, or ban' })
+  @ApiResponse({ status: 200 })
+  async sanctionUser(
+    @Param('id') id: string,
+    @Body() dto: SanctionUserDto,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.adminUsersService.sanctionUser(id, dto, adminId);
   }
 
   @Get(':id/sanctions')

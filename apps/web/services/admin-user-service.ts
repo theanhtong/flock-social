@@ -43,6 +43,8 @@ export interface AuditLogItem {
   };
 }
 
+export type SanctionType = 'warning' | 'suspension' | 'ban';
+
 export const adminUserService = {
   getSystemStats: async (token?: string | null): Promise<SystemStats> => {
     return apiClient.get<SystemStats>('/admin/users/stats', { token });
@@ -105,6 +107,15 @@ export const adminUserService = {
     );
   },
 
+
+  sanctionUser: async (
+    userId: string,
+    data: { type: SanctionType; reason: string; durationDays?: number; reportId?: string },
+    token?: string | null,
+  ): Promise<any> => {
+    return apiClient.post(`/admin/users/${userId}/sanction`, data, { token });
+  },
+
   banUser: async (
     userId: string,
     data: { reason: string; durationDays?: number },
@@ -119,6 +130,13 @@ export const adminUserService = {
     token?: string | null,
   ): Promise<any> => {
     return apiClient.post(`/admin/users/${userId}/unban`, data, { token });
+  },
+
+  restoreUser: async (
+    userId: string,
+    token?: string | null,
+  ): Promise<{ message: string }> => {
+    return apiClient.post<{ message: string }>(`/admin/users/${userId}/restore`, {}, { token });
   },
 
   deleteUser: async (

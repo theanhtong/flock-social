@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, Shield, Users, FileText, MessageSquare, Settings, Bell, Flag } from 'lucide-react';
+import { Home, User, Shield, Users, FileText, MessageSquare, Settings, Bell, Flag, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useNotificationStore } from '@/store/notification-store';
 import { Avatar } from '@/components/ui/avatar';
@@ -11,21 +11,24 @@ import { Avatar } from '@/components/ui/avatar';
 export const Sidebar = () => {
     const pathname = usePathname();
     const user = useAuthStore((s) => s.user);
+    const logout = useAuthStore((s) => s.logout);
     const unreadCount = useNotificationStore((s) => s.unreadCount);
     const pendingReportsCount = useNotificationStore((s) => s.pendingReportsCount);
 
+    const isAdminOrMod = user?.role === 'admin' || user?.role === 'moderator';
+
     const navItem = (href: string, icon: React.ReactNode, label: string, danger = false, badge?: number) => {
-        const isActive = pathname === href || (href === '/messages' && pathname?.startsWith('/messages')) || (href === '/notifications' && pathname?.startsWith('/notifications'));
+        const isActive = pathname === href || (href !== '/' && pathname?.startsWith(href));
         return (
             <Link
                 href={href}
-                className={`flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition-colors ${isActive
+                className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${isActive
                     ? danger
-                        ? 'text-red-400 bg-red-500/10'
-                        : 'text-blue-400 bg-blue-500/10'
+                        ? 'text-red-400 bg-red-500/10 border border-red-500/20'
+                        : 'text-blue-400 bg-blue-500/10 border border-blue-500/20'
                     : danger
-                        ? 'text-red-400 hover:bg-slate-800'
-                        : 'text-slate-300 hover:bg-slate-800'
+                        ? 'text-red-400 hover:bg-slate-800/80'
+                        : 'text-slate-300 hover:bg-slate-800/80'
                     }`}
             >
                 <div className="flex items-center gap-2.5">
@@ -42,34 +45,34 @@ export const Sidebar = () => {
     };
 
     return (
-        <aside className="hidden md:block md:col-span-3 sticky top-[72px] font-sans">
-            <div className="bg-slate-900 border border-slate-800 rounded p-4 flex flex-col gap-3 font-sans">
-                <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
-                    <Avatar
-                        src={user?.avatarUrl}
-                        name={user?.displayName || user?.username || 'User'}
-                        size="md"
-                    />
-                    <div className="flex flex-col min-w-0 font-sans">
-                        <span className="font-bold text-slate-100 text-xs truncate">
-                            {user?.displayName || user?.username}
-                        </span>
-                        <span className="text-[11px] text-slate-400 truncate">@{user?.username}</span>
-                    </div>
+        <aside className="hidden md:block md:col-span-3 sticky top-4 font-sans">
+            <div className="bg-slate-900 border border-slate-800/80 rounded-xl p-4 flex flex-col gap-4 font-sans shadow-sm">
+                
+                {/* Brand Logo Header */}
+                <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-800/60">
+                    <Link href="/" className="flex items-center gap-2 text-slate-100 hover:text-white transition-colors">
+                        <span className="font-extrabold text-base tracking-tight text-white">flock.</span>
+                        {isAdminOrMod && (
+                            <span className="text-[10px] font-mono tracking-wider text-blue-400 uppercase bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded">
+                                {user?.role}
+                            </span>
+                        )}
+                    </Link>
                 </div>
 
+                {/* Main Navigation */}
                 <nav className="flex flex-col gap-1 font-sans">
                     {navItem('/', <Home className="w-4 h-4" />, 'Home Feed')}
+                    {navItem('/profile', <User className="w-4 h-4" />, 'My Profile')}
                     {navItem('/notifications', <Bell className="w-4 h-4" />, 'Notifications', false, unreadCount)}
                     {navItem('/messages', <MessageSquare className="w-4 h-4" />, 'Messages')}
-                    {navItem('/profile', <User className="w-4 h-4" />, 'My Profile')}
                     {navItem('/settings', <Settings className="w-4 h-4" />, 'Settings')}
 
-                    {(user?.role === 'admin' || user?.role === 'moderator') && (
+                    {isAdminOrMod && (
                         <>
-                            <div className="my-1.5 border-t border-slate-800/80 pt-1.5 font-sans">
-                                <span className="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-                                    Moderation & Admin
+                            <div className="my-1.5 border-t border-slate-800/80 pt-2 font-sans">
+                                <span className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Admin & Moderation
                                 </span>
                             </div>
                             {navItem('/dashboard', <Shield className="w-4 h-4" />, 'Console Overview')}
@@ -83,6 +86,37 @@ export const Sidebar = () => {
                         </>
                     )}
                 </nav>
+
+                {/* User Profile Card & Sign Out at Bottom */}
+                {user && (
+                    <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                        <Link
+                            href={`/profile/${user.username}`}
+                            className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-80 transition-opacity"
+                        >
+                            <Avatar
+                                src={user.avatarUrl}
+                                name={user.displayName || user.username || 'User'}
+                                size="sm"
+                            />
+                            <div className="flex flex-col min-w-0 font-sans">
+                                <span className="font-bold text-slate-100 text-xs truncate">
+                                    {user.displayName || user.username}
+                                </span>
+                                <span className="text-[10px] text-slate-400 truncate">@{user.username}</span>
+                            </div>
+                        </Link>
+
+                        <button
+                            type="button"
+                            onClick={logout}
+                            title="Sign Out"
+                            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors shrink-0"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
             </div>
         </aside>
     );
@@ -107,7 +141,7 @@ export function SidebarLayout({ children, rightPanel, childrenSpan, rightPanelSp
             </main>
 
             {rightPanel && (
-                <aside className={`hidden md:block ${rightPanelSpan || 'md:col-span-3'} sticky top-[72px] font-sans`}>
+                <aside className={`hidden md:block ${rightPanelSpan || 'md:col-span-3'} sticky top-4 font-sans`}>
                     {rightPanel}
                 </aside>
             )}

@@ -23,13 +23,15 @@ import {
   MoveConversationDto,
   ReactMessageDto,
 } from './messages.dto.js';
+import { AllowWhileRestricted } from '../auth/guards/allow-while-restricted.decorator.js';
 
 @ApiTags('Messages')
+@AllowWhileRestricted()
 @Controller('conversations')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class MessagesController {
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(private readonly messagesService: MessagesService) { }
 
   @Get()
   @ApiOperation({ summary: 'Get conversations filtered by folder with cursor pagination' })

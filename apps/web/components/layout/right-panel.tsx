@@ -71,7 +71,7 @@ export function RightPanel() {
   }, [searchQuery, token, currentUser]);
 
   return (
-    <>
+    <div className="flex flex-col gap-4 font-sans">
       {/* Search */}
       <div ref={searchContainerRef} className="relative font-sans">
         <Input
@@ -190,6 +190,6 @@ export function RightPanel() {
           ))
         )}
       </div>
-    </>
+    </div>
   );
 }

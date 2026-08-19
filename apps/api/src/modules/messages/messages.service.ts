@@ -281,6 +281,9 @@ export class MessagesService {
       );
     }
 
+
+    // users who have this setting can create orders.
+    // uers who don't have this setting will receive a forbidden result.
     if (targetSettings?.whoCanMessageMe === 'followers') {
       const currentFollowsTarget = await this.prisma.follow.findUnique({
         where: {
@@ -677,6 +680,7 @@ export class MessagesService {
             },
           },
         });
+
         if (!currentFollowsTarget || currentFollowsTarget.isPending) {
           const targetUser = await this.prisma.user.findUnique({
             where: { id: targetUserId },

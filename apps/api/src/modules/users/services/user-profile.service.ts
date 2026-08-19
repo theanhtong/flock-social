@@ -5,7 +5,7 @@ import { formatProfile } from '../users.mapper.js';
 
 @Injectable()
 export class UserProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async getMyProfile(userId: string): Promise<UserProfileDto> {
     const userBigInt = BigInt(userId);
@@ -28,6 +28,32 @@ export class UserProfileService {
     ]);
 
     return formatProfile({ ...user, followersCount, followingCount });
+  }
+
+  async getMyRestrictionStatus(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: BigInt(userId) },
+      select: { status: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User profile not found');
+    }
+
+    if (user.status === 'active') return { restricted: false };
+
+    const sanction = await this.prisma.userSanction.findFirst({
+      where: { userId: BigInt(userId), status: 'active' },
+      orderBy: { createdAt: 'desc' },
+      select: { type: true, reason: true, expiresAt: true },
+    });
+
+    return {
+      restricted: true,
+      status: user.status,
+      reason: sanction?.reason ?? null,
+      expiresAt: sanction?.expiresAt ?? null,
+    };
   }
 
   async getProfileByUsername(username: string): Promise<UserProfileDto> {

@@ -8,13 +8,13 @@ import {
   BanUserDto,
   UnbanUserDto,
   SystemStatsDto,
+  SanctionUserDto,
 } from '../admin-users.dto.js';
 import {
   AuditActionType,
   AuditLogType,
   SanctionStatus,
   SanctionType,
-  UserRole,
   UserStatus,
 } from '../../../generated/prisma/enums.js';
 
@@ -23,7 +23,7 @@ export class AdminUsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly snowflakeService: SnowflakeService,
-  ) {}
+  ) { }
 
   async getUsers(query: AdminQueryUsersDto) {
     const limit = Number(query.limit) || 20;
@@ -274,6 +274,83 @@ export class AdminUsersService {
     });
 
     return { message: `User ${user.username} unbanned successfully` };
+  }
+
+  async sanctionUser(userId: string, dto: SanctionUserDto, adminId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: BigInt(userId) },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    if (user.isDeleted) {
+      throw new BadRequestException('Cannot sanction a deleted user');
+    }
+
+    let expiresAt: Date | undefined = undefined;
+    if (dto.type === SanctionType.suspension && dto.durationDays && dto.durationDays > 0) {
+      expiresAt = new Date(Date.now() + dto.durationDays * 24 * 60 * 60 * 1000);
+    }
+
+    const statusChangeMap: Partial<Record<SanctionType, UserStatus>> = {
+      [SanctionType.ban]: UserStatus.banned,
+      [SanctionType.suspension]: UserStatus.suspended,
+    };
+    const targetStatus = statusChangeMap[dto.type];
+
+    const sanctionId = this.snowflakeService.generate();
+
+    const operations: any[] = [
+      this.prisma.userSanction.create({
+        data: {
+          id: sanctionId,
+          userId: BigInt(userId),
+          issuedById: BigInt(adminId),
+          reportId: dto.reportId ? BigInt(dto.reportId) : undefined,
+          type: dto.type,
+          reason: dto.reason,
+          status: SanctionStatus.active,
+          expiresAt,
+        },
+      }),
+    ];
+
+    if (targetStatus) {
+      operations.push(
+        this.prisma.user.update({
+          where: { id: BigInt(userId) },
+          data: { status: targetStatus },
+        }),
+        this.prisma.session.deleteMany({
+          where: { userId: BigInt(userId) },
+        }),
+      );
+    }
+
+    const [sanction] = await this.prisma.$transaction(operations);
+
+    await this.logAudit({
+      adminId,
+      action: AuditActionType.create,
+      targetId: userId,
+      targetType: AuditLogType.sanction,
+      metadata: { sanctionId: sanctionId.toString(), type: dto.type, reason: dto.reason, reportId: dto.reportId },
+    });
+
+    return {
+      message: targetStatus
+        ? `User ${user.username} has been ${targetStatus}`
+        : `Warning issued to ${user.username}`,
+      sanction: {
+        ...sanction,
+        id: sanction.id.toString(),
+        userId: sanction.userId.toString(),
+        issuedById: sanction.issuedById.toString(),
+        reportId: sanction.reportId ? sanction.reportId.toString() : null,
+      },
+    };
   }
 
   async getUserSanctions(userId: string) {

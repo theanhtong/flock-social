@@ -101,6 +101,38 @@ export default function LoginPage() {
           Sign in with Google
         </Button>
 
+        <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-800 font-sans">
+          <span className="text-[10px] font-bold uppercase text-slate-500">Quick Login (Dev)</span>
+          <div className="grid grid-cols-3 gap-1.5">
+            {[
+              { label: 'Admin', id: 'admin', pw: 'Admin123!', cls: 'text-rose-400 border-rose-800/60 hover:bg-rose-500/10' },
+              { label: 'Mod', id: 'moderator', pw: 'Mod123456!', cls: 'text-amber-400 border-amber-800/60 hover:bg-amber-500/10' },
+              { label: 'User', id: 'testuser', pw: 'Test123456!', cls: 'text-blue-400 border-blue-800/60 hover:bg-blue-500/10' },
+            ].map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={async () => {
+                  setIdentifier(p.id);
+                  setPassword(p.pw);
+                  setLoading(true);
+                  try {
+                    await login({ identifier: p.id, password: p.pw });
+                    const u = useAuthStore.getState().user;
+                    if (u && (u.role === 'admin' || u.role === 'moderator')) router.push('/dashboard');
+                    else router.push('/');
+                  } catch {} finally {
+                    setLoading(false);
+                  }
+                }}
+                className={`px-2 py-1.5 rounded border text-[11px] font-bold transition-colors ${p.cls}`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="text-xs text-slate-400 text-center">
           Don't have an account?{' '}
           <Link href="/register" className="text-blue-400 font-medium hover:underline">

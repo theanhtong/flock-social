@@ -26,11 +26,13 @@ import {
 } from './auth.dto.js';
 import { Role, Roles } from './decorators/roles.decorator.js';
 import { RolesGuard } from './guards/roles.guard.js';
+import { AllowWhileRestricted } from './guards/allow-while-restricted.decorator.js';
 
 @ApiTags('Auth')
+@AllowWhileRestricted()
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register')
   @ApiOperation({ summary: 'Register user' })

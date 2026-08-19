@@ -1,12 +1,40 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
+  Min,
+  ValidateNested,
 } from 'class-validator';
-import { ReportType, ReportReason, ReportStatus } from '../../generated/prisma/enums.js';
+import { Type } from 'class-transformer';
+import { ReportType, ReportReason, ReportStatus, SanctionType } from '../../generated/prisma/enums.js';
+
+export class SanctionPayloadDto {
+  @ApiProperty({ enum: SanctionType, example: SanctionType.warning })
+  @IsEnum(SanctionType)
+  type: SanctionType;
+
+  @ApiProperty({ example: '12345678901234567', description: 'ID of the user to sanction' })
+  @IsString()
+  @IsNotEmpty()
+  targetUserId: string;
+
+  @ApiProperty({ example: 'Violated community guidelines' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  reason: string;
+
+  @ApiPropertyOptional({ example: 7, description: 'Duration in days (suspension only; null = permanent ban)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  durationDays?: number;
+}
 
 export class CreateReportDto {
   @ApiProperty({ enum: ReportType, example: ReportType.post })
@@ -24,10 +52,10 @@ export class CreateReportDto {
   @IsNotEmpty()
   reason: ReportReason;
 
-  @ApiPropertyOptional({ example: 'This post contains inappropriate content' })
+  @ApiPropertyOptional({ example: '{"text":"This post is spam","images":[]}' })
   @IsOptional()
   @IsString()
-  @MaxLength(1000)
+  @MaxLength(20000)
   details?: string;
 }
 
@@ -61,4 +89,23 @@ export class ResolveReportDto {
   @ApiPropertyOptional({ example: true, description: 'Whether to delete the reported content' })
   @IsOptional()
   deleteContent?: boolean;
+
+  @ApiPropertyOptional({ description: 'Optional sanction to issue against the reported user/author' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SanctionPayloadDto)
+  sanction?: SanctionPayloadDto;
+}
+
+export class DismissReportDto {
+  @ApiPropertyOptional({ description: 'Optional sanction to issue against the reporter for false report' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SanctionPayloadDto)
+  sanction?: SanctionPayloadDto;
+
+  @ApiPropertyOptional({ example: 'This report did not violate any guidelines' })
+  @IsOptional()
+  @IsString()
+  resolution?: string;
 }

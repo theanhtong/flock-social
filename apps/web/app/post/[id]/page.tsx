@@ -28,6 +28,7 @@ import { RightPanel } from '@/components/layout/right-panel';
 import { PostComments } from '@/components/comments/post-comments';
 import { RepostModal } from '@/components/posts/repost-modal';
 import { EditPostModal } from '@/components/posts/edit-post-modal';
+import { PostCardSkeleton } from '@/components/ui/skeleton';
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
@@ -70,8 +71,12 @@ export default function PostDetailPage() {
   const fetchPost = async () => {
     if (!postId) return;
     setIsLoading(true);
+    const minDelay = new Promise((resolve) => setTimeout(resolve, 200));
     try {
-      const data = await postService.getPostById(postId, token);
+      const [data] = await Promise.all([
+        postService.getPostById(postId, token),
+        minDelay,
+      ]);
       setPost(data);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to load post');
@@ -154,10 +159,7 @@ export default function PostDetailPage() {
 
         {/* Post Detail Card */}
         {isLoading ? (
-          <div className="bg-slate-900 border border-slate-800 rounded p-12 text-center flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-            <p className="text-xs text-slate-400">Loading post...</p>
-          </div>
+          <PostCardSkeleton />
         ) : !post ? (
           <div className="bg-slate-900 border border-slate-800 rounded p-8 text-center flex flex-col items-center gap-2">
             <p className="font-semibold text-slate-300 text-xs">Post not found</p>

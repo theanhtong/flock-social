@@ -29,8 +29,10 @@ import {
   UserProfileDto,
   UpdateUserSettingDto,
 } from './users.dto.js';
+import { AllowWhileRestricted } from '../auth/guards/allow-while-restricted.decorator.js';
 
 @ApiTags('Users')
+@AllowWhileRestricted()
 @Controller('users')
 export class UsersController {
   constructor(
@@ -38,7 +40,7 @@ export class UsersController {
     private readonly userSettingsService: UserSettingsService,
     private readonly userFollowService: UserFollowService,
     private readonly userBlockService: UserBlockService,
-  ) {}
+  ) { }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
@@ -48,6 +50,8 @@ export class UsersController {
   async getMyProfile(@CurrentUser('id') userId: string) {
     return this.userProfileService.getMyProfile(userId);
   }
+
+
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
@@ -76,6 +80,14 @@ export class UsersController {
     @CurrentUser('id') userId?: string,
   ) {
     return this.userProfileService.searchUsers(queryDto, userId);
+  }
+
+  @Get('me/restriction-status')
+  @UseGuards(JwtAuthGuard)
+  @AllowWhileRestricted()
+  @ApiBearerAuth()
+  async getMyRestrictionStatus(@CurrentUser('id') userId: string) {
+    return this.userProfileService.getMyRestrictionStatus(userId);
   }
 
   @Get('me/settings')

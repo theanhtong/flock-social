@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { SidebarLayout } from '@/components/layout/sidebar';
+import { TableRowSkeleton } from '@/components/ui/skeleton';
 
 export function AuditLogsView() {
   const token = useAuthStore((s) => s.token);
@@ -31,9 +32,12 @@ export function AuditLogsView() {
 
   const fetchAuditLogs = (cursor?: string) => {
     setIsLoadingAudit(true);
-    adminUserService
-      .getAuditLogs({ cursor, limit: 15 }, token)
-      .then((res) => {
+    const minDelay = new Promise((resolve) => setTimeout(resolve, 180));
+    Promise.all([
+      adminUserService.getAuditLogs({ cursor, limit: 15 }, token),
+      minDelay,
+    ])
+      .then(([res]) => {
         setAuditLogs(res.data);
         setNextCursor(res.meta.nextCursor);
         setHasNextPage(res.meta.hasNextPage);
@@ -159,8 +163,10 @@ export function AuditLogsView() {
         {/* Audit Logs Content */}
         <div className="bg-slate-900 border border-slate-800 rounded overflow-hidden font-sans">
           {isLoadingAudit ? (
-            <div className="py-16 flex justify-center text-purple-400 font-sans">
-              <Spinner size="lg" />
+            <div className="divide-y divide-slate-800/60 font-sans">
+              <TableRowSkeleton />
+              <TableRowSkeleton />
+              <TableRowSkeleton />
             </div>
           ) : filteredLogs.length === 0 ? (
             <div className="py-16 text-center text-slate-400 text-xs font-sans">

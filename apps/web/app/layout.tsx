@@ -6,6 +6,7 @@ import { AuthInitializer } from "@/components/auth-initializer";
 import { LoginModal } from "@/components/auth/login-modal";
 import { RegisterModal } from "@/components/auth/register-modal";
 import { Header } from "@/components/layout/header";
+import { RestrictionModal } from "@/components/restriction-modal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,7 @@ export default function RootLayout({
         <Header />
         <div className="flex-1 flex flex-col">
           {children}
+          <RestrictionModal />
         </div>
         <LoginModal />
         <RegisterModal />

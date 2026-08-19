@@ -151,21 +151,21 @@ export function MessageComposer() {
           {isUploading ? <Loader2 className="w-4 h-4 animate-spin text-blue-400" /> : <Paperclip className="w-4 h-4" />}
         </Button>
 
-        <div className="flex-1 relative bg-slate-950 border border-slate-800 rounded-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+        <div className="flex-1 relative bg-slate-900/80 border border-slate-800 rounded-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
           <textarea
             rows={1}
             value={text}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Write a message..."
-            className="w-full px-3 py-2 text-xs text-slate-100 bg-transparent placeholder-slate-500 focus:outline-none resize-none max-h-24"
+            className="w-full px-3 py-2 text-xs text-slate-100 bg-transparent placeholder-slate-400 focus:outline-none resize-none max-h-24 font-sans"
           />
         </div>
 
         <Button
           type="submit"
           disabled={(!text.trim() && mediaUrls.length === 0) || isSending || isUploading}
-          className="bg-blue-600 hover:bg-blue-500 text-white p-2.5 h-9 w-9 rounded-sm flex items-center justify-center flex-shrink-0 shadow-md transition-transform active:scale-95 disabled:opacity-50"
+          className="bg-blue-500 hover:bg-blue-400 text-white p-2.5 h-9 w-9 rounded-sm flex items-center justify-center flex-shrink-0 shadow-md transition-transform active:scale-95 disabled:opacity-50"
         >
           {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>

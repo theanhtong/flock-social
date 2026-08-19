@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/store/auth-store';
+import { useRestrictionStore } from '@/store/restriction-store';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -34,6 +35,16 @@ const processQueue = (error: any, token: string | null = null) => {
     }
   });
   failedQueue = [];
+};
+
+const checkAccountRestriction = (status: number, isJson: boolean, data: any) => {
+  if (status === 403 && isJson && data?.code === 'ACCOUNT_RESTRICTED') {
+    useRestrictionStore.getState().setRestriction({
+      status: data.status,
+      reason: data.reason ?? null,
+      expiresAt: data.expiresAt ?? null,
+    });
+  }
 };
 
 export async function request<T = any>(
@@ -108,6 +119,8 @@ export async function request<T = any>(
             const retryIsJson = retryContentType && retryContentType.includes('application/json');
             const retryData = retryIsJson ? await retryResponse.json() : await retryResponse.text();
 
+            checkAccountRestriction(retryResponse.status, !!retryIsJson, retryData);
+
             if (!retryResponse.ok) {
               const errorMessage =
                 (retryIsJson && retryData?.message) ||
@@ -145,6 +158,8 @@ export async function request<T = any>(
       });
     }
   }
+
+  checkAccountRestriction(response.status, !!isJson, data);
 
   if (!response.ok) {
     const errorMessage =

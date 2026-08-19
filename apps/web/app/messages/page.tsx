@@ -20,25 +20,37 @@ function MessagesPageContent() {
   const isLoading = useAuthStore((s) => s.isLoading);
   const { initSocketListeners, cleanSocketListeners, activeConversationId, setActiveConversationId } = useMessageStore();
 
+  // 1. Redirect if unauthenticated
   useEffect(() => {
     if (isLoading) return;
-
     if (!token && !user) {
       router.push('/login');
-      return;
     }
+  }, [isLoading, token, user, router]);
 
-    if (convIdFromUrl) {
-      setActiveConversationId(convIdFromUrl);
-    } else {
-      setActiveConversationId(null);
-    }
+  // 2. Initialize socket listeners once upon mounting
+  useEffect(() => {
+    if (isLoading || (!token && !user)) return;
+
     initSocketListeners();
-
     return () => {
       cleanSocketListeners();
     };
-  }, [isLoading, token, user, router, convIdFromUrl, initSocketListeners, cleanSocketListeners, setActiveConversationId]);
+  }, [isLoading, token, user]);
+
+  // 3. Sync convIdFromUrl with activeConversationId without thrashing socket listeners
+  useEffect(() => {
+    if (isLoading || (!token && !user)) return;
+
+    const currentActiveId = useMessageStore.getState().activeConversationId;
+    if (convIdFromUrl) {
+      if (currentActiveId !== convIdFromUrl) {
+        setActiveConversationId(convIdFromUrl);
+      }
+    } else if (currentActiveId !== null) {
+      setActiveConversationId(null);
+    }
+  }, [isLoading, token, user, convIdFromUrl, setActiveConversationId]);
 
   if (isLoading || (!token && !user)) {
     return (

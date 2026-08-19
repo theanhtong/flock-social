@@ -129,6 +129,10 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
   setActiveConversationId: async (id: string | null) => {
     const prevId = get().activeConversationId;
+    if (id && prevId === id && get().activeConversation) {
+      return;
+    }
+
     if (prevId && prevId !== id) {
       socketService.leaveConversation(prevId);
     }

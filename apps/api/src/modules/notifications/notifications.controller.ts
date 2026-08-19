@@ -11,15 +11,17 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { NotificationsService } from './notifications.service.js';
+import { AllowWhileRestricted } from '../auth/guards/allow-while-restricted.decorator.js';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(private readonly notificationsService: NotificationsService) { }
 
   @Get()
+  @AllowWhileRestricted()
   @ApiOperation({ summary: 'Get paginated notifications filtered by category' })
   async getNotifications(
     @CurrentUser('id') userId: string,

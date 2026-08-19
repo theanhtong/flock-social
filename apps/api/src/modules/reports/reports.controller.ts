@@ -23,6 +23,7 @@ import {
   CreateReportDto,
   QueryReportsDto,
   ResolveReportDto,
+  DismissReportDto,
 } from './reports.dto.js';
 
 @ApiTags('Reports')
@@ -33,7 +34,7 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Post('reports')
-  @ApiOperation({ summary: 'Submit a new content or user report' })
+  @ApiOperation({ summary: 'Submit a new content or user report (with optional evidence)' })
   @ApiResponse({ status: 201 })
   async createReport(
     @CurrentUser('id') userId: string,
@@ -63,7 +64,7 @@ export class ReportsController {
   @Patch('admin/reports/:id/resolve')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  @ApiOperation({ summary: 'Resolve a report' })
+  @ApiOperation({ summary: 'Resolve a report – optionally issue a sanction against reported user/author' })
   @ApiResponse({ status: 200 })
   async resolveReport(
     @Param('id') id: string,
@@ -76,12 +77,13 @@ export class ReportsController {
   @Patch('admin/reports/:id/dismiss')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  @ApiOperation({ summary: 'Dismiss a report' })
+  @ApiOperation({ summary: 'Dismiss a report as invalid – optionally sanction the reporter' })
   @ApiResponse({ status: 200 })
   async dismissReport(
     @Param('id') id: string,
     @CurrentUser('id') moderatorId: string,
+    @Body() dto: DismissReportDto,
   ) {
-    return this.reportsService.dismissReport(id, moderatorId);
+    return this.reportsService.dismissReport(id, moderatorId, dto);
   }
 }

@@ -33,6 +33,13 @@ export interface QueryReportsParams {
   targetType?: string;
 }
 
+export interface SanctionPayload {
+  type: 'warning' | 'suspension' | 'ban';
+  targetUserId: string;
+  reason: string;
+  durationDays?: number;
+}
+
 export const reportService = {
   createReport: async (
     data: {
@@ -66,7 +73,7 @@ export const reportService = {
 
   resolveReport: async (
     id: string,
-    data: { resolution?: string; deleteContent?: boolean },
+    data: { resolution?: string; deleteContent?: boolean; sanction?: SanctionPayload },
     token?: string | null,
   ): Promise<ReportItem> => {
     return apiClient.patch(`/admin/reports/${id}/resolve`, data, { token });
@@ -74,8 +81,9 @@ export const reportService = {
 
   dismissReport: async (
     id: string,
+    data?: { resolution?: string; sanction?: SanctionPayload },
     token?: string | null,
   ): Promise<ReportItem> => {
-    return apiClient.patch(`/admin/reports/${id}/dismiss`, {}, { token });
+    return apiClient.patch(`/admin/reports/${id}/dismiss`, data || {}, { token });
   },
 };

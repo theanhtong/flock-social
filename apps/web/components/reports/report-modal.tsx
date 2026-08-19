@@ -37,6 +37,7 @@ export function ReportModal({
   const token = useAuthStore((s) => s.token);
   const [reason, setReason] = useState('spam');
   const [details, setDetails] = useState('');
+  const [evidenceImage, setEvidenceImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -47,18 +48,23 @@ export function ReportModal({
 
     setIsSubmitting(true);
     try {
+      const finalDetails = evidenceImage
+        ? JSON.stringify({ text: details.trim() || null, images: [evidenceImage] })
+        : details.trim() || undefined;
+
       await reportService.createReport(
         {
           targetType,
           targetId,
           reason,
-          details: details.trim() || undefined,
+          details: finalDetails,
         },
         token,
       );
       toast.success('Report submitted successfully. Thank you for keeping our community safe.');
       onClose();
       setDetails('');
+      setEvidenceImage(null);
       setReason('spam');
     } catch (err: any) {
       toast.error(err.message || 'Failed to submit report');
@@ -106,14 +112,50 @@ export function ReportModal({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="font-semibold text-slate-200">Additional Details (Optional)</label>
+          <label className="font-semibold text-slate-200">Additional Details / Evidence (Text or Image)</label>
           <textarea
             value={details}
             onChange={(e) => setDetails(e.target.value)}
             placeholder="Provide context or explanation..."
             rows={3}
-            className="bg-slate-950/60 border border-slate-800 rounded p-2.5 text-xs text-slate-200 focus:outline-none focus:border-rose-500"
+            className="bg-slate-950/60 border border-slate-800 rounded p-2.5 text-xs text-slate-200 focus:outline-none focus:border-rose-500 font-sans"
           />
+          <div className="flex items-center gap-2 mt-1">
+            <input
+              type="file"
+              accept="image/*"
+              id="report-evidence-file"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setEvidenceImage(reader.result as string);
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+            <label
+              htmlFor="report-evidence-file"
+              className="px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded text-slate-300 hover:text-slate-100 hover:border-slate-700 text-[11px] cursor-pointer flex items-center gap-1.5 font-sans"
+            >
+              📷 Attach Evidence Image
+            </label>
+            {evidenceImage && (
+              <div className="flex items-center gap-1.5 text-emerald-400 text-[11px]">
+                <span>Image attached</span>
+                <button
+                  type="button"
+                  onClick={() => setEvidenceImage(null)}
+                  className="text-slate-500 hover:text-rose-400 font-bold ml-1"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">

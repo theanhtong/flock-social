@@ -22,8 +22,10 @@ import {
 } from '@/store/notification-store';
 import { userService } from '@/services/user-service';
 import { SidebarLayout } from '@/components/layout/sidebar';
+import { RightPanel } from '@/components/layout/right-panel';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { NotificationItemSkeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 export default function NotificationsPage() {
@@ -100,29 +102,36 @@ export default function NotificationsPage() {
         };
       case 'repost':
         return {
-          icon: <Repeat className="w-4 h-4 text-purple-400" />,
-          text: `${actorName} reposted your content`,
+          icon: <Repeat className="w-4 h-4 text-emerald-400" />,
+          text: `${actorName} reposted your post`,
           link: item.entityId ? `/post/${item.entityId}` : '#',
+        };
+      case 'system_warning':
+        return {
+          icon: <Megaphone className="w-4 h-4 text-blue-400" />,
+          text: item.message || 'System Notice: Account warning or report notification received.',
+          link: '#',
+          isSystem: true,
         };
       default:
         return {
-          icon: <Megaphone className="w-4 h-4 text-purple-400" />,
-          text: `${actorName} interacted with your account`,
+          icon: <Bell className="w-4 h-4 text-blue-400" />,
+          text: `${actorName} interacted with you`,
           link: '#',
         };
     }
   };
 
-  const tabs: { id: NotificationCategory; label: string; icon: React.ReactNode }[] = [
-    { id: 'all', label: 'All', icon: <Bell className="w-3.5 h-3.5" /> },
-    { id: 'likes', label: 'Likes', icon: <Heart className="w-3.5 h-3.5" /> },
-    { id: 'comments', label: 'Comments', icon: <MessageSquare className="w-3.5 h-3.5" /> },
-    { id: 'follows', label: 'Follows', icon: <UserPlus className="w-3.5 h-3.5" /> },
-    { id: 'system', label: 'System', icon: <Megaphone className="w-3.5 h-3.5 text-purple-400" /> },
+  const tabs: { id: NotificationCategory; label: string }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'likes', label: 'Likes' },
+    { id: 'comments', label: 'Comments' },
+    { id: 'follows', label: 'Follows' },
+    { id: 'system', label: 'System' },
   ];
 
   return (
-    <SidebarLayout>
+    <SidebarLayout rightPanel={<RightPanel />}>
       <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl font-sans min-h-[80vh] flex flex-col">
         {/* Top Header */}
         <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
@@ -172,13 +181,12 @@ export default function NotificationsPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveCategory(tab.id)}
-                className={`flex items-center gap-2 py-3 px-3.5 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer ${
+                className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer ${
                   isActive
                     ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
                     : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
                 }`}
               >
-                {tab.icon}
                 <span>{tab.label}</span>
               </button>
             );
@@ -188,9 +196,12 @@ export default function NotificationsPage() {
         {/* Notifications List */}
         <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60">
           {isLoading && notifications.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
-              <span className="text-xs">Loading notifications...</span>
+            <div className="divide-y divide-slate-800/60">
+              <NotificationItemSkeleton />
+              <NotificationItemSkeleton />
+              <NotificationItemSkeleton />
+              <NotificationItemSkeleton />
+              <NotificationItemSkeleton />
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-16 text-center text-slate-400 flex flex-col items-center justify-center gap-3">

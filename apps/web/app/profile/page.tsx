@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
+import { ProfileHeaderSkeleton, PostCardSkeleton } from '@/components/ui/skeleton';
 import { EditProfileModal } from '@/components/profile/edit-profile-modal';
 import { ImagePreviewModal } from '@/components/profile/image-preview-modal';
 import { FollowersModal } from '@/components/profile/followers-modal';
@@ -114,9 +115,12 @@ export default function SelfProfilePage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-blue-500">
-        <Spinner size="lg" />
-      </div>
+      <SidebarLayout rightPanel={<RightPanel />}>
+        <div className="flex flex-col gap-4 font-sans">
+          <ProfileHeaderSkeleton />
+          <PostCardSkeleton />
+        </div>
+      </SidebarLayout>
     );
   }
 

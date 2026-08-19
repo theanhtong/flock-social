@@ -297,14 +297,10 @@ export class AuthService {
     }
 
     if (user.status === 'banned') {
-      throw new UnauthorizedException('Your account has been banned due to policy violations.');
+      throw new UnauthorizedException('Your account has been banned');
     }
 
-    if (user.status === 'suspended') {
-      throw new UnauthorizedException('Your account is currently suspended.');
-    }
-
-    if (user.status !== 'active') {
+    if (!user.isVerified) {
       throw new UnauthorizedException(
         'Account is not active. Please verify your email.',
       );

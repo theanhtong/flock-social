@@ -35,7 +35,7 @@ export class PostsController {
   getPosts(
     @CurrentUser('id') userId?: string,
     @Query('cursor') cursor?: string,
-    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit?: number,
   ) {
     return this.postsService.getPosts(userId, cursor, limit);
   }

@@ -19,9 +19,10 @@ export default function Home() {
 
   if (isLoading || !user) {
     return (
-      <div className="flex-1 flex items-center justify-center text-blue-500">
-        <Spinner size="lg" />
-      </div>
+      // <div className="flex-1 flex items-center justify-center text-blue-500">
+      //   <Spinner size="lg" />
+      // </div>
+      <></>
     );
   }
 

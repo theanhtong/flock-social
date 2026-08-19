@@ -85,7 +85,8 @@ export class VideoQueueProcessor implements OnModuleInit, OnModuleDestroy {
       const result = await this.videoProcessor.transcodeToHls(rawFilePath, hlsOutputDir);
 
       // Upload HLS output & thumbnail to MinIO
-      const prefix = `hls/${mediaId}`;
+      const isMessageVideo = rawKey.startsWith('messages/');
+      const prefix = isMessageVideo ? `messages/videos/hls/${mediaId}` : `posts/videos/hls/${mediaId}`;
       const uploadedUrls = await this.s3Storage.uploadDirectoryToMinIO(hlsOutputDir, prefix);
 
       const masterManifestUrl = uploadedUrls.get('master.m3u8') || `${this.s3Storage.getPublicUrl()}/${prefix}/master.m3u8`;

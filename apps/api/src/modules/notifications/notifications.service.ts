@@ -145,7 +145,9 @@ export class NotificationsService {
       whereClause.type = {
         in: [NotificationType.follow, NotificationType.follow_request],
       };
-    } else if (category === 'system' || category === 'reposts') {
+    } else if (category === 'reposts') {
+      whereClause.type = NotificationType.repost;
+    } else if (category === 'system') {
       whereClause.type = {
         in: [NotificationType.repost, NotificationType.dm_message],
       };

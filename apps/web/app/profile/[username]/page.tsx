@@ -17,6 +17,7 @@ import { ProfileUserPosts } from '@/components/profile/profile-posts';
 import { toast } from 'sonner';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
+import { ProfileHeaderSkeleton, PostCardSkeleton } from '@/components/ui/skeleton';
 import { ReportModal } from '@/components/reports/report-modal';
 
 export default function PublicProfilePage() {
@@ -245,9 +246,12 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-blue-500">
-        <Spinner size="lg" />
-      </div>
+      <SidebarLayout rightPanel={<RightPanel />}>
+        <div className="flex flex-col gap-4 font-sans">
+          <ProfileHeaderSkeleton />
+          <PostCardSkeleton />
+        </div>
+      </SidebarLayout>
     );
   }
 

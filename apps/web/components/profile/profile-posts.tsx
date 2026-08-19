@@ -25,6 +25,7 @@ import { ImageLightbox } from '@/components/ui/image-lightbox';
 import { CommentModal } from '@/components/comments/comment-modal';
 import { RepostModal } from '@/components/posts/repost-modal';
 import { EditPostModal } from '@/components/posts/edit-post-modal';
+import { PostCardSkeleton } from '@/components/ui/skeleton';
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
@@ -71,8 +72,12 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
   const fetchUserPosts = async () => {
     if (!username) return;
     setIsLoading(true);
+    const minDelay = new Promise((resolve) => setTimeout(resolve, 200));
     try {
-      const data = await postService.getUserPosts(username, activeTab, token);
+      const [data] = await Promise.all([
+        postService.getUserPosts(username, activeTab, token),
+        minDelay,
+      ]);
       setPosts(data || []);
     } catch (err: any) {
       toast.error('Failed to load user posts');
@@ -197,9 +202,9 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
 
       {/* Posts List */}
       {isLoading ? (
-        <div className="bg-slate-900 border border-slate-800 rounded p-12 text-center flex flex-col items-center justify-center gap-3 font-sans">
-          <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-          <p className="text-xs text-slate-400">Loading posts...</p>
+        <div className="flex flex-col gap-3 font-sans">
+          <PostCardSkeleton />
+          <PostCardSkeleton />
         </div>
       ) : posts.length === 0 ? (
         <div className="bg-slate-900 border border-slate-800 rounded p-8 text-center flex flex-col items-center gap-2 font-sans">
