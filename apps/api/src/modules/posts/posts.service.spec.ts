@@ -159,7 +159,7 @@ describe('PostsService', () => {
 
     it('should throw ForbiddenException for unverified account', async () => {
       const prisma = makeMockPrisma();
-      prisma.user.findUnique = jest.fn().mockResolvedValue({ status: 'pending_verification' });
+      prisma.user.findUnique = jest.fn<any>().mockResolvedValue({ status: 'pending_verification' });
       const service = await makeService(prisma);
 
       await expect(service.createPost(USER_ID, { content: 'x' } as any)).rejects.toThrow(ForbiddenException);
@@ -186,7 +186,7 @@ describe('PostsService', () => {
     it('should update post and return new version', async () => {
       const prisma = makeMockPrisma();
       prisma.$transaction = jest.fn().mockImplementation((fn: any) => fn(prisma));
-      prisma.post.findUniqueOrThrow = jest.fn().mockResolvedValue(makePost({ content: 'Updated' }));
+      prisma.post.findUniqueOrThrow = jest.fn<any>().mockResolvedValue(makePost({ content: 'Updated' }));
       const service = await makeService(prisma);
 
       const result = await service.updatePost(USER_ID, POST_ID, { content: 'Updated' } as any);
@@ -197,7 +197,7 @@ describe('PostsService', () => {
 
     it('should throw NotFoundException when post does not exist', async () => {
       const prisma = makeMockPrisma();
-      prisma.post.findUnique = jest.fn().mockResolvedValue(null);
+      prisma.post.findUnique = jest.fn<any>().mockResolvedValue(null);
       const service = await makeService(prisma);
 
       await expect(service.updatePost(USER_ID, POST_ID, {} as any)).rejects.toThrow(NotFoundException);
@@ -205,7 +205,7 @@ describe('PostsService', () => {
 
     it('should throw ForbiddenException when editing another user post', async () => {
       const prisma = makeMockPrisma();
-      prisma.post.findUnique = jest.fn().mockResolvedValue(makePost({ userId: snowflake.generate() }));
+      prisma.post.findUnique = jest.fn<any>().mockResolvedValue(makePost({ userId: snowflake.generate() }));
       const service = await makeService(prisma);
 
       await expect(service.updatePost(USER_ID, POST_ID, {} as any)).rejects.toThrow(ForbiddenException);
@@ -225,7 +225,7 @@ describe('PostsService', () => {
 
     it('should throw NotFoundException when post does not exist', async () => {
       const prisma = makeMockPrisma();
-      prisma.post.findUnique = jest.fn().mockResolvedValue(null);
+      prisma.post.findUnique = jest.fn<any>().mockResolvedValue(null);
       const service = await makeService(prisma);
 
       await expect(service.deletePost(USER_ID, POST_ID)).rejects.toThrow(NotFoundException);
@@ -233,7 +233,7 @@ describe('PostsService', () => {
 
     it('should throw ForbiddenException when deleting another user post', async () => {
       const prisma = makeMockPrisma();
-      prisma.post.findUnique = jest.fn().mockResolvedValue(makePost({ userId: snowflake.generate() }));
+      prisma.post.findUnique = jest.fn<any>().mockResolvedValue(makePost({ userId: snowflake.generate() }));
       const service = await makeService(prisma);
 
       await expect(service.deletePost(USER_ID, POST_ID)).rejects.toThrow(ForbiddenException);
@@ -325,7 +325,7 @@ describe('PostsService', () => {
   describe('toggleBookmark', () => {
     it('should add bookmark when not yet bookmarked', async () => {
       const prisma = makeMockPrisma();
-      prisma.bookmark.count = jest.fn().mockResolvedValue(1);
+      prisma.bookmark.count = jest.fn<any>().mockResolvedValue(1);
       const service = await makeService(prisma);
 
       const result = await service.toggleBookmark(USER_ID, POST_ID);
@@ -336,8 +336,8 @@ describe('PostsService', () => {
 
     it('should remove bookmark when already bookmarked', async () => {
       const prisma = makeMockPrisma();
-      prisma.bookmark.findUnique = jest.fn().mockResolvedValue({ userId: BigInt(USER_ID), postId: BigInt(POST_ID) });
-      prisma.bookmark.count = jest.fn().mockResolvedValue(0);
+      prisma.bookmark.findUnique = jest.fn<any>().mockResolvedValue({ userId: BigInt(USER_ID), postId: BigInt(POST_ID) });
+      prisma.bookmark.count = jest.fn<any>().mockResolvedValue(0);
       const service = await makeService(prisma);
 
       const result = await service.toggleBookmark(USER_ID, POST_ID);
@@ -350,7 +350,7 @@ describe('PostsService', () => {
   describe('getUserPosts', () => {
     it('should return posts for an existing username', async () => {
       const prisma = makeMockPrisma();
-      prisma.user.findUnique = jest.fn().mockResolvedValue({ id: BigInt(USER_ID), username: 'testuser' });
+      prisma.user.findUnique = jest.fn<any>().mockResolvedValue({ id: BigInt(USER_ID), username: 'testuser' });
       const service = await makeService(prisma);
 
       const result = await service.getUserPosts('testuser', USER_ID);
@@ -361,7 +361,7 @@ describe('PostsService', () => {
 
     it('should throw NotFoundException for unknown username', async () => {
       const prisma = makeMockPrisma();
-      prisma.user.findUnique = jest.fn().mockResolvedValue(null);
+      prisma.user.findUnique = jest.fn<any>().mockResolvedValue(null);
       const service = await makeService(prisma);
 
       await expect(service.getUserPosts('nobody', USER_ID)).rejects.toThrow(NotFoundException);
