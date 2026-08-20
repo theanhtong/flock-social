@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, X, User, Hash, FileText, Sparkles, UserPlus, Heart, MessageSquare, ArrowRight } from 'lucide-react';
+import { Search, X, User, Hash, FileText, Sparkles, UserPlus, UserCheck, Heart, MessageSquare, ArrowRight } from 'lucide-react';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
 import { Avatar } from '@/components/ui/avatar';
@@ -110,7 +110,7 @@ export default function SearchPage() {
   return (
     <SidebarLayout rightPanel={<RightPanel />}>
       <div className="flex flex-col gap-4 font-sans">
-
+        
         {/* Search Header Bar */}
         <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3 shadow-sm">
           <div className="flex items-center justify-between">
@@ -148,10 +148,11 @@ export default function SearchPage() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-t-sm transition-colors border-b-2 capitalize ${activeTab === tab
+                className={`px-3 py-1.5 text-xs font-semibold rounded-t-sm transition-colors border-b-2 capitalize ${
+                  activeTab === tab
                     ? 'text-blue-400 border-blue-500 bg-blue-500/10'
                     : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
-                  }`}
+                }`}
               >
                 {tab}
               </button>
@@ -218,9 +219,14 @@ export default function SearchPage() {
                             variant={isFollowing ? 'outline' : 'primary'}
                             size="sm"
                             onClick={() => handleToggleFollow(u.username)}
-                            className="shrink-0 text-xs py-1"
+                            title={isFollowing ? 'Following' : 'Follow'}
+                            className="shrink-0 p-2 text-xs"
                           >
-                            {isFollowing ? 'Following' : 'Follow'}
+                            {isFollowing ? (
+                              <UserCheck className="w-4 h-4 text-blue-400" />
+                            ) : (
+                              <UserPlus className="w-4 h-4" />
+                            )}
                           </Button>
                         </div>
                       );

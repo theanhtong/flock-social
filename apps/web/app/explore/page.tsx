@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Compass, TrendingUp, Sparkles, UserPlus, Flame, MessageSquare, Heart, Bookmark, Share2 } from 'lucide-react';
+import { Compass, TrendingUp, Sparkles, UserPlus, UserCheck, Flame, MessageSquare, Heart, Bookmark, Share2 } from 'lucide-react';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
 import { Avatar } from '@/components/ui/avatar';
@@ -164,9 +164,14 @@ export default function ExplorePage() {
                           variant={isFollowing ? 'outline' : 'primary'}
                           size="sm"
                           onClick={() => handleToggleFollow(user.username)}
-                          className="shrink-0 text-xs py-1"
+                          title={isFollowing ? 'Following' : 'Follow'}
+                          className="shrink-0 p-2 text-xs"
                         >
-                          {isFollowing ? 'Following' : 'Follow'}
+                          {isFollowing ? (
+                            <UserCheck className="w-4 h-4 text-blue-400" />
+                          ) : (
+                            <UserPlus className="w-4 h-4" />
+                          )}
                         </Button>
                       </div>
                     );
