@@ -30,43 +30,12 @@ export default function SearchPage() {
   const [hashtags, setHashtags] = useState<ExtractedHashtag[]>([]);
   const [followingState, setFollowingState] = useState<Record<string, boolean>>({});
 
-  // Fetch initial posts to build hashtag corpus
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const feed = await postService.getPosts(undefined, token);
-        const allPosts = feed.posts || [];
-
-        // Extract real hashtags from real post contents
-        const tagMap: Record<string, number> = {};
-        allPosts.forEach((post) => {
-          const matches = post.content.match(/#[a-zA-Z0-9_]+/g);
-          if (matches) {
-            matches.forEach((m) => {
-              const tagClean = m.replace('#', '').toLowerCase();
-              tagMap[tagClean] = (tagMap[tagClean] || 0) + 1;
-            });
-          }
-        });
-
-        const extracted = Object.entries(tagMap).map(([tag, postsCount]) => ({
-          tag,
-          postsCount,
-        }));
-        extracted.sort((a, b) => b.postsCount - a.postsCount);
-        setHashtags(extracted);
-      } catch (err) {
-        // Silent catch for initial feed
-      }
-    };
-    fetchInitialData();
-  }, [token]);
-
-  // Execute real database user & post search when query changes
+  // Execute real database user, post & hashtag search when query changes
   useEffect(() => {
     if (!query.trim()) {
       setUsers([]);
       setPosts([]);
+      setHashtags([]);
       setLoading(false);
       return;
     }
@@ -74,15 +43,18 @@ export default function SearchPage() {
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const [searchResults, postResults] = await Promise.all([
+        const [searchResults, postResults, hashtagResults] = await Promise.all([
           userService.searchUsers(query.trim(), token).catch(() => []),
           postService.searchPosts(query.trim(), token).catch(() => []),
+          postService.searchHashtags(query.trim(), 10, token).catch(() => []),
         ]);
         setUsers(searchResults || []);
         setPosts(postResults || []);
+        setHashtags(hashtagResults || []);
       } catch (err: any) {
         setUsers([]);
         setPosts([]);
+        setHashtags([]);
       } finally {
         setLoading(false);
       }
@@ -104,12 +76,6 @@ export default function SearchPage() {
     }
   };
 
-  const filteredPosts = query.trim() ? posts : [];
-
-  const filteredHashtags = query.trim()
-    ? hashtags.filter((h) => h.tag.toLowerCase().includes(query.toLowerCase().replace('#', '')))
-    : [];
-
   const searchTabs = [
     { id: 'top', label: 'Top' },
     { id: 'people', label: 'People' },
@@ -117,11 +83,13 @@ export default function SearchPage() {
     { id: 'hashtags', label: 'Hashtags' },
   ];
 
+  const hasAnyResults = users.length > 0 || posts.length > 0 || hashtags.length > 0;
+
   return (
     <SidebarLayout rightPanel={<RightPanel />}>
       <div className="flex flex-col gap-4 font-sans">
         
-        {/* Search Header Container (styled identically to Notifications page) */}
+        {/* Search Header Container */}
         <div className="bg-slate-900 border border-slate-800 rounded-sm overflow-hidden shadow-sm flex flex-col font-sans">
           
           {/* Top Header Title */}
@@ -155,7 +123,7 @@ export default function SearchPage() {
             </div>
           </div>
 
-          {/* Category Tabs (Identical to Notifications Page) */}
+          {/* Category Tabs */}
           <div className="flex items-center px-4 bg-slate-950 border-b border-slate-800 overflow-x-auto gap-1">
             {searchTabs.map((tab) => {
               const isActive = activeTab === tab.id;
@@ -192,140 +160,161 @@ export default function SearchPage() {
                 Enter a search term above to find users (@username), posts, or trending #hashtags.
               </span>
             </div>
-          ) : users.length === 0 && filteredPosts.length === 0 && filteredHashtags.length === 0 ? (
+          ) : !hasAnyResults && activeTab === 'top' ? (
             <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
               <Search className="w-6 h-6 text-slate-600" />
               <span className="text-xs font-bold text-slate-300">No results found for "{query}"</span>
               <span className="text-[11px] text-slate-500 max-w-xs">
-                Try searching for another username (@user), display name, or post content.
+                Try searching for another username (@user), display name, or post keyword.
               </span>
             </div>
           ) : (
             <>
-              {/* Real Database Users Section */}
-              {(activeTab === 'top' || activeTab === 'people') && users.length > 0 && (
-                <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-blue-400" />
-                      <span>People ({users.length})</span>
-                    </span>
-                    {activeTab === 'top' && (
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('people')}
-                        className="text-[11px] text-blue-400 hover:underline font-medium flex items-center gap-1"
-                      >
-                        <span>View all</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    {users.map((u) => {
-                      const isFollowing = followingState[u.username] ?? false;
-                      return (
-                        <div
-                          key={u.id}
-                          className="flex items-center justify-between p-3 rounded-sm bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors"
+              {/* People Section */}
+              {(activeTab === 'top' || activeTab === 'people') && (
+                users.length > 0 ? (
+                  <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-blue-400" />
+                        <span>People ({users.length})</span>
+                      </span>
+                      {activeTab === 'top' && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('people')}
+                          className="text-[11px] text-blue-400 hover:underline font-medium flex items-center gap-1"
                         >
-                          <Link href={`/profile/${u.username}`} className="flex items-center gap-3 min-w-0 flex-1">
-                            <Avatar src={u.avatarUrl} name={u.displayName || u.username} size="md" />
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-xs font-bold text-slate-100 truncate">
-                                {u.displayName || u.username}
-                              </span>
-                              <span className="text-[10px] text-slate-400 truncate">@{u.username}</span>
-                              {u.bio && <p className="text-[11px] text-slate-300 truncate mt-0.5">{u.bio}</p>}
-                            </div>
-                          </Link>
-                          <Button
-                            variant={isFollowing ? 'outline' : 'primary'}
-                            size="sm"
-                            onClick={() => handleToggleFollow(u.username)}
-                            className="shrink-0 text-xs py-1"
+                          <span>View all</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {users.map((u) => {
+                        const isFollowing = followingState[u.username] ?? false;
+                        return (
+                          <div
+                            key={u.id}
+                            className="flex items-center justify-between p-3 rounded-sm bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors"
                           >
-                            {isFollowing ? 'Following' : 'Follow'}
-                          </Button>
-                        </div>
-                      );
-                    })}
+                            <Link href={`/profile/${u.username}`} className="flex items-center gap-3 min-w-0 flex-1">
+                              <Avatar src={u.avatarUrl} name={u.displayName || u.username} size="md" />
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-bold text-slate-100 truncate">
+                                  {u.displayName || u.username}
+                                </span>
+                                <span className="text-[10px] text-slate-400 truncate">@{u.username}</span>
+                                {u.bio && <p className="text-[11px] text-slate-300 truncate mt-0.5">{u.bio}</p>}
+                              </div>
+                            </Link>
+                            <Button
+                              variant={isFollowing ? 'outline' : 'primary'}
+                              size="sm"
+                              onClick={() => handleToggleFollow(u.username)}
+                              className="shrink-0 text-xs py-1"
+                            >
+                              {isFollowing ? 'Following' : 'Follow'}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                ) : activeTab === 'people' ? (
+                  <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
+                    <User className="w-6 h-6 text-slate-600" />
+                    <span className="text-xs font-bold text-slate-300">No people found matching "{query}"</span>
+                  </div>
+                ) : null
               )}
 
-              {/* Real Extracted Hashtags Section */}
-              {(activeTab === 'top' || activeTab === 'hashtags') && filteredHashtags.length > 0 && (
-                <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
-                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <Hash className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Hashtags</span>
-                  </span>
+              {/* Hashtags Section */}
+              {(activeTab === 'top' || activeTab === 'hashtags') && (
+                hashtags.length > 0 ? (
+                  <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
+                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <Hash className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Hashtags ({hashtags.length})</span>
+                    </span>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {filteredHashtags.map((ht, idx) => (
-                      <Link
-                        key={ht.tag}
-                        href={`/search?q=%23${ht.tag}`}
-                        className="p-3 rounded-sm bg-slate-950/60 border border-slate-800/80 hover:border-blue-500/40 transition-colors flex items-center justify-between"
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-blue-400">#{ht.tag}</span>
-                          <span className="text-[10px] text-slate-400">{ht.postsCount} post{ht.postsCount > 1 ? 's' : ''}</span>
-                        </div>
-                        <span className="text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded-sm">
-                          #{idx + 1} Trending
-                        </span>
-                      </Link>
-                    ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {hashtags.map((ht, idx) => (
+                        <Link
+                          key={ht.tag}
+                          href={`/search?q=%23${ht.tag}`}
+                          className="p-3 rounded-sm bg-slate-950/60 border border-slate-800/80 hover:border-blue-500/40 transition-colors flex items-center justify-between"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-blue-400">#{ht.tag}</span>
+                            <span className="text-[10px] text-slate-400">{ht.postsCount} post{ht.postsCount > 1 ? 's' : ''}</span>
+                          </div>
+                          <span className="text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded-sm">
+                            #{idx + 1} Trending
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : activeTab === 'hashtags' ? (
+                  <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
+                    <Hash className="w-6 h-6 text-slate-600" />
+                    <span className="text-xs font-bold text-slate-300">No hashtags found matching "{query}"</span>
+                  </div>
+                ) : null
               )}
 
-              {/* Real Database Posts Section */}
-              {(activeTab === 'top' || activeTab === 'posts') && filteredPosts.length > 0 && (
-                <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
-                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Posts ({filteredPosts.length})</span>
-                  </span>
+              {/* Posts Section */}
+              {(activeTab === 'top' || activeTab === 'posts') && (
+                posts.length > 0 ? (
+                  <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
+                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Posts ({posts.length})</span>
+                    </span>
 
-                  <div className="flex flex-col gap-3">
-                    {filteredPosts.map((post) => (
-                      <div
-                        key={post.id}
-                        className="p-3.5 rounded-sm bg-slate-950/60 border border-slate-800/80 flex flex-col gap-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <Link href={`/profile/${post.user.username}`} className="flex items-center gap-2">
-                            <Avatar src={post.user.avatarUrl} name={post.user.displayName || post.user.username} size="sm" />
-                            <div className="flex flex-col">
-                              <span className="text-xs font-bold text-slate-200">
-                                {post.user.displayName || post.user.username}
-                              </span>
-                              <span className="text-[10px] text-slate-400">@{post.user.username}</span>
-                            </div>
-                          </Link>
-                          <span className="text-[10px] text-slate-500">
-                            {new Date(post.createdAt).toLocaleDateString()}
-                          </span>
+                    <div className="flex flex-col gap-3">
+                      {posts.map((post) => (
+                        <div
+                          key={post.id}
+                          className="p-3.5 rounded-sm bg-slate-950/60 border border-slate-800/80 flex flex-col gap-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <Link href={`/profile/${post.user.username}`} className="flex items-center gap-2">
+                              <Avatar src={post.user.avatarUrl} name={post.user.displayName || post.user.username} size="sm" />
+                              <div className="flex flex-col">
+                                <span className="text-xs font-bold text-slate-200">
+                                  {post.user.displayName || post.user.username}
+                                </span>
+                                <span className="text-[10px] text-slate-400">@{post.user.username}</span>
+                              </div>
+                            </Link>
+                            <span className="text-[10px] text-slate-500">
+                              {new Date(post.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-300 leading-relaxed">{post.content}</p>
+                          <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
+                            <span className="flex items-center gap-1 hover:text-rose-400 transition-colors">
+                              <Heart className="w-3.5 h-3.5" />
+                              <span>{post.likeCount}</span>
+                            </span>
+                            <span className="flex items-center gap-1 hover:text-blue-400 transition-colors">
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              <span>{post.commentCount}</span>
+                            </span>
+                          </div>
                         </div>
-                        <p className="text-xs text-slate-300 leading-relaxed">{post.content}</p>
-                        <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
-                          <span className="flex items-center gap-1 hover:text-rose-400 transition-colors">
-                            <Heart className="w-3.5 h-3.5" />
-                            <span>{post.likeCount}</span>
-                          </span>
-                          <span className="flex items-center gap-1 hover:text-blue-400 transition-colors">
-                            <MessageSquare className="w-3.5 h-3.5" />
-                            <span>{post.commentCount}</span>
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : activeTab === 'posts' ? (
+                  <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
+                    <FileText className="w-6 h-6 text-slate-600" />
+                    <span className="text-xs font-bold text-slate-300">No posts found matching "{query}"</span>
+                  </div>
+                ) : null
               )}
             </>
           )}

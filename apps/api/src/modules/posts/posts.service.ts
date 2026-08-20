@@ -367,6 +367,43 @@ export class PostsService {
     };
   }
 
+  async getTrendingHashtags(limit = 10): Promise<{ tag: string; postsCount: number }[]> {
+    const maxLimit = Math.min(limit || 10, 50);
+    const activePosts = await this.prisma.post.findMany({
+      where: { status: PostStatus.active },
+      select: { content: true },
+      orderBy: { id: 'desc' },
+      take: 300,
+    });
+
+    const tagCounts: Record<string, number> = {};
+    for (const post of activePosts) {
+      if (!post.content) continue;
+      const matches = post.content.match(/#[a-zA-Z0-9_]+/g);
+      if (matches) {
+        for (const match of matches) {
+          const tag = match.replace('#', '').toLowerCase();
+          if (tag) {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+          }
+        }
+      }
+    }
+
+    return Object.entries(tagCounts)
+      .map(([tag, postsCount]) => ({ tag, postsCount }))
+      .sort((a, b) => b.postsCount - a.postsCount)
+      .slice(0, maxLimit);
+  }
+
+  async searchHashtags(query: string, limit = 10): Promise<{ tag: string; postsCount: number }[]> {
+    const q = query?.replace(/^#/, '').toLowerCase().trim();
+    if (!q) return [];
+
+    const trending = await this.getTrendingHashtags(50);
+    return trending.filter((t) => t.tag.includes(q)).slice(0, limit);
+  }
+
   async getPosts(
     userId?: string,
     cursor?: string,

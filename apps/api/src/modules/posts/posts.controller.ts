@@ -52,6 +52,21 @@ export class PostsController {
     return this.postsService.searchPosts(query, cursor, limit, userId);
   }
 
+  @Get('hashtags/trending')
+  getTrendingHashtags(
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit?: number,
+  ) {
+    return this.postsService.getTrendingHashtags(limit);
+  }
+
+  @Get('hashtags/search')
+  searchHashtags(
+    @Query('q') query: string,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit?: number,
+  ) {
+    return this.postsService.searchHashtags(query, limit);
+  }
+
   @Get('bookmarks')
   @UseGuards(JwtAuthGuard)
   getUserBookmarks(@CurrentUser('id') userId: string) {

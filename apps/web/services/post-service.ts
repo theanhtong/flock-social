@@ -79,6 +79,22 @@ export const postService = {
     return res.posts || [];
   },
 
+  getTrendingHashtags: async (
+    limit = 10,
+    token?: string | null
+  ): Promise<{ tag: string; postsCount: number }[]> => {
+    return apiClient.get<{ tag: string; postsCount: number }[]>(`/posts/hashtags/trending?limit=${limit}`, { token });
+  },
+
+  searchHashtags: async (
+    query: string,
+    limit = 10,
+    token?: string | null
+  ): Promise<{ tag: string; postsCount: number }[]> => {
+    if (!query || !query.trim()) return [];
+    return apiClient.get<{ tag: string; postsCount: number }[]>(`/posts/hashtags/search?q=${encodeURIComponent(query.trim())}&limit=${limit}`, { token });
+  },
+
   getUserPosts: async (
     username: string,
     tab: 'posts' | 'replies' | 'likes' = 'posts',
