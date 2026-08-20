@@ -38,6 +38,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [levels, setLevels] = useState<VideoQualityOption[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<number>(-1); // -1 = Auto
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -56,6 +57,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         hls = new Hls({
           capLevelToPlayerSize: true,
           maxBufferLength: 30,
+          maxMaxBufferLength: 600,
+          backBufferLength: 90,
+          lowLatencyMode: false,
         });
         hlsRef.current = hls;
 
@@ -135,6 +139,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         controls={controls && !isProcessing && !isFailed}
         autoPlay={autoPlay}
         muted={muted}
+        preload="metadata"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
         onError={(e) => {
           const mediaError = (e.target as HTMLVideoElement)?.error;
           if (mediaError && mediaError.code === 1) {
@@ -144,7 +151,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             setIsError(true);
           }
         }}
-        className="w-full h-full object-cover rounded-xl"
+        className="w-full h-full object-cover rounded-xl bg-slate-950 bg-black"
         {...props}
       />
 

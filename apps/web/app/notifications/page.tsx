@@ -127,6 +127,7 @@ export default function NotificationsPage() {
     { id: 'likes', label: 'Likes' },
     { id: 'comments', label: 'Comments' },
     { id: 'follows', label: 'Follows' },
+    { id: 'reposts', label: 'Reposts' },
     { id: 'system', label: 'System' },
   ];
 

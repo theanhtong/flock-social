@@ -13,11 +13,18 @@ import { toast } from 'sonner';
 
 export type FolderType = 'main' | 'pending';
 
+const computeTotalUnread = (conversations: Record<FolderType, Conversation[]>): number => {
+  const mainCount = (conversations.main || []).reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+  const pendingCount = (conversations.pending || []).reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+  return mainCount + pendingCount;
+};
+
 interface MessageState {
   activeFolder: FolderType;
   conversations: Record<FolderType, Conversation[]>;
   conversationsCursor: Record<FolderType, string | null>;
   isLoadingConversations: boolean;
+  unreadMessageCount: number;
 
   activeConversationId: string | null;
   activeConversation: Conversation | null;
@@ -70,6 +77,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     pending: null,
   },
   isLoadingConversations: false,
+  unreadMessageCount: 0,
 
   activeConversationId: null,
   activeConversation: null,
@@ -109,11 +117,14 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         existing.forEach((c: Conversation) => map.set(c.id, c));
         newConvs.forEach((c: Conversation) => map.set(c.id, c));
 
+        const nextConvs = {
+          ...state.conversations,
+          [folder]: Array.from(map.values()),
+        };
+
         return {
-          conversations: {
-            ...state.conversations,
-            [folder]: Array.from(map.values()),
-          },
+          conversations: nextConvs,
+          unreadMessageCount: computeTotalUnread(nextConvs),
           conversationsCursor: {
             ...state.conversationsCursor,
             [folder]: res.nextCursor || null,
@@ -446,12 +457,15 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
       const newOtherList = otherList.filter((c: Conversation) => c.id !== updated.id);
 
+      const nextConvs = {
+        ...state.conversations,
+        [targetFolder]: newTargetList,
+        [otherFolder]: newOtherList,
+      };
+
       return {
-        conversations: {
-          ...state.conversations,
-          [targetFolder]: newTargetList,
-          [otherFolder]: newOtherList,
-        },
+        conversations: nextConvs,
+        unreadMessageCount: computeTotalUnread(nextConvs),
         activeConversation:
           state.activeConversation?.id === updated.id
             ? { ...state.activeConversation, ...updated }
@@ -464,11 +478,13 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     set((state) => {
       const folderKey = state.activeFolder;
       const list = state.conversations[folderKey] || [];
+      const nextConvs = {
+        ...state.conversations,
+        [folderKey]: list.filter((c: Conversation) => c.id !== conversationId),
+      };
       return {
-        conversations: {
-          ...state.conversations,
-          [folderKey]: list.filter((c: Conversation) => c.id !== conversationId),
-        },
+        conversations: nextConvs,
+        unreadMessageCount: computeTotalUnread(nextConvs),
         activeConversationId: state.activeConversationId === conversationId ? null : state.activeConversationId,
         activeConversation: state.activeConversation?.id === conversationId ? null : state.activeConversation,
       };

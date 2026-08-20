@@ -6,7 +6,7 @@ import {
   NotificationItem,
 } from '@/services/notification-service';
 
-export type NotificationCategory = 'all' | 'likes' | 'comments' | 'follows' | 'system';
+export type NotificationCategory = 'all' | 'likes' | 'comments' | 'follows' | 'reposts' | 'system';
 
 interface NotificationState {
   notifications: NotificationItem[];

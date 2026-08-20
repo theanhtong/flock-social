@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Home, User, Shield, Users, FileText, MessageSquare, Settings, Bell, Flag, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useNotificationStore } from '@/store/notification-store';
+import { useMessageStore } from '@/store/message-store';
 import { Avatar } from '@/components/ui/avatar';
 
 export const Sidebar = () => {
@@ -13,12 +14,15 @@ export const Sidebar = () => {
     const user = useAuthStore((s) => s.user);
     const logout = useAuthStore((s) => s.logout);
     const unreadCount = useNotificationStore((s) => s.unreadCount);
+    const unreadMessageCount = useMessageStore((s) => s.unreadMessageCount);
     const pendingReportsCount = useNotificationStore((s) => s.pendingReportsCount);
 
     const isAdminOrMod = user?.role === 'admin' || user?.role === 'moderator';
 
     const navItem = (href: string, icon: React.ReactNode, label: string, danger = false, badge?: number) => {
-        const isActive = pathname === href || (href !== '/' && pathname?.startsWith(href));
+        const isActive = href === '/' || href === '/dashboard'
+            ? pathname === href
+            : pathname?.startsWith(href);
         return (
             <Link
                 href={href}
@@ -47,7 +51,7 @@ export const Sidebar = () => {
     return (
         <aside className="hidden md:block md:col-span-3 sticky top-4 font-sans">
             <div className="bg-slate-900 border border-slate-800/80 rounded-xl p-4 flex flex-col gap-4 font-sans shadow-sm">
-                
+
                 {/* Brand Logo Header */}
                 <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-800/60">
                     <Link href="/" className="flex items-center gap-2 text-slate-100 hover:text-white transition-colors">
@@ -65,7 +69,7 @@ export const Sidebar = () => {
                     {navItem('/', <Home className="w-4 h-4" />, 'Home Feed')}
                     {navItem('/profile', <User className="w-4 h-4" />, 'My Profile')}
                     {navItem('/notifications', <Bell className="w-4 h-4" />, 'Notifications', false, unreadCount)}
-                    {navItem('/messages', <MessageSquare className="w-4 h-4" />, 'Messages')}
+                    {navItem('/messages', <MessageSquare className="w-4 h-4" />, 'Messages', false, unreadMessageCount)}
                     {navItem('/settings', <Settings className="w-4 h-4" />, 'Settings')}
 
                     {isAdminOrMod && (
