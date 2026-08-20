@@ -99,13 +99,13 @@ export default function SearchPage() {
     }
   };
 
-  const filteredPosts = posts.filter((p) =>
-    p.content.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredPosts = query.trim()
+    ? posts.filter((p) => p.content.toLowerCase().includes(query.toLowerCase()))
+    : [];
 
-  const filteredHashtags = hashtags.filter((h) =>
-    h.tag.toLowerCase().includes(query.toLowerCase().replace('#', ''))
-  );
+  const filteredHashtags = query.trim()
+    ? hashtags.filter((h) => h.tag.toLowerCase().includes(query.toLowerCase().replace('#', '')))
+    : [];
 
   const searchTabs = [
     { id: 'top', label: 'Top' },
@@ -181,7 +181,15 @@ export default function SearchPage() {
               <Sparkles className="w-5 h-5 text-blue-400 animate-spin" />
               <span className="text-xs text-slate-400 font-medium">Searching database...</span>
             </div>
-          ) : query && users.length === 0 && filteredPosts.length === 0 && filteredHashtags.length === 0 ? (
+          ) : !query.trim() ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-sm p-12 flex flex-col items-center justify-center text-center gap-2 shadow-sm">
+              <Search className="w-8 h-8 text-slate-600 mb-1" />
+              <span className="text-sm font-bold text-slate-200">Search Flock Social</span>
+              <span className="text-xs text-slate-400 max-w-sm">
+                Enter a search term above to find users (@username), posts, or trending #hashtags.
+              </span>
+            </div>
+          ) : users.length === 0 && filteredPosts.length === 0 && filteredHashtags.length === 0 ? (
             <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
               <Search className="w-6 h-6 text-slate-600" />
               <span className="text-xs font-bold text-slate-300">No results found for "{query}"</span>
