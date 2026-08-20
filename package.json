@@ -7,11 +7,15 @@
     "dev:api": "kill-port 4000 || true && npm run dev --prefix apps/api",
     "dev:web": "kill-port 3000 || true && npm run dev --prefix apps/web",
     "start": "npm run dev",
-    "build": "npm run build --prefix apps/api && npm run build --prefix apps/web"
+    "build": "npm run build --prefix apps/api && npm run build --prefix apps/web",
+    "typecheck:api": "tsc --noEmit --project apps/api/tsconfig.json",
+    "typecheck:web": "tsc --noEmit --project apps/web/tsconfig.json",
+    "typecheck": "npm run typecheck:api && npm run typecheck:web"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "kill-port": "^2.0.1"
+    "kill-port": "^2.0.1",
+    "typescript": "^5.7.3"
   },
   "dependencies": {
     "sharp": "^0.35.3"

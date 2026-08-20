@@ -28,10 +28,10 @@ jobs:
         run: npx prisma generate --schema=apps/api/prisma/schema.prisma
 
       - name: Typecheck API (NestJS)
-        run: npx tsc --noEmit --project apps/api/tsconfig.json
+        run: npm run typecheck:api
 
       - name: Typecheck Web (Next.js)
-        run: npx tsc --noEmit --project apps/web/tsconfig.json
+        run: npm run typecheck:web
 
       - name: Run API Unit Test Suite (110 Tests)
         run: npm test --prefix apps/api
