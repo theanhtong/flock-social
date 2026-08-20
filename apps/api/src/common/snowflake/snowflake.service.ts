@@ -26,12 +26,7 @@ export class SnowflakeService implements OnModuleInit {
   constructor(private readonly configService: ConfigService) {
 
     // get SNOWLAKE_EPOCH and validate if positive number and not in the future
-    const epochRaw = this.configService.get<string>('SNOWFLAKE_EPOCH');
-    if (!epochRaw) {
-      throw new Error(
-        'SNOWFLAKE_EPOCH is required.',
-      );
-    }
+    const epochRaw = this.configService.get<string>('SNOWFLAKE_EPOCH') || '1704067200000';
     const epochMs = parseInt(epochRaw, 10);
     if (isNaN(epochMs) || epochMs <= 0) {
       throw new Error(
@@ -45,12 +40,7 @@ export class SnowflakeService implements OnModuleInit {
     }
 
     // get SNOWFLAKE_NODE_ID and validate if number between 0 and maxNodeId
-    const nodeIdRaw = this.configService.get<string>('SNOWFLAKE_NODE_ID');
-    if (!nodeIdRaw) {
-      throw new Error(
-        'SNOWFLAKE_NODE_ID is required.',
-      );
-    }
+    const nodeIdRaw = this.configService.get<string>('SNOWFLAKE_NODE_ID') || '1';
     const nodeIdNum = parseInt(nodeIdRaw, 10);
     if (isNaN(nodeIdNum)) {
       throw new Error(
