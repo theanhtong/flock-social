@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, X, User, Hash, FileText, Sparkles, UserPlus, UserCheck, Heart, MessageSquare, ArrowRight } from 'lucide-react';
+import { Search, X, User, Hash, FileText, Sparkles, UserPlus, Heart, MessageSquare, ArrowRight } from 'lucide-react';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
 import { Avatar } from '@/components/ui/avatar';
@@ -107,56 +107,70 @@ export default function SearchPage() {
     h.tag.toLowerCase().includes(query.toLowerCase().replace('#', ''))
   );
 
+  const searchTabs = [
+    { id: 'top', label: 'Top' },
+    { id: 'people', label: 'People' },
+    { id: 'posts', label: 'Posts' },
+    { id: 'hashtags', label: 'Hashtags' },
+  ];
+
   return (
     <SidebarLayout rightPanel={<RightPanel />}>
       <div className="flex flex-col gap-4 font-sans">
         
-        {/* Search Header Bar */}
-        <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h1 className="text-base font-bold text-slate-100 flex items-center gap-2">
-              <Search className="w-4 h-4 text-blue-400" />
-              <span>Global Search</span>
-            </h1>
-            <span className="text-xs text-slate-500 font-mono">Live API</span>
+        {/* Search Header Container (styled identically to Notifications page) */}
+        <div className="bg-slate-900 border border-slate-800 rounded-sm overflow-hidden shadow-sm flex flex-col font-sans">
+          
+          {/* Top Header Title */}
+          <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Search className="w-5 h-5 text-blue-400" />
+              <h1 className="text-base font-bold text-slate-100">Search</h1>
+            </div>
           </div>
 
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search users by name/handle, keywords, or #hashtags..."
-              className="w-full bg-slate-950 text-slate-100 border border-slate-800 rounded-sm pl-10 pr-9 py-2.5 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500 transition-all"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery('')}
-                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+          {/* Search Input Box */}
+          <div className="p-4 bg-slate-900 border-b border-slate-800">
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search users by name/handle, keywords, or #hashtags..."
+                className="w-full bg-slate-950 text-slate-100 border border-slate-800 rounded-sm pl-10 pr-9 py-2.5 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500 transition-all"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Navigation Category Tabs */}
-          <div className="flex items-center gap-1 border-b border-slate-800/80 pt-1">
-            {(['top', 'people', 'posts', 'hashtags'] as SearchTab[]).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-t-sm transition-colors border-b-2 capitalize ${
-                  activeTab === tab
-                    ? 'text-blue-400 border-blue-500 bg-blue-500/10'
-                    : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+          {/* Category Tabs (Identical to Notifications Page) */}
+          <div className="flex items-center px-4 bg-slate-950 border-b border-slate-800 overflow-x-auto gap-1">
+            {searchTabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as SearchTab)}
+                  className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
+                      : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -219,14 +233,9 @@ export default function SearchPage() {
                             variant={isFollowing ? 'outline' : 'primary'}
                             size="sm"
                             onClick={() => handleToggleFollow(u.username)}
-                            title={isFollowing ? 'Following' : 'Follow'}
-                            className="shrink-0 p-2 text-xs"
+                            className="shrink-0 text-xs py-1"
                           >
-                            {isFollowing ? (
-                              <UserCheck className="w-4 h-4 text-blue-400" />
-                            ) : (
-                              <UserPlus className="w-4 h-4" />
-                            )}
+                            {isFollowing ? 'Following' : 'Follow'}
                           </Button>
                         </div>
                       );
