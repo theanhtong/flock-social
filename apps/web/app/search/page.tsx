@@ -289,7 +289,7 @@ function SearchPageContent() {
                       {hashtags.map((ht, idx) => (
                         <Link
                           key={ht.tag}
-                          href={`/search?q=%23${ht.tag}`}
+                          href={`/hashtag/${ht.tag}`}
                           className="p-3 rounded-sm bg-slate-950/60 border border-slate-800/80 hover:border-blue-500/40 transition-colors flex items-center justify-between"
                         >
                           <div className="flex flex-col">

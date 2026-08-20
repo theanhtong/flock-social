@@ -333,12 +333,17 @@ export class PostsService {
     const viewerId = userId ? BigInt(userId) : undefined;
     const baseWhere = await buildAudienceWhere(this.prisma, userId, 'feed');
 
+    const cleanQ = q.replace(/^#/, '').trim();
+    if (!cleanQ) {
+      return { posts: [] };
+    }
+
     const searchWhere = {
       AND: [
         baseWhere,
         {
           content: {
-            contains: q,
+            contains: cleanQ,
             mode: 'insensitive' as const,
           },
         },
