@@ -329,7 +329,7 @@ async function main() {
     create: {
       id: post2Id,
       userId: alex.id,
-      content: 'Just deployed a new high-performance system architecture. Check out this abstract tech render! 🦀✨',
+      content: 'Just deployed a new high-performance system architecture. Check out this abstract tech render! 🦀✨ #tech #devlife',
       postType: 'post',
       status: 'active',
       audience: 'everyone',
@@ -347,7 +347,7 @@ async function main() {
     create: {
       id: post3Id,
       userId: jane.id,
-      content: 'Exploring modern UI design systems with Tailwind CSS & Glassmorphism. What do you think? (Updated with new specs)',
+      content: 'Exploring modern UI design systems with Tailwind CSS & Glassmorphic interfaces. What do you think? 🎨 #design #tech',
       postType: 'post',
       status: 'active',
       audience: 'everyone',
@@ -365,7 +365,7 @@ async function main() {
     create: {
       id: post4Id,
       userId: sarah.id,
-      content: 'Totally agree with @johndoe! Excited for what is coming next! 🔥',
+      content: 'Totally agree with @johndoe! Excited for what is coming next! 🔥 #flocksocial',
       postType: 'repost',
       repostOfId: post1Id,
       status: 'active',
@@ -380,7 +380,7 @@ async function main() {
     create: {
       id: post5Id,
       userId: michael.id,
-      content: 'Coffee & Code morning setup! Minimalist desk vibes ☕💻',
+      content: 'Coffee & Code morning setup! Minimalist desk vibes ☕💻 #devlife #tech',
       postType: 'post',
       status: 'active',
       audience: 'everyone',
@@ -397,7 +397,7 @@ async function main() {
     create: {
       id: post6Id,
       userId: admin.id,
-      content: 'Welcome to Flock Social! Please check out community guidelines and stay safe online. 🛡️',
+      content: 'Welcome to Flock Social! Please check out community guidelines and stay safe online. 🛡️ #welcome #flocksocial',
       postType: 'post',
       status: 'active',
       audience: 'everyone',
@@ -411,7 +411,7 @@ async function main() {
     create: {
       id: post7Id,
       userId: john.id,
-      content: 'What is your favorite tech stack in 2026? Next.js + NestJS + Prisma is working like a charm. ⚡',
+      content: 'What is your favorite tech stack in 2026? Next.js + NestJS + Prisma is working like a charm. ⚡ #nextjs #typescript #tech',
       postType: 'post',
       status: 'active',
       audience: 'everyone',

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, X, User, Hash, FileText, Sparkles, UserPlus, Heart, MessageSquare, ArrowRight } from 'lucide-react';
+import { Search, X, User, Hash, FileText, Loader2, UserPlus, Heart, MessageSquare, ArrowRight } from 'lucide-react';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
 import { Avatar } from '@/components/ui/avatar';
@@ -22,6 +22,7 @@ interface ExtractedHashtag {
 export default function SearchPage() {
   const token = useAuthStore((s) => s.token);
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeTab, setActiveTab] = useState<SearchTab>('top');
   const [loading, setLoading] = useState(false);
 
@@ -30,9 +31,10 @@ export default function SearchPage() {
   const [hashtags, setHashtags] = useState<ExtractedHashtag[]>([]);
   const [followingState, setFollowingState] = useState<Record<string, boolean>>({});
 
-  // Execute real database user, post & hashtag search when query changes
+  // 400ms Debounce Handler for Search Input
   useEffect(() => {
     if (!query.trim()) {
+      setDebouncedQuery('');
       setUsers([]);
       setPosts([]);
       setHashtags([]);
@@ -41,27 +43,54 @@ export default function SearchPage() {
     }
 
     setLoading(true);
-    const timer = setTimeout(async () => {
-      try {
-        const [searchResults, postResults, hashtagResults] = await Promise.all([
-          userService.searchUsers(query.trim(), token).catch(() => []),
-          postService.searchPosts(query.trim(), token).catch(() => []),
-          postService.searchHashtags(query.trim(), 10, token).catch(() => []),
-        ]);
-        setUsers(searchResults || []);
-        setPosts(postResults || []);
-        setHashtags(hashtagResults || []);
-      } catch (err: any) {
-        setUsers([]);
-        setPosts([]);
-        setHashtags([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 400);
 
     return () => clearTimeout(timer);
-  }, [query, token]);
+  }, [query]);
+
+  // Execute real database user, post & hashtag search when debouncedQuery updates
+  useEffect(() => {
+    if (!debouncedQuery) {
+      setUsers([]);
+      setPosts([]);
+      setHashtags([]);
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchResults = async () => {
+      setLoading(true);
+      try {
+        const [searchResults, postResults, hashtagResults] = await Promise.all([
+          userService.searchUsers(debouncedQuery, token).catch(() => []),
+          postService.searchPosts(debouncedQuery, token).catch(() => []),
+          postService.searchHashtags(debouncedQuery, 10, token).catch(() => []),
+        ]);
+        if (isMounted) {
+          setUsers(searchResults || []);
+          setPosts(postResults || []);
+          setHashtags(hashtagResults || []);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setUsers([]);
+          setPosts([]);
+          setHashtags([]);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchResults();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [debouncedQuery, token]);
 
   const handleToggleFollow = async (username: string) => {
     try {
@@ -111,15 +140,20 @@ export default function SearchPage() {
                 placeholder="Search users by name/handle, keywords, or #hashtags..."
                 className="w-full bg-slate-950 text-slate-100 border border-slate-800 rounded-sm pl-10 pr-9 py-2.5 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500 transition-all"
               />
-              {query && (
+              {loading ? (
+                <Loader2 className="w-4 h-4 text-blue-400 animate-spin absolute right-3 top-2.5" />
+              ) : query ? (
                 <button
                   type="button"
-                  onClick={() => setQuery('')}
+                  onClick={() => {
+                    setQuery('');
+                    setDebouncedQuery('');
+                  }}
                   className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
                 >
                   <X className="w-4 h-4" />
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -149,10 +183,10 @@ export default function SearchPage() {
         <div className="flex flex-col gap-3">
           {loading ? (
             <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center gap-2">
-              <Sparkles className="w-5 h-5 text-blue-400 animate-spin" />
+              <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
               <span className="text-xs text-slate-400 font-medium">Searching database...</span>
             </div>
-          ) : !query.trim() ? (
+          ) : !debouncedQuery ? (
             <div className="bg-slate-900 border border-slate-800 rounded-sm p-12 flex flex-col items-center justify-center text-center gap-2 shadow-sm">
               <Search className="w-8 h-8 text-slate-600 mb-1" />
               <span className="text-sm font-bold text-slate-200">Search Flock Social</span>
@@ -163,7 +197,7 @@ export default function SearchPage() {
           ) : !hasAnyResults && activeTab === 'top' ? (
             <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
               <Search className="w-6 h-6 text-slate-600" />
-              <span className="text-xs font-bold text-slate-300">No results found for "{query}"</span>
+              <span className="text-xs font-bold text-slate-300">No results found for "{debouncedQuery}"</span>
               <span className="text-[11px] text-slate-500 max-w-xs">
                 Try searching for another username (@user), display name, or post keyword.
               </span>
@@ -225,7 +259,7 @@ export default function SearchPage() {
                 ) : activeTab === 'people' ? (
                   <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
                     <User className="w-6 h-6 text-slate-600" />
-                    <span className="text-xs font-bold text-slate-300">No people found matching "{query}"</span>
+                    <span className="text-xs font-bold text-slate-300">No people found matching "{debouncedQuery}"</span>
                   </div>
                 ) : null
               )}
@@ -260,7 +294,7 @@ export default function SearchPage() {
                 ) : activeTab === 'hashtags' ? (
                   <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
                     <Hash className="w-6 h-6 text-slate-600" />
-                    <span className="text-xs font-bold text-slate-300">No hashtags found matching "{query}"</span>
+                    <span className="text-xs font-bold text-slate-300">No hashtags found matching "{debouncedQuery}"</span>
                   </div>
                 ) : null
               )}
@@ -312,7 +346,7 @@ export default function SearchPage() {
                 ) : activeTab === 'posts' ? (
                   <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
                     <FileText className="w-6 h-6 text-slate-600" />
-                    <span className="text-xs font-bold text-slate-300">No posts found matching "{query}"</span>
+                    <span className="text-xs font-bold text-slate-300">No posts found matching "{debouncedQuery}"</span>
                   </div>
                 ) : null
               )}
