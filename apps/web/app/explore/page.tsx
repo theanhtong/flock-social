@@ -83,21 +83,6 @@ export default function ExplorePage() {
   return (
     <SidebarLayout rightPanel={<RightPanel />}>
       <div className="flex flex-col gap-4 font-sans">
-        
-        {/* Explore Featured Banner */}
-        <div className="relative rounded-sm overflow-hidden bg-gradient-to-r from-blue-900/60 via-slate-900 to-indigo-900/60 border border-slate-800 p-6 flex flex-col gap-2 shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-mono text-blue-400 uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Explore Live Community</span>
-          </div>
-          <h1 className="text-xl font-extrabold text-white tracking-tight">
-            Trending Discussions & Creators
-          </h1>
-          <p className="text-xs text-slate-300 max-w-lg leading-relaxed">
-            Real-time feed connected to Flock Social NestJS API and PostgreSQL database.
-          </p>
-        </div>
-
         {loading ? (
           <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center gap-2">
             <Spinner size="md" variant="white" />

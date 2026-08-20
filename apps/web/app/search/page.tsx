@@ -110,7 +110,7 @@ export default function SearchPage() {
   return (
     <SidebarLayout rightPanel={<RightPanel />}>
       <div className="flex flex-col gap-4 font-sans">
-        
+
         {/* Search Header Bar */}
         <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3 shadow-sm">
           <div className="flex items-center justify-between">
@@ -148,11 +148,10 @@ export default function SearchPage() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-t-sm transition-colors border-b-2 capitalize ${
-                  activeTab === tab
+                className={`px-3 py-1.5 text-xs font-semibold rounded-t-sm transition-colors border-b-2 capitalize ${activeTab === tab
                     ? 'text-blue-400 border-blue-500 bg-blue-500/10'
                     : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
-                }`}
+                  }`}
               >
                 {tab}
               </button>
