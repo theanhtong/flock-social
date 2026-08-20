@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, Shield, Users, FileText, MessageSquare, Settings, Bell, Flag, LogOut } from 'lucide-react';
+import { Home, User, Shield, Users, FileText, MessageSquare, Settings, Bell, Flag, LogOut, Compass, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useNotificationStore } from '@/store/notification-store';
 import { useMessageStore } from '@/store/message-store';
@@ -67,6 +67,8 @@ export const Sidebar = () => {
                 {/* Main Navigation */}
                 <nav className="flex flex-col gap-1 font-sans">
                     {navItem('/', <Home className="w-4 h-4" />, 'Home Feed')}
+                    {navItem('/explore', <Compass className="w-4 h-4" />, 'Explore')}
+                    {navItem('/search', <Search className="w-4 h-4" />, 'Search')}
                     {navItem('/profile', <User className="w-4 h-4" />, 'My Profile')}
                     {navItem('/notifications', <Bell className="w-4 h-4" />, 'Notifications', false, unreadCount)}
                     {navItem('/messages', <MessageSquare className="w-4 h-4" />, 'Messages', false, unreadMessageCount)}
