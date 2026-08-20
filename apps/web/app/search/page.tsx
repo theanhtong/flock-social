@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Search, X, User, Hash, FileText, Loader2, UserPlus, Heart, MessageSquare, ArrowRight } from 'lucide-react';
+import { Search, X, User, Hash, FileText, Loader2, ArrowRight } from 'lucide-react';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
 import { Avatar } from '@/components/ui/avatar';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/auth-store';
 import { userService, UserProfile } from '@/services/user-service';
 import { postService, Post } from '@/services/post-service';
+import { PostCard } from '@/components/posts/post-card';
 import { toast } from 'sonner';
 
 type SearchTab = 'top' | 'posts' | 'people' | 'hashtags';
@@ -21,6 +22,7 @@ interface ExtractedHashtag {
 }
 
 function SearchPageContent() {
+  const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
@@ -115,6 +117,14 @@ function SearchPageContent() {
     } catch (err: any) {
       toast.error(err.message || 'Failed to toggle follow status');
     }
+  };
+
+  const handlePostDeleted = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
+
+  const handlePostUpdated = (updated: Post) => {
+    setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
   };
 
   const searchTabs = [
@@ -314,44 +324,22 @@ function SearchPageContent() {
               {/* Posts Section */}
               {(activeTab === 'top' || activeTab === 'posts') && (
                 posts.length > 0 ? (
-                  <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
-                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <div className="flex flex-col gap-3">
+                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5 px-1">
                       <FileText className="w-3.5 h-3.5 text-blue-400" />
                       <span>Posts ({posts.length})</span>
                     </span>
 
                     <div className="flex flex-col gap-3">
                       {posts.map((post) => (
-                        <div
+                        <PostCard
                           key={post.id}
-                          className="p-3.5 rounded-sm bg-slate-950/60 border border-slate-800/80 flex flex-col gap-2"
-                        >
-                          <div className="flex items-center justify-between">
-                            <Link href={`/profile/${post.user.username}`} className="flex items-center gap-2">
-                              <Avatar src={post.user.avatarUrl} name={post.user.displayName || post.user.username} size="sm" />
-                              <div className="flex flex-col">
-                                <span className="text-xs font-bold text-slate-200">
-                                  {post.user.displayName || post.user.username}
-                                </span>
-                                <span className="text-[10px] text-slate-400">@{post.user.username}</span>
-                              </div>
-                            </Link>
-                            <span className="text-[10px] text-slate-500">
-                              {new Date(post.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-300 leading-relaxed">{post.content}</p>
-                          <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
-                            <span className="flex items-center gap-1 hover:text-rose-400 transition-colors">
-                              <Heart className="w-3.5 h-3.5" />
-                              <span>{post.likeCount}</span>
-                            </span>
-                            <span className="flex items-center gap-1 hover:text-blue-400 transition-colors">
-                              <MessageSquare className="w-3.5 h-3.5" />
-                              <span>{post.commentCount}</span>
-                            </span>
-                          </div>
-                        </div>
+                          post={post}
+                          currentUserId={user?.id}
+                          token={token}
+                          onPostUpdated={handlePostUpdated}
+                          onPostDeleted={handlePostDeleted}
+                        />
                       ))}
                     </div>
                   </div>

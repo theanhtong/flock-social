@@ -2,25 +2,30 @@
 
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { Hash, ArrowLeft, Loader2, Sparkles, Heart, MessageSquare, User, FileText } from 'lucide-react';
+import { Hash, ArrowLeft, Loader2, FileText, Share2, Sparkles, TrendingUp } from 'lucide-react';
+import { toast } from 'sonner';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
-import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/auth-store';
 import { postService, Post } from '@/services/post-service';
+import { PostCard } from '@/components/posts/post-card';
 
 interface HashtagPageProps {
   params: Promise<{ tag: string }>;
 }
+
+type HashtagTab = 'top' | 'latest' | 'media';
 
 export default function HashtagPage({ params }: HashtagPageProps) {
   const resolvedParams = use(params);
   const rawTag = resolvedParams.tag || '';
   const cleanTag = decodeURIComponent(rawTag).replace(/^#/, '').trim();
 
+  const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [activeTab, setActiveTab] = useState<HashtagTab>('top');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,41 +49,103 @@ export default function HashtagPage({ params }: HashtagPageProps) {
     fetchHashtagPosts();
   }, [cleanTag, token]);
 
+  const handlePostDeleted = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
+
+  const handlePostUpdated = (updated: Post) => {
+    setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+  };
+
+  const handleShareHashtag = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success(`Copied link for #${cleanTag}`);
+    }
+  };
+
+  const mediaPosts = posts.filter((p) => p.media && p.media.length > 0);
+
+  const displayedPosts = activeTab === 'media' ? mediaPosts : posts;
+
+  const tabs = [
+    { id: 'top', label: 'Top' },
+    { id: 'latest', label: 'Latest' },
+    { id: 'media', label: `Media (${mediaPosts.length})` },
+  ];
+
   return (
     <SidebarLayout rightPanel={<RightPanel />}>
       <div className="flex flex-col gap-4 font-sans">
         
-        {/* Hashtag Banner Header */}
-        <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/search"
-              className="p-2 rounded-sm bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-slate-100 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="p-2.5 rounded-sm bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                <Hash className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col">
-                <h1 className="text-lg font-bold text-slate-100">#{cleanTag}</h1>
+        {/* Sleek Minimalist Hashtag Header */}
+        <div className="bg-slate-900 border border-slate-800 rounded-sm overflow-hidden shadow-sm flex flex-col font-sans">
+          
+          {/* Top Title Bar */}
+          <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/search"
+                className="p-1.5 rounded-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition-colors"
+                title="Back to Search"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold text-slate-100 truncate">#{cleanTag}</h1>
+                  <span className="text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded-sm font-semibold flex items-center gap-1 shrink-0">
+                    <TrendingUp className="w-3 h-3 text-blue-400" />
+                    <span>Trending</span>
+                  </span>
+                </div>
                 <span className="text-xs text-slate-400">
-                  {loading ? 'Counting posts...' : `${posts.length} post${posts.length !== 1 ? 's' : ''} tagged`}
+                  {loading ? 'Fetching posts...' : `${posts.length} post${posts.length !== 1 ? 's' : ''}`}
                 </span>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handleShareHashtag}
+              className="p-2 rounded-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition-colors"
+              title="Share Hashtag"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Sub Navigation Tabs */}
+          <div className="flex items-center px-4 bg-slate-950 border-b border-slate-800 overflow-x-auto gap-1">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as HashtagTab)}
+                  className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
+                      : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Posts Container */}
+        {/* Posts List */}
         <div className="flex flex-col gap-3">
           {loading ? (
             <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center gap-2">
               <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
               <span className="text-xs text-slate-400 font-medium">Fetching #{cleanTag} posts...</span>
             </div>
-          ) : posts.length === 0 ? (
+          ) : displayedPosts.length === 0 ? (
             <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
               <Hash className="w-8 h-8 text-slate-600 mb-1" />
               <span className="text-sm font-bold text-slate-200">No posts found for #{cleanTag}</span>
@@ -92,50 +159,17 @@ export default function HashtagPage({ params }: HashtagPageProps) {
               </Link>
             </div>
           ) : (
-            <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Posts ({posts.length})</span>
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {posts.map((post) => (
-                  <div
-                    key={post.id}
-                    className="p-4 rounded-sm bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors flex flex-col gap-2.5"
-                  >
-                    <div className="flex items-center justify-between">
-                      <Link href={`/profile/${post.user.username}`} className="flex items-center gap-2.5">
-                        <Avatar src={post.user.avatarUrl} name={post.user.displayName || post.user.username} size="sm" />
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-slate-100 hover:text-blue-400 transition-colors">
-                            {post.user.displayName || post.user.username}
-                          </span>
-                          <span className="text-[10px] text-slate-400">@{post.user.username}</span>
-                        </div>
-                      </Link>
-                      <span className="text-[10px] text-slate-500">
-                        {new Date(post.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap">{post.content}</p>
-
-                    <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1 border-t border-slate-800/40 mt-1">
-                      <span className="flex items-center gap-1 hover:text-rose-400 transition-colors cursor-pointer">
-                        <Heart className="w-3.5 h-3.5" />
-                        <span>{post.likeCount}</span>
-                      </span>
-                      <span className="flex items-center gap-1 hover:text-blue-400 transition-colors cursor-pointer">
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        <span>{post.commentCount}</span>
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="flex flex-col gap-3">
+              {displayedPosts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  currentUserId={user?.id}
+                  token={token}
+                  onPostUpdated={handlePostUpdated}
+                  onPostDeleted={handlePostDeleted}
+                />
+              ))}
             </div>
           )}
         </div>
