@@ -10,15 +10,15 @@ RUN apk add --no-cache libc6-compat
 # ==========================================
 FROM base AS deps
 COPY package.json package-lock.json ./
-COPY apps/web/package.json ./apps/web/
-RUN npm ci --workspace=apps/web
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/web/package.json ./apps/web/package.json
+RUN npm install
 
 # ==========================================
 # Builder Stage
 # ==========================================
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY package.json package-lock.json ./
 COPY apps/web ./apps/web
 

@@ -2,6 +2,9 @@
   "name": "flock-social-monorepo",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev": "concurrently -n \"API,WEB\" -c \"cyan,blue\" \"npm run dev --prefix apps/api\" \"npm run dev --prefix apps/web\"",
     "dev:api": "kill-port 4000 || true && npm run dev --prefix apps/api",
