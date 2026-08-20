@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Search, X, User, Hash, FileText, Loader2, UserPlus, Heart, MessageSquare, ArrowRight } from 'lucide-react';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { RightPanel } from '@/components/layout/right-panel';
@@ -19,10 +20,13 @@ interface ExtractedHashtag {
   postsCount: number;
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const token = useAuthStore((s) => s.token);
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get('q') || '';
+
+  const [query, setQuery] = useState(urlQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(urlQuery.trim());
   const [activeTab, setActiveTab] = useState<SearchTab>('top');
   const [loading, setLoading] = useState(false);
 
@@ -30,6 +34,14 @@ export default function SearchPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [hashtags, setHashtags] = useState<ExtractedHashtag[]>([]);
   const [followingState, setFollowingState] = useState<Record<string, boolean>>({});
+
+  // Synchronize URL query param with search input query state
+  useEffect(() => {
+    if (urlQuery) {
+      setQuery(urlQuery);
+      setDebouncedQuery(urlQuery.trim());
+    }
+  }, [urlQuery]);
 
   // 400ms Debounce Handler for Search Input
   useEffect(() => {
@@ -355,5 +367,21 @@ export default function SearchPage() {
         </div>
       </div>
     </SidebarLayout>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <SidebarLayout rightPanel={<RightPanel />}>
+          <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex items-center justify-center">
+            <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+          </div>
+        </SidebarLayout>
+      }
+    >
+      <SearchPageContent />
+    </Suspense>
   );
 }
