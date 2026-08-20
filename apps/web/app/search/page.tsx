@@ -158,7 +158,7 @@ export default function SearchPage() {
       <div className="flex flex-col gap-4 font-sans">
         
         {/* Search Header Bar */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 shadow-sm">
+        <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3 shadow-sm">
           <div className="flex items-center justify-between">
             <h1 className="text-base font-bold text-slate-100 flex items-center gap-2">
               <Search className="w-4 h-4 text-blue-400" />
@@ -174,7 +174,7 @@ export default function SearchPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search posts, people, or hashtags..."
-              className="w-full bg-slate-950 text-slate-100 border border-slate-800 rounded-lg pl-10 pr-9 py-2.5 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500 transition-all"
+              className="w-full bg-slate-950 text-slate-100 border border-slate-800 rounded-sm pl-10 pr-9 py-2.5 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500 transition-all"
             />
             {query && (
               <button
@@ -194,7 +194,7 @@ export default function SearchPage() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-t-lg transition-colors border-b-2 capitalize ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-t-sm transition-colors border-b-2 capitalize ${
                   activeTab === tab
                     ? 'text-blue-400 border-blue-500 bg-blue-500/10'
                     : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
@@ -209,12 +209,12 @@ export default function SearchPage() {
         {/* Results Container */}
         <div className="flex flex-col gap-3">
           {isSearching ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 flex flex-col items-center justify-center gap-2">
+            <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center gap-2">
               <Sparkles className="w-5 h-5 text-blue-400 animate-spin" />
               <span className="text-xs text-slate-400 font-medium">Searching Flock Social...</span>
             </div>
           ) : query && filteredPeople.length === 0 && filteredPosts.length === 0 && filteredHashtags.length === 0 ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 flex flex-col items-center justify-center text-center gap-2">
+            <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
               <Search className="w-6 h-6 text-slate-600" />
               <span className="text-xs font-bold text-slate-300">No results found for "{query}"</span>
               <span className="text-[11px] text-slate-500 max-w-xs">
@@ -225,7 +225,7 @@ export default function SearchPage() {
             <>
               {/* People Section */}
               {(activeTab === 'top' || activeTab === 'people') && filteredPeople.length > 0 && (
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+                <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-blue-400" />
@@ -247,7 +247,7 @@ export default function SearchPage() {
                     {filteredPeople.map((person) => (
                       <div
                         key={person.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors"
+                        className="flex items-center justify-between p-3 rounded-sm bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors"
                       >
                         <Link href={`/profile/${person.username}`} className="flex items-center gap-3 min-w-0 flex-1">
                           <Avatar src={person.avatarUrl} name={person.displayName} size="md" />
@@ -273,7 +273,7 @@ export default function SearchPage() {
 
               {/* Hashtags Section */}
               {(activeTab === 'top' || activeTab === 'hashtags') && filteredHashtags.length > 0 && (
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+                <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
                   <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                     <Hash className="w-3.5 h-3.5 text-blue-400" />
                     <span>Hashtags</span>
@@ -284,13 +284,13 @@ export default function SearchPage() {
                       <Link
                         key={ht.tag}
                         href={`/search?q=%23${ht.tag}`}
-                        className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-blue-500/40 transition-colors flex items-center justify-between"
+                        className="p-3 rounded-sm bg-slate-950/60 border border-slate-800/80 hover:border-blue-500/40 transition-colors flex items-center justify-between"
                       >
                         <div className="flex flex-col">
                           <span className="text-xs font-bold text-blue-400">#{ht.tag}</span>
                           <span className="text-[10px] text-slate-400">{ht.postsCount.toLocaleString()} posts</span>
                         </div>
-                        <span className="text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded-sm">
                           #{ht.trendingRank} Trending
                         </span>
                       </Link>
@@ -301,7 +301,7 @@ export default function SearchPage() {
 
               {/* Posts Section */}
               {(activeTab === 'top' || activeTab === 'posts') && filteredPosts.length > 0 && (
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+                <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
                   <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-blue-400" />
                     <span>Posts</span>
@@ -311,7 +311,7 @@ export default function SearchPage() {
                     {filteredPosts.map((post) => (
                       <div
                         key={post.id}
-                        className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800/80 flex flex-col gap-2"
+                        className="p-3.5 rounded-sm bg-slate-950/60 border border-slate-800/80 flex flex-col gap-2"
                       >
                         <div className="flex items-center justify-between">
                           <Link href={`/profile/${post.author.username}`} className="flex items-center gap-2">

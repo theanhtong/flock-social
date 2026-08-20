@@ -26,7 +26,7 @@ export const Sidebar = () => {
         return (
             <Link
                 href={href}
-                className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${isActive
+                className={`flex items-center justify-between px-3 py-2 rounded-sm text-xs font-medium transition-colors ${isActive
                     ? danger
                         ? 'text-red-400 bg-red-500/10 border border-red-500/20'
                         : 'text-blue-400 bg-blue-500/10 border border-blue-500/20'
@@ -40,7 +40,7 @@ export const Sidebar = () => {
                     <span>{label}</span>
                 </div>
                 {badge && badge > 0 ? (
-                    <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-blue-500 text-white">
+                    <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-sm bg-blue-500 text-white">
                         {badge > 99 ? '99+' : badge}
                     </span>
                 ) : null}
@@ -50,14 +50,14 @@ export const Sidebar = () => {
 
     return (
         <aside className="hidden md:block md:col-span-3 sticky top-4 font-sans">
-            <div className="bg-slate-900 border border-slate-800/80 rounded-xl p-4 flex flex-col gap-4 font-sans shadow-sm">
+            <div className="bg-slate-900 border border-slate-800/80 rounded-sm p-4 flex flex-col gap-4 font-sans shadow-sm">
 
                 {/* Brand Logo Header */}
                 <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-800/60">
                     <Link href="/" className="flex items-center gap-2 text-slate-100 hover:text-white transition-colors">
                         <span className="font-extrabold text-base tracking-tight text-white">flock.</span>
                         {isAdminOrMod && (
-                            <span className="text-[10px] font-mono tracking-wider text-blue-400 uppercase bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-mono tracking-wider text-blue-400 uppercase bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-sm">
                                 {user?.role}
                             </span>
                         )}
@@ -117,7 +117,7 @@ export const Sidebar = () => {
                             type="button"
                             onClick={logout}
                             title="Sign Out"
-                            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors shrink-0"
+                            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-sm transition-colors shrink-0"
                         >
                             <LogOut className="w-4 h-4" />
                         </button>

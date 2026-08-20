@@ -79,7 +79,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 font-sans">
         
         {/* Banner & Avatar Interactive Header Preview */}
-        <div className="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800/80">
+        <div className="relative rounded-sm overflow-hidden bg-slate-950 border border-slate-800/80">
           {/* Banner Preview */}
           <div className="h-28 w-full bg-slate-800 relative group overflow-hidden">
             {bannerUrl ? (
@@ -92,7 +92,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             <button
               type="button"
               onClick={() => setShowUrlInputs(!showUrlInputs)}
-              className="absolute top-2 right-2 p-2 bg-slate-900/80 hover:bg-slate-900 text-slate-200 rounded-lg text-xs flex items-center gap-1.5 backdrop-blur-sm border border-slate-700/60 transition-all shadow-md"
+              className="absolute top-2 right-2 p-2 bg-slate-900/80 hover:bg-slate-900 text-slate-200 rounded-sm text-xs flex items-center gap-1.5 backdrop-blur-sm border border-slate-700/60 transition-all shadow-md"
             >
               <Camera className="w-3.5 h-3.5" />
               <span>Change Media</span>
@@ -119,7 +119,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
         {/* Media URL Accordion Input */}
         {showUrlInputs && (
-          <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-lg flex flex-col gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-sm flex flex-col gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-400">
               <ImageIcon className="w-3.5 h-3.5" />
               <span>Image URLs</span>
@@ -161,7 +161,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             placeholder="Write a brief bio about yourself..."
             rows={3}
             maxLength={maxBioLength}
-            className="w-full bg-slate-950 text-slate-100 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500 resize-none transition-all"
+            className="w-full bg-slate-950 text-slate-100 border border-slate-800 rounded-sm px-3 py-2 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500 resize-none transition-all"
           />
         </div>
 

@@ -90,7 +90,7 @@ export default function ExplorePage() {
       <div className="flex flex-col gap-4 font-sans">
         
         {/* Explore Featured Banner */}
-        <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-blue-900/60 via-slate-900 to-indigo-900/60 border border-slate-800 p-6 flex flex-col gap-2 shadow-sm">
+        <div className="relative rounded-sm overflow-hidden bg-gradient-to-r from-blue-900/60 via-slate-900 to-indigo-900/60 border border-slate-800 p-6 flex flex-col gap-2 shadow-sm">
           <div className="flex items-center gap-2 text-xs font-mono text-blue-400 uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Explore What's Happening</span>
@@ -104,14 +104,14 @@ export default function ExplorePage() {
         </div>
 
         {/* Trending Categories Filter Bar */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 flex items-center gap-2 overflow-x-auto scrollbar-none">
+        <div className="bg-slate-900 border border-slate-800 rounded-sm p-3 flex items-center gap-2 overflow-x-auto scrollbar-none">
           <TrendingUp className="w-4 h-4 text-blue-400 shrink-0 ml-1" />
           {categories.map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors shrink-0 ${
+              className={`px-3 py-1.5 rounded-sm text-xs font-medium capitalize transition-colors shrink-0 ${
                 selectedCategory === cat
                   ? 'bg-blue-500 text-white font-bold shadow'
                   : 'bg-slate-950 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border border-slate-800/80'
@@ -123,7 +123,7 @@ export default function ExplorePage() {
         </div>
 
         {/* Trending Topics Grid */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+        <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
               <Flame className="w-4 h-4 text-orange-400" />
@@ -137,7 +137,7 @@ export default function ExplorePage() {
               <Link
                 key={topic.id}
                 href={`/search?q=%23${topic.hashtag}`}
-                className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-blue-500/50 hover:bg-slate-900/90 transition-all flex items-start justify-between group"
+                className="p-3.5 rounded-sm bg-slate-950/70 border border-slate-800/80 hover:border-blue-500/50 hover:bg-slate-900/90 transition-all flex items-start justify-between group"
               >
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
@@ -149,7 +149,7 @@ export default function ExplorePage() {
                   <span className="text-[10px] text-slate-400">{topic.postsCount.toLocaleString()} posts</span>
                 </div>
                 {topic.isHot && (
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20 flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 rounded-sm text-[9px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20 flex items-center gap-1">
                     <Flame className="w-2.5 h-2.5" />
                     <span>HOT</span>
                   </span>
@@ -160,7 +160,7 @@ export default function ExplorePage() {
         </div>
 
         {/* Who to Follow Section */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+        <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
           <h2 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
             <UserPlus className="w-4 h-4 text-blue-400" />
             <span>Suggested Creators to Follow</span>
@@ -170,7 +170,7 @@ export default function ExplorePage() {
             {suggestedUsers.map((user) => (
               <div
                 key={user.id}
-                className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors"
+                className="p-3.5 rounded-sm bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors"
               >
                 <Link href={`/profile/${user.username}`} className="flex items-center gap-3 min-w-0 flex-1">
                   <Avatar src={user.avatarUrl} name={user.displayName} size="md" />

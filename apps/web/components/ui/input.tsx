@@ -48,7 +48,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={actualType}
             disabled={disabled}
             className={cn(
-              'w-full bg-slate-900 text-slate-100 border border-slate-700 rounded px-3 py-2 text-sm transition-colors duration-150 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500 disabled:opacity-50 disabled:bg-slate-950',
+              'w-full bg-slate-900 text-slate-100 border border-slate-700 rounded-sm px-3 py-2 text-sm transition-colors duration-150 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500 disabled:opacity-50 disabled:bg-slate-950',
               error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
               isPassword && 'pr-9',
               className

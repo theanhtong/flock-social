@@ -61,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Modal Container */}
       <div
         className={cn(
-          'relative w-full bg-slate-900 border border-slate-700 rounded shadow-xl z-10 overflow-hidden flex flex-col max-h-[90vh] text-slate-100 animate-in zoom-in-95 duration-150',
+          'relative w-full bg-slate-900 border border-slate-700 rounded-sm shadow-xl z-10 overflow-hidden flex flex-col max-h-[90vh] text-slate-100 animate-in zoom-in-95 duration-150',
           maxWidthMap[maxWidth]
         )}
       >
@@ -84,7 +84,7 @@ export const Modal: React.FC<ModalProps> = ({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none shrink-0"
+                className="p-1 rounded-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none shrink-0"
                 aria-label="Close modal"
               >
                 <X size={16} />
