@@ -8,142 +8,96 @@ import { RightPanel } from '@/components/layout/right-panel';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/auth-store';
+import { userService, UserProfile } from '@/services/user-service';
+import { postService, Post } from '@/services/post-service';
 import { toast } from 'sonner';
 
 type SearchTab = 'top' | 'posts' | 'people' | 'hashtags';
 
-interface MockUserResult {
-  id: string;
-  username: string;
-  displayName: string;
-  avatarUrl?: string;
-  bio: string;
-  followersCount: number;
-  isFollowing?: boolean;
-}
-
-interface MockPostResult {
-  id: string;
-  author: {
-    username: string;
-    displayName: string;
-    avatarUrl?: string;
-  };
-  content: string;
-  createdAt: string;
-  likeCount: number;
-  commentCount: number;
-}
-
-interface MockHashtagResult {
+interface ExtractedHashtag {
   tag: string;
   postsCount: number;
-  trendingRank: number;
 }
 
 export default function SearchPage() {
   const token = useAuthStore((s) => s.token);
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<SearchTab>('top');
-  const [isSearching, setIsSearching] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Mock initial search datasets
-  const [people, setPeople] = useState<MockUserResult[]>([
-    {
-      id: '1',
-      username: 'tech_insider',
-      displayName: 'Tech Insider',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      bio: 'Latest updates in AI, software engineering & tech trends.',
-      followersCount: 14200,
-      isFollowing: false,
-    },
-    {
-      id: '2',
-      username: 'design_craft',
-      displayName: 'Design Studio',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-      bio: 'UI/UX design systems, dark modes & micro-interactions.',
-      followersCount: 8900,
-      isFollowing: true,
-    },
-    {
-      id: '3',
-      username: 'dev_alex',
-      displayName: 'Alex Rivers',
-      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-      bio: 'Fullstack Next.js developer building flock-social.',
-      followersCount: 3400,
-      isFollowing: false,
-    },
-  ]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [hashtags, setHashtags] = useState<ExtractedHashtag[]>([]);
+  const [followingState, setFollowingState] = useState<Record<string, boolean>>({});
 
-  const [posts, setPosts] = useState<MockPostResult[]>([
-    {
-      id: 'p1',
-      author: {
-        username: 'tech_insider',
-        displayName: 'Tech Insider',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      },
-      content: 'Dockerizing Next.js 15 monorepo with standalone output reduces container image size by 70%! #NextJS #Docker',
-      createdAt: '10m ago',
-      likeCount: 42,
-      commentCount: 8,
-    },
-    {
-      id: 'p2',
-      author: {
-        username: 'dev_alex',
-        displayName: 'Alex Rivers',
-        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-      },
-      content: 'Just launched real-time notifications & moderation dashboard in Flock Social! Check it out. #FlockSocial #DevLog',
-      createdAt: '1h ago',
-      likeCount: 128,
-      commentCount: 24,
-    },
-  ]);
+  // Fetch initial posts to build search corpus & extracted hashtags
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const feed = await postService.getPosts(undefined, token);
+        const allPosts = feed.posts || [];
+        setPosts(allPosts);
 
-  const hashtags: MockHashtagResult[] = [
-    { tag: 'FlockRelease', postsCount: 1540, trendingRank: 1 },
-    { tag: 'NextJS15', postsCount: 890, trendingRank: 2 },
-    { tag: 'Dockerize', postsCount: 640, trendingRank: 3 },
-    { tag: 'TypeScript', postsCount: 420, trendingRank: 4 },
-  ];
+        // Extract real hashtags from real post contents
+        const tagMap: Record<string, number> = {};
+        allPosts.forEach((post) => {
+          const matches = post.content.match(/#[a-zA-Z0-9_]+/g);
+          if (matches) {
+            matches.forEach((m) => {
+              const tagClean = m.replace('#', '').toLowerCase();
+              tagMap[tagClean] = (tagMap[tagClean] || 0) + 1;
+            });
+          }
+        });
 
-  // Simulating debounced search trigger
+        const extracted = Object.entries(tagMap).map(([tag, postsCount]) => ({
+          tag,
+          postsCount,
+        }));
+        extracted.sort((a, b) => b.postsCount - a.postsCount);
+        setHashtags(extracted);
+      } catch (err) {
+        // Silent catch for initial feed
+      }
+    };
+    fetchInitialData();
+  }, [token]);
+
+  // Execute real database user search when query changes
   useEffect(() => {
     if (!query.trim()) {
-      setIsSearching(false);
+      setUsers([]);
+      setLoading(false);
       return;
     }
-    setIsSearching(true);
-    const timer = setTimeout(() => {
-      setIsSearching(false);
-    }, 250);
+
+    setLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const searchResults = await userService.searchUsers(query, token);
+        setUsers(searchResults || []);
+      } catch (err: any) {
+        setUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, token]);
 
-  const toggleFollowUser = (id: string) => {
-    setPeople((prev) =>
-      prev.map((user) => {
-        if (user.id === id) {
-          const nextState = !user.isFollowing;
-          toast.success(nextState ? `Following @${user.username}` : `Unfollowed @${user.username}`);
-          return { ...user, isFollowing: nextState };
-        }
-        return user;
-      })
-    );
+  const handleToggleFollow = async (username: string) => {
+    try {
+      const res = await userService.toggleFollow(username, token);
+      setFollowingState((prev) => ({
+        ...prev,
+        [username]: res.isFollowing,
+      }));
+      toast.success(res.isFollowing ? `Following @${username}` : `Unfollowed @${username}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to toggle follow status');
+    }
   };
-
-  const filteredPeople = people.filter(
-    (p) =>
-      p.username.toLowerCase().includes(query.toLowerCase()) ||
-      p.displayName.toLowerCase().includes(query.toLowerCase()) ||
-      p.bio.toLowerCase().includes(query.toLowerCase())
-  );
 
   const filteredPosts = posts.filter((p) =>
     p.content.toLowerCase().includes(query.toLowerCase())
@@ -164,7 +118,7 @@ export default function SearchPage() {
               <Search className="w-4 h-4 text-blue-400" />
               <span>Global Search</span>
             </h1>
-            <span className="text-xs text-slate-500 font-mono">Real-time</span>
+            <span className="text-xs text-slate-500 font-mono">Live API</span>
           </div>
 
           <div className="relative">
@@ -173,7 +127,7 @@ export default function SearchPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search posts, people, or hashtags..."
+              placeholder="Search users by name/handle, keywords, or #hashtags..."
               className="w-full bg-slate-950 text-slate-100 border border-slate-800 rounded-sm pl-10 pr-9 py-2.5 text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500 transition-all"
             />
             {query && (
@@ -208,28 +162,28 @@ export default function SearchPage() {
 
         {/* Results Container */}
         <div className="flex flex-col gap-3">
-          {isSearching ? (
+          {loading ? (
             <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center gap-2">
               <Sparkles className="w-5 h-5 text-blue-400 animate-spin" />
-              <span className="text-xs text-slate-400 font-medium">Searching Flock Social...</span>
+              <span className="text-xs text-slate-400 font-medium">Searching database...</span>
             </div>
-          ) : query && filteredPeople.length === 0 && filteredPosts.length === 0 && filteredHashtags.length === 0 ? (
+          ) : query && users.length === 0 && filteredPosts.length === 0 && filteredHashtags.length === 0 ? (
             <div className="bg-slate-900 border border-slate-800 rounded-sm p-8 flex flex-col items-center justify-center text-center gap-2">
               <Search className="w-6 h-6 text-slate-600" />
               <span className="text-xs font-bold text-slate-300">No results found for "{query}"</span>
               <span className="text-[11px] text-slate-500 max-w-xs">
-                Try searching for another keyword, username (@user), or trending hashtag (#tag).
+                Try searching for another username (@user), display name, or post content.
               </span>
             </div>
           ) : (
             <>
-              {/* People Section */}
-              {(activeTab === 'top' || activeTab === 'people') && filteredPeople.length > 0 && (
+              {/* Real Database Users Section */}
+              {(activeTab === 'top' || activeTab === 'people') && users.length > 0 && (
                 <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-blue-400" />
-                      <span>People</span>
+                      <span>People ({users.length})</span>
                     </span>
                     {activeTab === 'top' && (
                       <button
@@ -244,34 +198,39 @@ export default function SearchPage() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    {filteredPeople.map((person) => (
-                      <div
-                        key={person.id}
-                        className="flex items-center justify-between p-3 rounded-sm bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors"
-                      >
-                        <Link href={`/profile/${person.username}`} className="flex items-center gap-3 min-w-0 flex-1">
-                          <Avatar src={person.avatarUrl} name={person.displayName} size="md" />
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-xs font-bold text-slate-100 truncate">{person.displayName}</span>
-                            <span className="text-[10px] text-slate-400 truncate">@{person.username}</span>
-                            <p className="text-[11px] text-slate-300 truncate mt-0.5">{person.bio}</p>
-                          </div>
-                        </Link>
-                        <Button
-                          variant={person.isFollowing ? 'outline' : 'primary'}
-                          size="sm"
-                          onClick={() => toggleFollowUser(person.id)}
-                          className="shrink-0 text-xs py-1"
+                    {users.map((u) => {
+                      const isFollowing = followingState[u.username] ?? false;
+                      return (
+                        <div
+                          key={u.id}
+                          className="flex items-center justify-between p-3 rounded-sm bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors"
                         >
-                          {person.isFollowing ? 'Following' : 'Follow'}
-                        </Button>
-                      </div>
-                    ))}
+                          <Link href={`/profile/${u.username}`} className="flex items-center gap-3 min-w-0 flex-1">
+                            <Avatar src={u.avatarUrl} name={u.displayName || u.username} size="md" />
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-bold text-slate-100 truncate">
+                                {u.displayName || u.username}
+                              </span>
+                              <span className="text-[10px] text-slate-400 truncate">@{u.username}</span>
+                              {u.bio && <p className="text-[11px] text-slate-300 truncate mt-0.5">{u.bio}</p>}
+                            </div>
+                          </Link>
+                          <Button
+                            variant={isFollowing ? 'outline' : 'primary'}
+                            size="sm"
+                            onClick={() => handleToggleFollow(u.username)}
+                            className="shrink-0 text-xs py-1"
+                          >
+                            {isFollowing ? 'Following' : 'Follow'}
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {/* Hashtags Section */}
+              {/* Real Extracted Hashtags Section */}
               {(activeTab === 'top' || activeTab === 'hashtags') && filteredHashtags.length > 0 && (
                 <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
                   <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
@@ -280,7 +239,7 @@ export default function SearchPage() {
                   </span>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {filteredHashtags.map((ht) => (
+                    {filteredHashtags.map((ht, idx) => (
                       <Link
                         key={ht.tag}
                         href={`/search?q=%23${ht.tag}`}
@@ -288,10 +247,10 @@ export default function SearchPage() {
                       >
                         <div className="flex flex-col">
                           <span className="text-xs font-bold text-blue-400">#{ht.tag}</span>
-                          <span className="text-[10px] text-slate-400">{ht.postsCount.toLocaleString()} posts</span>
+                          <span className="text-[10px] text-slate-400">{ht.postsCount} post{ht.postsCount > 1 ? 's' : ''}</span>
                         </div>
                         <span className="text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded-sm">
-                          #{ht.trendingRank} Trending
+                          #{idx + 1} Trending
                         </span>
                       </Link>
                     ))}
@@ -299,12 +258,12 @@ export default function SearchPage() {
                 </div>
               )}
 
-              {/* Posts Section */}
+              {/* Real Database Posts Section */}
               {(activeTab === 'top' || activeTab === 'posts') && filteredPosts.length > 0 && (
                 <div className="bg-slate-900 border border-slate-800 rounded-sm p-4 flex flex-col gap-3">
                   <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Posts</span>
+                    <span>Posts ({filteredPosts.length})</span>
                   </span>
 
                   <div className="flex flex-col gap-3">
@@ -314,14 +273,18 @@ export default function SearchPage() {
                         className="p-3.5 rounded-sm bg-slate-950/60 border border-slate-800/80 flex flex-col gap-2"
                       >
                         <div className="flex items-center justify-between">
-                          <Link href={`/profile/${post.author.username}`} className="flex items-center gap-2">
-                            <Avatar src={post.author.avatarUrl} name={post.author.displayName} size="sm" />
+                          <Link href={`/profile/${post.user.username}`} className="flex items-center gap-2">
+                            <Avatar src={post.user.avatarUrl} name={post.user.displayName || post.user.username} size="sm" />
                             <div className="flex flex-col">
-                              <span className="text-xs font-bold text-slate-200">{post.author.displayName}</span>
-                              <span className="text-[10px] text-slate-400">@{post.author.username}</span>
+                              <span className="text-xs font-bold text-slate-200">
+                                {post.user.displayName || post.user.username}
+                              </span>
+                              <span className="text-[10px] text-slate-400">@{post.user.username}</span>
                             </div>
                           </Link>
-                          <span className="text-[10px] text-slate-500">{post.createdAt}</span>
+                          <span className="text-[10px] text-slate-500">
+                            {new Date(post.createdAt).toLocaleDateString()}
+                          </span>
                         </div>
                         <p className="text-xs text-slate-300 leading-relaxed">{post.content}</p>
                         <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
