@@ -65,12 +65,12 @@ function MessagesPageContent() {
       childrenSpan="md:col-span-3"
       rightPanelSpan="md:col-span-6"
       rightPanel={
-        <div className={`${!activeConversationId ? 'hidden md:flex' : 'flex'} flex-col h-[calc(90vh-100px)] min-h-0 bg-slate-900 border border-slate-800 rounded overflow-hidden shadow-xl`}>
+        <div className={`${!activeConversationId ? 'hidden md:flex' : 'flex'} flex-col h-[calc(90vh-100px)] min-h-0 bg-slate-900 border border-slate-800 rounded-sm overflow-hidden shadow-xl`}>
           <ChatWindow />
         </div>
       }
     >
-      <div className={`${activeConversationId ? 'hidden md:flex' : 'flex'} flex-col h-[calc(90vh-100px)] min-h-0 bg-slate-900 border border-slate-800 rounded overflow-hidden shadow-xl`}>
+      <div className={`${activeConversationId ? 'hidden md:flex' : 'flex'} flex-col h-[calc(90vh-100px)] min-h-0 bg-slate-900 border border-slate-800 rounded-sm overflow-hidden shadow-xl`}>
         <ConversationList />
       </div>
 
