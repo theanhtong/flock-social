@@ -59,13 +59,23 @@ export interface UpdatePostPayload {
 export const postService = {
   getPosts: async (
     cursor?: string,
-    token?: string | null
+    token?: string | null,
+    search?: string
   ): Promise<FeedResponse> => {
     const params = new URLSearchParams();
     if (cursor) params.set('cursor', cursor);
+    if (search) params.set('search', search);
 
     const queryStr = params.toString() ? `?${params.toString()}` : '';
     return apiClient.get<FeedResponse>(`/posts${queryStr}`, { token });
+  },
+
+  searchPosts: async (
+    query: string,
+    token?: string | null
+  ): Promise<Post[]> => {
+    const res = await apiClient.get<FeedResponse>(`/posts?search=${encodeURIComponent(query)}`, { token });
+    return res.posts || [];
   },
 
   getUserPosts: async (

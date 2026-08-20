@@ -237,6 +237,7 @@ export class PostsService {
     userId?: string,
     cursor?: string,
     limit = 10,
+    search?: string,
   ): Promise<{ posts: PostDto[]; nextCursor?: string }> {
     const viewerId = userId ? BigInt(userId) : undefined;
     const baseWhere = await buildAudienceWhere(this.prisma, userId, 'feed');
@@ -244,7 +245,7 @@ export class PostsService {
     let viewedPostIds: bigint[] = [];
 
     // Filter out posts that user has already seen (stored in Redis) on initial load
-    if (userId && !cursor) {
+    if (userId && !cursor && !search) {
       const seenStrList = await this.redisService.smembers(`user:seen:${userId}`);
       if (seenStrList && seenStrList.length > 0) {
         viewedPostIds = seenStrList.map((idStr) => BigInt(idStr));
@@ -261,6 +262,21 @@ export class PostsService {
       };
     }
 
+    if (search && search.trim()) {
+      const searchClean = search.trim();
+      whereCondition = {
+        AND: [
+          baseWhere,
+          {
+            content: {
+              contains: searchClean,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      };
+    }
+
     let rows = await this.prisma.post.findMany({
       where: whereCondition,
       orderBy: { id: 'desc' },
@@ -271,7 +287,7 @@ export class PostsService {
     });
 
     // Fallback: If all available posts have been seen, reset Redis seen cache & return fresh feed
-    if (rows.length === 0 && viewedPostIds.length > 0) {
+    if (rows.length === 0 && viewedPostIds.length > 0 && !search) {
       const redisKey = `user:seen:${userId}`;
       await this.redisService.del(redisKey).catch(() => {});
 
@@ -292,7 +308,7 @@ export class PostsService {
       nextCursor = pageRows[pageRows.length - 1].id.toString();
     }
 
-    if (userId && pageRows.length > 0) {
+    if (userId && pageRows.length > 0 && !search) {
       const redisKey = `user:seen:${userId}`;
       const postIdsStr = pageRows.map((p) => p.id.toString());
       await this.redisService.sadd(redisKey, ...postIdsStr).catch(() => {});
@@ -306,8 +322,9 @@ export class PostsService {
     userId?: string,
     cursor?: string,
     limit = 20,
+    search?: string,
   ): Promise<{ posts: PostDto[]; nextCursor?: string }> {
-    return this.getHomeFeed(userId, cursor, limit);
+    return this.getHomeFeed(userId, cursor, limit, search);
   }
 
   async getUserPosts(

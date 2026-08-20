@@ -30,13 +30,12 @@ export default function SearchPage() {
   const [hashtags, setHashtags] = useState<ExtractedHashtag[]>([]);
   const [followingState, setFollowingState] = useState<Record<string, boolean>>({});
 
-  // Fetch initial posts to build search corpus & extracted hashtags
+  // Fetch initial posts to build hashtag corpus
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         const feed = await postService.getPosts(undefined, token);
         const allPosts = feed.posts || [];
-        setPosts(allPosts);
 
         // Extract real hashtags from real post contents
         const tagMap: Record<string, number> = {};
@@ -63,10 +62,11 @@ export default function SearchPage() {
     fetchInitialData();
   }, [token]);
 
-  // Execute real database user search when query changes
+  // Execute real database user & post search when query changes
   useEffect(() => {
     if (!query.trim()) {
       setUsers([]);
+      setPosts([]);
       setLoading(false);
       return;
     }
@@ -74,10 +74,15 @@ export default function SearchPage() {
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const searchResults = await userService.searchUsers(query, token);
+        const [searchResults, postResults] = await Promise.all([
+          userService.searchUsers(query.trim(), token).catch(() => []),
+          postService.searchPosts(query.trim(), token).catch(() => []),
+        ]);
         setUsers(searchResults || []);
+        setPosts(postResults || []);
       } catch (err: any) {
         setUsers([]);
+        setPosts([]);
       } finally {
         setLoading(false);
       }
@@ -99,9 +104,7 @@ export default function SearchPage() {
     }
   };
 
-  const filteredPosts = query.trim()
-    ? posts.filter((p) => p.content.toLowerCase().includes(query.toLowerCase()))
-    : [];
+  const filteredPosts = query.trim() ? posts : [];
 
   const filteredHashtags = query.trim()
     ? hashtags.filter((h) => h.tag.toLowerCase().includes(query.toLowerCase().replace('#', '')))

@@ -36,8 +36,9 @@ export class PostsController {
     @CurrentUser('id') userId?: string,
     @Query('cursor') cursor?: string,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit?: number,
+    @Query('search') search?: string,
   ) {
-    return this.postsService.getPosts(userId, cursor, limit);
+    return this.postsService.getPosts(userId, cursor, limit, search);
   }
 
   @Get('bookmarks')
