@@ -24,6 +24,9 @@ jobs:
       - name: Install Monorepo Dependencies
         run: npm ci
 
+      - name: Generate Prisma Client
+        run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+
       - name: Typecheck API (NestJS)
         run: npx tsc --noEmit --project apps/api/tsconfig.json
 
@@ -51,6 +54,7 @@ jobs:
       - name: Install Dependencies & Build Packages
         run: |
           npm ci
+          npx prisma generate --schema=apps/api/prisma/schema.prisma
           npm run build
 
       - name: Set up Docker Buildx
