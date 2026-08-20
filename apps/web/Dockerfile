@@ -3,22 +3,22 @@
 # ==========================================
 FROM node:20-alpine AS base
 WORKDIR /app
-RUN apk add --no-cache libc6-compat python3 make g++
+RUN apk add --no-cache libc6-compat
 
 # ==========================================
 # Dependencies Stage
 # ==========================================
 FROM base AS deps
 COPY package.json package-lock.json ./
-COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
-RUN npm install
+RUN npm install --workspace=apps/web
 
 # ==========================================
 # Builder Stage
 # ==========================================
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY package.json package-lock.json ./
 COPY apps/web ./apps/web
 
