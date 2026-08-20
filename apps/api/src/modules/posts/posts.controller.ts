@@ -41,6 +41,17 @@ export class PostsController {
     return this.postsService.getPosts(userId, cursor, limit, search);
   }
 
+  @Get('search/query')
+  @UseGuards(GuestGuard)
+  searchPosts(
+    @Query('q') query: string,
+    @Query('cursor') cursor?: string,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+    @CurrentUser('id') userId?: string,
+  ) {
+    return this.postsService.searchPosts(query, cursor, limit, userId);
+  }
+
   @Get('bookmarks')
   @UseGuards(JwtAuthGuard)
   getUserBookmarks(@CurrentUser('id') userId: string) {

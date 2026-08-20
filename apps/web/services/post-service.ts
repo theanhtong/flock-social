@@ -74,7 +74,8 @@ export const postService = {
     query: string,
     token?: string | null
   ): Promise<Post[]> => {
-    const res = await apiClient.get<FeedResponse>(`/posts?search=${encodeURIComponent(query)}`, { token });
+    if (!query || !query.trim()) return [];
+    const res = await apiClient.get<FeedResponse>(`/posts/search/query?q=${encodeURIComponent(query.trim())}`, { token });
     return res.posts || [];
   },
 

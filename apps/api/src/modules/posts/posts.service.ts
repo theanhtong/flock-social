@@ -270,7 +270,7 @@ export class PostsService {
           {
             content: {
               contains: searchClean,
-              mode: 'insensitive',
+              mode: 'insensitive' as const,
             },
           },
         ],
@@ -316,6 +316,55 @@ export class PostsService {
     }
 
     return { posts: pageRows.map((p) => formatPost(p, userId)), nextCursor };
+  }
+
+  async searchPosts(
+    query?: string,
+    cursor?: string,
+    limit = 20,
+    userId?: string,
+  ): Promise<{ posts: PostDto[]; nextCursor?: string }> {
+    const q = query?.trim();
+    if (!q) {
+      return { posts: [] };
+    }
+
+    const maxLimit = Math.min(limit, 50);
+    const viewerId = userId ? BigInt(userId) : undefined;
+    const baseWhere = await buildAudienceWhere(this.prisma, userId, 'feed');
+
+    const searchWhere = {
+      AND: [
+        baseWhere,
+        {
+          content: {
+            contains: q,
+            mode: 'insensitive' as const,
+          },
+        },
+      ],
+    };
+
+    const rows = await this.prisma.post.findMany({
+      where: searchWhere,
+      orderBy: { id: 'desc' },
+      take: maxLimit + 1,
+      cursor: cursor ? { id: BigInt(cursor) } : undefined,
+      skip: cursor ? 1 : 0,
+      include: postInclude(viewerId),
+    });
+
+    let nextCursor: string | undefined = undefined;
+    const pageRows = [...rows];
+    if (pageRows.length > maxLimit) {
+      pageRows.pop();
+      nextCursor = pageRows[pageRows.length - 1].id.toString();
+    }
+
+    return {
+      posts: pageRows.map((p) => formatPost(p, userId)),
+      nextCursor,
+    };
   }
 
   async getPosts(
