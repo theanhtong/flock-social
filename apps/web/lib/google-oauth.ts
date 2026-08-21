@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 
 /**
  * Official Google Identity Services (GSI) & OAuth 2.0 Popup Window Handler
+ * (STRICT PRODUCTION MODE - NO MOCK DATA)
  */
 export function triggerGoogleOAuthPopup(
   onSuccess: (token: string, userInfo?: { email: string; name: string; picture: string }) => void,
@@ -13,24 +14,17 @@ export function triggerGoogleOAuthPopup(
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-  // If no custom Google Client ID is configured in .env.local yet
-  if (!clientId || clientId.includes('demo') || clientId.includes('flocksocial')) {
-    toast.info(
-      'Chưa cấu hình NEXT_PUBLIC_GOOGLE_CLIENT_ID trong apps/web/.env.local. Đang tự động kết nối bằng tài khoản Google đã xác minh...',
-      { duration: 4000 }
+  // STRICT REQUIREMENT: If NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured in .env.local, refuse to execute & inform user
+  if (!clientId || clientId.trim() === '' || clientId.includes('demo') || clientId.includes('flocksocial')) {
+    toast.error(
+      'Chưa cấu hình NEXT_PUBLIC_GOOGLE_CLIENT_ID trong apps/web/.env.local. Vui lòng thêm Google OAuth Client ID từ Google Cloud Console để mở popup Google thật!',
+      { duration: 5000 }
     );
-
-    setTimeout(() => {
-      onSuccess(`google_oauth_token_${Date.now()}`, {
-        email: 'theanhtong022@gmail.com',
-        name: 'Anh Tong',
-        picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      });
-    }, 800);
+    if (onError) onError('MISSING_GOOGLE_CLIENT_ID');
     return;
   }
 
-  // Open Official Google OAuth Account Selector Popup Window
+  // Open Official Google OAuth Account Selector Popup Window directly with Google's servers
   const width = 500;
   const height = 620;
   const left = window.screenX + (window.outerWidth - width) / 2;
@@ -52,6 +46,7 @@ export function triggerGoogleOAuthPopup(
   );
 
   if (!popup) {
+    toast.error('Trình duyệt đã chặn cửa sổ Popup Google. Vui lòng cho phép Popups!');
     if (onError) onError('Popup blocked by browser');
     return;
   }

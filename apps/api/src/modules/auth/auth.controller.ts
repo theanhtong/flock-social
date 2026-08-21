@@ -66,13 +66,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Google OAuth login' })
   @ApiResponse({ status: 200, description: 'Success' })
   async googleAuth(
-    @Body()
-    dto: GoogleAuthDto & {
-      userInfo?: { email: string; name?: string; picture?: string };
-    },
+    @Body() dto: GoogleAuthDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.googleAuth(dto.idToken, res, dto.userInfo);
+    return this.authService.googleAuth(dto.idToken, res);
   }
 
   @Post('login')

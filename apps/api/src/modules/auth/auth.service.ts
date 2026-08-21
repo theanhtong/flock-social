@@ -183,37 +183,30 @@ export class AuthService {
   async googleAuth(
     idToken: string,
     res: Response,
-    userInfoObj?: { email: string; name?: string; picture?: string },
   ): Promise<AuthResponseDto> {
     let email: string;
     let name: string;
     let picture: string | undefined;
 
-    if (userInfoObj && userInfoObj.email) {
-      email = userInfoObj.email;
-      name = userInfoObj.name || email.split('@')[0];
-      picture = userInfoObj.picture;
-    } else {
-      try {
-        // strictly verify real google oauth token
-        const googleClientId =
-          this.configService.get<string>('GOOGLE_CLIENT_ID');
-        const ticket = await this.googleClient.verifyIdToken({
-          idToken,
-          audience: googleClientId || undefined,
-        });
-        const payload = ticket.getPayload();
-        if (!payload || !payload.email) {
-          throw new BadRequestException('Invalid Google ID Token');
-        }
-        email = payload.email;
-        name = payload.name || payload.email.split('@')[0];
-        picture = payload.picture;
-      } catch (err: any) {
-        throw new BadRequestException(
-          `Google authentication failed: ${err.message || 'Invalid token'}`,
-        );
+    try {
+      // strictly verify real google oauth token via google auth library
+      const googleClientId =
+        this.configService.get<string>('GOOGLE_CLIENT_ID');
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken,
+        audience: googleClientId || undefined,
+      });
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email) {
+        throw new BadRequestException('Invalid Google ID Token');
       }
+      email = payload.email;
+      name = payload.name || payload.email.split('@')[0];
+      picture = payload.picture;
+    } catch (err: any) {
+      throw new BadRequestException(
+        `Google authentication failed: ${err.message || 'Invalid token'}`,
+      );
     }
 
     let user = await this.prisma.user.findUnique({ where: { email } });
