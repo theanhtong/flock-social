@@ -8,6 +8,7 @@ import { RegisterModal } from "@/components/auth/register-modal";
 import { GoogleOAuthModal } from "@/components/auth/google-oauth-modal";
 import { Header } from "@/components/layout/header";
 import { RestrictionModal } from "@/components/restriction-modal";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-[#0f172a] text-slate-100 font-sans"
         suppressHydrationWarning
       >
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <AuthInitializer />
         <Header />
         <div className="flex-1 flex flex-col">

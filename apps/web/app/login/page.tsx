@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { triggerGoogleOAuthPopup } from '@/lib/google-oauth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -50,7 +51,28 @@ export default function LoginPage() {
   const openGoogleModal = useAuthStore((s) => s.openGoogleModal);
 
   const handleGoogleLogin = () => {
-    openGoogleModal();
+    setGoogleLoading(true);
+    triggerGoogleOAuthPopup(
+      async (idToken, userInfo) => {
+        try {
+          await googleAuth(idToken, userInfo);
+          const loggedUser = useAuthStore.getState().user;
+          if (loggedUser && (loggedUser.role === 'admin' || loggedUser.role === 'moderator')) {
+            router.push('/dashboard');
+          } else {
+            router.push('/');
+          }
+        } catch (err) {
+          // Handled by store toasts
+        } finally {
+          setGoogleLoading(false);
+        }
+      },
+      (err) => {
+        setGoogleLoading(false);
+        openGoogleModal();
+      }
+    );
   };
 
   return (

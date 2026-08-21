@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { triggerGoogleOAuthPopup } from '@/lib/google-oauth';
 
 export const LoginModal: React.FC = () => {
   const router = useRouter();
@@ -55,7 +56,27 @@ export const LoginModal: React.FC = () => {
   const openGoogleModal = useAuthStore((s) => s.openGoogleModal);
 
   const handleGoogleLogin = () => {
-    openGoogleModal();
+    setGoogleLoading(true);
+    triggerGoogleOAuthPopup(
+      async (idToken, userInfo) => {
+        try {
+          await googleAuth(idToken, userInfo);
+          closeLoginModal();
+          const loggedUser = useAuthStore.getState().user;
+          if (loggedUser && (loggedUser.role === 'admin' || loggedUser.role === 'moderator')) {
+            router.push('/dashboard');
+          }
+        } catch (err) {
+          // Handled by store toasts
+        } finally {
+          setGoogleLoading(false);
+        }
+      },
+      (err) => {
+        setGoogleLoading(false);
+        openGoogleModal();
+      }
+    );
   };
 
   return (

@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { OtpInput } from '@/components/ui/otp-input';
 
+import { triggerGoogleOAuthPopup } from '@/lib/google-oauth';
+
 export const RegisterModal: React.FC = () => {
   const isRegisterModalOpen = useAuthStore((s) => s.isRegisterModalOpen);
   const closeRegisterModal = useAuthStore((s) => s.closeRegisterModal);
@@ -87,7 +89,23 @@ export const RegisterModal: React.FC = () => {
   const openGoogleModal = useAuthStore((s) => s.openGoogleModal);
 
   const handleGoogleAuth = () => {
-    openGoogleModal();
+    setGoogleLoading(true);
+    triggerGoogleOAuthPopup(
+      async (idToken, userInfo) => {
+        try {
+          await googleAuth(idToken, userInfo);
+          handleClose();
+        } catch (err) {
+          // Handled by store toasts
+        } finally {
+          setGoogleLoading(false);
+        }
+      },
+      (err) => {
+        setGoogleLoading(false);
+        openGoogleModal();
+      }
+    );
   };
 
   const handleResendOtp = async () => {
