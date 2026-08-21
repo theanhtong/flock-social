@@ -7,7 +7,6 @@ import {
   VolumeX,
   Inbox,
   MoreVertical,
-  Trash2,
 } from 'lucide-react';
 import { useMessageStore, FolderType } from '@/store/message-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -26,7 +25,6 @@ export function ConversationList() {
     activeConversationId,
     setActiveConversationId,
     setCreateGroupOpen,
-    clearHistory,
   } = useMessageStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -110,7 +108,7 @@ export function ConversationList() {
       {/* Header & Controls */}
       <div className="p-4 border-b border-slate-800 space-y-3 shrink-0">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+          <h1 className="text-base font-bold text-slate-100 flex items-center gap-2">
             <span>Messages</span>
           </h1>
           <div className="flex items-center gap-1.5">
@@ -119,7 +117,7 @@ export function ConversationList() {
               size="sm"
               onClick={() => setCreateGroupOpen(true)}
               title="Create Group Chat"
-              className="text-xs px-2.5 h-8 border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200"
+              className="text-xs px-2.5 h-8 border-slate-800 bg-slate-950/80 hover:bg-slate-800 text-slate-200"
             >
               <Users className="w-3.5 h-3.5 mr-1" />
               Group
@@ -135,43 +133,46 @@ export function ConversationList() {
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-950 border border-slate-800 rounded-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
           />
-        </div>
-
-        {/* Folder Tabs */}
-        <div className="flex items-center p-1 bg-slate-950 rounded-sm border border-slate-800 gap-1 text-xs">
-          {(['main', 'pending'] as FolderType[]).map((folder) => {
-            const isActive = activeFolder === folder;
-            const count = conversations[folder]?.reduce((acc, c) => acc + (c.unreadCount || 0), 0) || 0;
-            const label = folder === 'main' ? 'Main' : 'Pending';
-
-            return (
-              <button
-                key={folder}
-                onClick={() => setActiveFolder(folder)}
-                className={`flex-1 py-1 px-2 rounded-sm font-medium text-center transition-all capitalize flex items-center justify-center gap-1.5 cursor-pointer ${isActive
-                  ? 'bg-blue-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                  }`}
-              >
-                <span>{label}</span>
-                {count > 0 && (
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-blue-500/20 text-blue-400'
-                      }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
         </div>
       </div>
 
-      {/* Conversation List Feed */}
-      <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-850/50">
+      {/* Folder Tabs (Styled identically to Notifications Page) */}
+      <div className="flex items-center px-4 bg-slate-950 border-b border-slate-800 overflow-x-auto gap-1 shrink-0">
+        {(['main', 'pending'] as FolderType[]).map((folder) => {
+          const isActive = activeFolder === folder;
+          const count = conversations[folder]?.reduce((acc, c) => acc + (c.unreadCount || 0), 0) || 0;
+          const label = folder === 'main' ? 'Main' : 'Pending';
+
+          return (
+            <button
+              key={folder}
+              type="button"
+              onClick={() => setActiveFolder(folder)}
+              className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                isActive
+                  ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+              }`}
+            >
+              <span>{label}</span>
+              {count > 0 && (
+                <span
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                    isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-400'
+                  }`}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Conversation List Feed (Soft, soothing borders & selection highlight) */}
+      <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-800/40">
         {isLoadingConversations && currentList.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-500 animate-pulse">
             Loading conversations...
@@ -200,8 +201,11 @@ export function ConversationList() {
                     setActiveConversationId(conv.id);
                   }
                 }}
-                className={`group/conv relative p-3 flex items-center gap-3 cursor-pointer transition-all hover:bg-slate-800/60 ${isSelected ? 'bg-blue-950/40 border-l-4 border-blue-500 pl-2' : ''
-                  }`}
+                className={`group/conv relative p-3 flex items-center gap-3 cursor-pointer transition-all hover:bg-slate-800/40 ${
+                  isSelected
+                    ? 'bg-blue-500/10 border-l-2 border-blue-500'
+                    : 'hover:bg-slate-800/30'
+                }`}
               >
                 <div className="relative flex-shrink-0">
                   <Avatar src={avatar} name={title} size="md" />
@@ -221,6 +225,7 @@ export function ConversationList() {
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <span className="text-[10px] text-slate-500">{timeStr}</span>
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveMenuConvId(isMenuOpen ? null : conv.id);
@@ -235,43 +240,25 @@ export function ConversationList() {
 
                   <div className="flex items-center justify-between text-[11px]">
                     <p
-                      className={`truncate flex-1 ${hasUnread ? 'font-semibold text-slate-100' : 'text-slate-400'
-                        }`}
+                      className={`truncate flex-1 ${
+                        hasUnread ? 'font-semibold text-slate-100' : 'text-slate-400'
+                      }`}
                     >
-                      {conv.lastMessage?.isUnsent
-                        ? 'Message unsent'
-                        : conv.lastMessage?.content || conv.lastMessage?.mediaUrls?.length
-                          ? conv.lastMessage.content || 'Media attachment'
-                          : subtitle}
+                      {conv.lastMessage ? (
+                        <span>
+                          {conv.lastMessage.sender?.id === currentUser?.id ? 'You: ' : ''}
+                          {conv.lastMessage.content || 'Sent an attachment'}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 italic">{subtitle}</span>
+                      )}
                     </p>
 
                     {hasUnread && (
-                      <span className="ml-2 w-4 h-4 rounded-full bg-blue-500 text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0">
-                        {conv.unreadCount}
-                      </span>
+                      <span className="ml-2 flex-shrink-0 w-2 h-2 rounded-full bg-blue-500" />
                     )}
                   </div>
                 </div>
-
-                {/* Dropdown Menu */}
-                {isMenuOpen && (
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute right-2 top-10 w-44 bg-slate-900 border border-slate-800 rounded-sm shadow-xl z-30 p-1 font-sans"
-                  >
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        setActiveMenuConvId(null);
-                        await clearHistory(conv.id);
-                      }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40 rounded-sm transition-colors text-left font-medium"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>Delete</span>
-                    </button>
-                  </div>
-                )}
               </div>
             );
           })

@@ -12,11 +12,13 @@ interface ProfileUserPostsProps {
   username: string;
 }
 
+type ProfileTab = 'posts' | 'replies' | 'likes';
+
 export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
 
-  const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'likes'>('posts');
+  const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -44,40 +46,36 @@ export function ProfileUserPosts({ username }: ProfileUserPostsProps) {
     setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
   };
 
+  const tabs = [
+    { id: 'posts', label: 'Posts' },
+    { id: 'replies', label: 'Replies' },
+    { id: 'likes', label: 'Likes' },
+  ];
+
   return (
     <div className="flex flex-col gap-3 font-sans">
-      {/* Profile Feed Tabs */}
-      <div className="bg-slate-900 border border-slate-800 rounded-sm p-1 flex items-center gap-1 font-sans text-xs">
-        <button
-          onClick={() => setActiveTab('posts')}
-          className={`flex-1 py-2 text-center font-medium rounded-sm transition-colors cursor-pointer ${
-            activeTab === 'posts'
-              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-          }`}
-        >
-          Posts
-        </button>
-        <button
-          onClick={() => setActiveTab('replies')}
-          className={`flex-1 py-2 text-center font-medium rounded-sm transition-colors cursor-pointer ${
-            activeTab === 'replies'
-              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-          }`}
-        >
-          Replies
-        </button>
-        <button
-          onClick={() => setActiveTab('likes')}
-          className={`flex-1 py-2 text-center font-medium rounded-sm transition-colors cursor-pointer ${
-            activeTab === 'likes'
-              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-          }`}
-        >
-          Likes
-        </button>
+      
+      {/* Profile Feed Tabs (Styled identically to Notifications Page) */}
+      <div className="bg-slate-900 border border-slate-800 rounded-sm overflow-hidden shadow-sm flex flex-col font-sans">
+        <div className="flex items-center px-4 bg-slate-950 border-b border-slate-800 overflow-x-auto gap-1">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as ProfileTab)}
+                className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer ${
+                  isActive
+                    ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                }`}
+              >
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Posts List */}
