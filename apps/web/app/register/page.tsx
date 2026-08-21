@@ -222,7 +222,7 @@ export default function RegisterPage() {
                 className="w-full mt-1"
                 isLoading={loading}
               >
-                Send Verification OTP
+                Continue
               </Button>
             </form>
           </div>

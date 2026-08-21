@@ -220,7 +220,7 @@ export const RegisterModal: React.FC = () => {
                 className="w-full mt-1 font-sans"
                 isLoading={loading}
               >
-                Send Verification OTP
+                Continue
               </Button>
             </form>
           </div>
