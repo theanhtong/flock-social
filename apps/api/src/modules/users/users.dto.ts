@@ -8,9 +8,20 @@ import {
   IsBoolean,
   IsInt,
   Min,
+  MinLength,
   Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export class ChangePasswordDto {
+  @IsOptional()
+  @IsString()
+  currentPassword?: string;
+
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
+}
 
 export class CursorQueryDto {
   @IsOptional()

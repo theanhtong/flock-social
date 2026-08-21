@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, Eye, Bell, Check, Settings, Loader2, Play } from 'lucide-react';
+import { Shield, Key, Eye, Bell, Check, Settings, Loader2, Play, Lock } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { userService, UserSettings } from '@/services/user-service';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 const DEFAULT_SETTINGS: Partial<UserSettings> = {
@@ -53,6 +54,12 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<Partial<UserSettings>>(DEFAULT_SETTINGS);
   const [fetching, setFetching] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  // Change Password State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -136,6 +143,37 @@ export default function SettingsPage() {
     }
   };
 
+  const handleChangePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('New password and confirm password do not match');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await userService.changePassword(
+        {
+          currentPassword: currentPassword.trim() || undefined,
+          newPassword,
+        },
+        token
+      );
+      toast.success('Password updated successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   if (isLoading || fetching || (!token && !user)) {
     return (
       <div className="flex-1 flex items-center justify-center text-blue-500 min-h-[50vh]">
@@ -146,11 +184,11 @@ export default function SettingsPage() {
 
   return (
     <SidebarLayout>
-      <div className="flex flex-col gap-6 font-sans">
+      <div className="flex flex-col gap-6 font-sans max-w-4xl pb-10">
         {/* Page Header */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <div className="w-10 h-10 rounded-sm bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-500">
               <Settings className="w-5 h-5" />
             </div>
             <div>
@@ -158,7 +196,7 @@ export default function SettingsPage() {
                 <span>User Account Settings</span>
               </h1>
               <p className="text-xs text-slate-400 mt-0.5">
-                Privacy, interaction rules, and notification preferences based on UserSettings schema.
+                Manage your privacy, security, passwords, and notification rules.
               </p>
             </div>
           </div>
@@ -167,31 +205,85 @@ export default function SettingsPage() {
             onClick={handleSave}
             disabled={isSaving || !hasChanges}
             size="sm"
-            className={`rounded-sm text-xs px-4 self-start sm:self-auto ${hasChanges
-              ? 'bg-blue-600 hover:bg-blue-500 text-white'
-              : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-              }`}
+            className={`rounded-sm text-xs px-4 self-start sm:self-auto ${
+              hasChanges
+                ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+            }`}
           >
             {isSaving ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
             ) : (
-              <Check className="w-3.5 h-3.5 mr-1.5" />
+              <Check className="w-3.5 h-3.5 mr-1.5 text-blue-400" />
             )}
             {hasChanges ? 'Save Changes' : 'Saved'}
           </Button>
         </div>
 
-        {/* Section 1: Privacy & Account Security */}
+        {/* Section 1: Security & Password Management */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-            <Eye className="w-4 h-4 text-blue-400" />
+            <Key className="w-4 h-4 text-blue-500" />
             <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-              1. Profile Privacy & Status
+              1. Security & Change Password
+            </h2>
+          </div>
+
+          <form onSubmit={handleChangePasswordSubmit} className="flex flex-col gap-4 text-xs">
+            <p className="text-[11px] text-slate-400">
+              Set or update your password to enable logging in via Email & Password.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <Input
+                label="Current Password"
+                type="password"
+                placeholder="Required if set"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+
+              <Input
+                label="New Password"
+                type="password"
+                placeholder="Min. 6 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+
+              <Input
+                label="Confirm New Password"
+                type="password"
+                placeholder="Re-enter new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                className="rounded-sm text-xs px-4"
+                isLoading={changingPassword}
+              >
+                Update Password
+              </Button>
+            </div>
+          </form>
+        </div>
+
+        {/* Section 2: Profile Privacy & Status */}
+        <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
+          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+            <Eye className="w-4 h-4 text-blue-500" />
+            <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+              2. Profile Privacy & Status
             </h2>
           </div>
 
           <div className="flex flex-col gap-3.5 text-xs text-slate-300">
-            {/* Combined Private Profile Checkbox */}
             <label className="flex items-start gap-3 cursor-pointer group">
               <input
                 type="checkbox"
@@ -245,12 +337,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Section 2: Interaction & Permissions */}
+        {/* Section 3: Interaction & Messaging Rules */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-            <Lock className="w-4 h-4 text-emerald-400" />
+            <Lock className="w-4 h-4 text-blue-500" />
             <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-              2. Interaction & Messaging Rules
+              3. Interaction & Messaging Rules
             </h2>
           </div>
 
@@ -309,12 +401,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Section 3: Notification Rules */}
+        {/* Section 4: Notification Preferences */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-            <Bell className="w-4 h-4 text-amber-400" />
+            <Bell className="w-4 h-4 text-blue-500" />
             <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-              3. Notification Preferences
+              4. Notification Preferences
             </h2>
           </div>
 
@@ -406,12 +498,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Section 4: Application Experience */}
+        {/* Section 5: Media & Autoplay Settings */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-            <Play className="w-4 h-4 text-purple-400" />
+            <Play className="w-4 h-4 text-blue-500" />
             <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-              4. Media & Autoplay Settings
+              5. Media & Autoplay Settings
             </h2>
           </div>
 

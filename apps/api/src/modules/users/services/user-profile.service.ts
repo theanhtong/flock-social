@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import argon2 from 'argon2';
 import { PrismaService } from '../../../common/prisma/prisma.service.js';
-import { SearchUsersQueryDto, UpdateProfileDto, UserProfileDto } from '../users.dto.js';
+import { SearchUsersQueryDto, UpdateProfileDto, UserProfileDto, ChangePasswordDto } from '../users.dto.js';
 import { formatProfile } from '../users.mapper.js';
 
 @Injectable()
@@ -161,6 +162,37 @@ export class UserProfileService {
         nextCursor,
         hasNextPage: !!nextCursor,
       },
+    };
+  }
+
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+  ): Promise<{ success: boolean; message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: BigInt(userId) },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (dto.currentPassword) {
+      const isValid = await argon2.verify(user.passwordHash, dto.currentPassword);
+      if (!isValid) {
+        throw new UnauthorizedException('Current password is incorrect');
+      }
+    }
+
+    const newHash = await argon2.hash(dto.newPassword);
+    await this.prisma.user.update({
+      where: { id: BigInt(userId) },
+      data: { passwordHash: newHash },
+    });
+
+    return {
+      success: true,
+      message: 'Password has been updated successfully',
     };
   }
 }

@@ -28,6 +28,7 @@ import {
   UpdateProfileDto,
   UserProfileDto,
   UpdateUserSettingDto,
+  ChangePasswordDto,
 } from './users.dto.js';
 import { AllowWhileRestricted } from '../auth/guards/allow-while-restricted.decorator.js';
 
@@ -51,8 +52,6 @@ export class UsersController {
     return this.userProfileService.getMyProfile(userId);
   }
 
-
-
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -63,6 +62,18 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ) {
     return this.userProfileService.updateProfile(userId, dto);
+  }
+
+  @Post('me/change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change or set user password' })
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.userProfileService.changePassword(userId, dto);
   }
 
   @Get(':username')

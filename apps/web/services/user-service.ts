@@ -108,6 +108,10 @@ export const userService = {
   updateUserSettings: async (data: Partial<UserSettings>, token?: string | null): Promise<UserSettings> => {
     return apiClient.patch<UserSettings>('/users/me/settings', data, { token });
   },
+
+  changePassword: async (data: { currentPassword?: string; newPassword: string }, token?: string | null): Promise<{ success: boolean; message: string }> => {
+    return apiClient.post<{ success: boolean; message: string }>('/users/me/change-password', data, { token });
+  },
 };
 
 export interface UserSettings {
