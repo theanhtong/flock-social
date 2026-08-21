@@ -17,7 +17,7 @@ export function triggerGoogleOAuthPopup(
   // STRICT REQUIREMENT: If NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured in .env.local, refuse to execute & inform user
   if (!clientId || clientId.trim() === '' || clientId.includes('demo') || clientId.includes('flocksocial')) {
     toast.error(
-      'Chưa cấu hình NEXT_PUBLIC_GOOGLE_CLIENT_ID trong apps/web/.env.local. Vui lòng thêm Google OAuth Client ID từ Google Cloud Console để mở popup Google thật!',
+      'NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured in apps/web/.env.local. Please add your Google OAuth Client ID to enable Google authentication.',
       { duration: 5000 }
     );
     if (onError) onError('MISSING_GOOGLE_CLIENT_ID');
@@ -71,7 +71,7 @@ export function triggerGoogleOAuthPopup(
   );
 
   if (!popup) {
-    toast.error('Trình duyệt đã chặn cửa sổ Popup Google. Vui lòng cho phép Popups!');
+    toast.error('Google popup was blocked by your browser. Please allow popups for this site.');
     if (onError) onError('Popup blocked by browser');
     return;
   }
