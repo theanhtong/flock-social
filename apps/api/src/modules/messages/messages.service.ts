@@ -454,10 +454,16 @@ export class MessagesService {
     );
 
     const result: ConversationDto[] = [];
+    const seenConversationIds = new Set<string>();
     const seenOtherUserIds = new Set<string>();
 
     for (const m of members) {
       const conv = m.conversation;
+      const convIdStr = conv.id.toString();
+
+      if (seenConversationIds.has(convIdStr)) continue;
+      seenConversationIds.add(convIdStr);
+
       const validMessages = m.clearedAt
         ? conv.messages.filter((msg) => msg.createdAt > m.clearedAt!)
         : conv.messages;

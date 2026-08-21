@@ -49,7 +49,8 @@ export function ConversationList() {
     };
   }, [activeMenuConvId]);
 
-  const currentList = conversations[activeFolder] || [];
+  const rawList = conversations[activeFolder] || [];
+  const currentList = Array.from(new Map(rawList.map((c) => [c.id, c])).values());
 
   const getOtherUser = (conv: Conversation) => {
     if (conv.otherUser) return conv.otherUser;
