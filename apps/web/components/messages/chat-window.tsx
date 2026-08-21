@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   MessageSquare,
   Ban,
+  Trash2,
 } from 'lucide-react';
 import { useMessageStore } from '@/store/message-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -44,6 +45,7 @@ export function ChatWindow() {
     typingUsers,
     updateConversationInList,
     removeConversationFromList,
+    deleteConversation,
   } = useMessageStore();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -288,9 +290,27 @@ export function ChatWindow() {
           <Button
             variant="ghost"
             size="sm"
+            onClick={async () => {
+              if (!activeConversation) return;
+              try {
+                await deleteConversation(activeConversation.id);
+                toast.success('Conversation deleted');
+              } catch (err: any) {
+                toast.error(err?.message || 'Failed to delete conversation');
+              }
+            }}
+            title="Delete conversation"
+            className="text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 p-2 h-8 w-8 rounded-sm"
+          >
+            <Trash2 className="w-4 h-4 text-rose-500" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setGroupDetailsOpen(true)}
             title="Conversation Details & Settings"
-            className="text-slate-400 hover:text-white hover:bg-slate-800 p-2 h-8 w-8 rounded-full"
+            className="text-slate-400 hover:text-white hover:bg-slate-800 p-2 h-8 w-8 rounded-sm"
           >
             <Info className="w-4 h-4" />
           </Button>

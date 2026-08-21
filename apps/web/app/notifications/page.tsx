@@ -134,62 +134,62 @@ export default function NotificationsPage() {
   return (
     <SidebarLayout rightPanel={<RightPanel />}>
       <div className="flex flex-col font-sans max-w-4xl pb-10">
-        {/* Sticky Header */}
-        <div className="sticky top-0 z-20 bg-slate-950/90 backdrop-blur-md pb-3 pt-1 border-b border-slate-800">
-          <div className="flex items-center justify-between px-1 mb-3">
-            <div className="flex items-center gap-2.5">
-              <Bell className="w-5 h-5 text-blue-500" />
-              <h1 className="text-lg font-bold text-slate-100">Notifications</h1>
-              {unreadCount > 0 && (
-                <span className="px-2 py-0.5 text-[11px] font-extrabold rounded-sm bg-blue-600 text-white">
-                  {unreadCount} new
-                </span>
-              )}
-            </div>
-
-            {/* Header Action Buttons */}
-            <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={markAllAsRead}
-                  className="text-xs text-blue-400 hover:text-blue-300 hover:bg-slate-900 rounded-sm h-8 px-2.5"
-                >
-                  <CheckCheck className="w-3.5 h-3.5 mr-1 text-blue-500" />
-                  Mark all as read
-                </Button>
-              )}
-
-              {notifications.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearAll}
-                  className="text-xs text-rose-400 hover:text-rose-300 hover:bg-slate-900 rounded-sm h-8 px-2.5"
-                >
-                  <Trash2 className="w-3.5 h-3.5 mr-1" />
-                  Clear all
-                </Button>
-              )}
-            </div>
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800 font-sans">
+          <div className="flex items-center gap-2.5">
+            <Bell className="w-5 h-5 text-blue-400" />
+            <h1 className="text-lg font-bold text-slate-100">Notifications</h1>
+            {unreadCount > 0 && (
+              <span className="px-2 py-0.5 text-[11px] font-extrabold rounded-sm bg-blue-600 text-white">
+                {unreadCount} new
+              </span>
+            )}
           </div>
 
-          {/* Filter Category Tabs */}
-          <div className="flex items-center border-b border-slate-800/80 overflow-x-auto no-scrollbar">
+          {/* Header Action Buttons */}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={markAllAsRead}
+                className="gap-1.5 border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 text-xs h-8 px-2.5 rounded-sm"
+              >
+                <CheckCheck className="w-3.5 h-3.5 text-blue-400" />
+                Mark all as read
+              </Button>
+            )}
+
+            {notifications.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearAll}
+                className="gap-1.5 border-rose-900/60 bg-rose-950/30 text-rose-400 hover:bg-rose-900/50 text-xs h-8 px-2.5 rounded-sm"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Clear all
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Bar & Tabs (Matching Reports Queue Tab Style) */}
+        <div className="flex items-center justify-between px-4 bg-slate-950 border-b border-slate-800 overflow-x-auto gap-4 font-sans">
+          <div className="flex items-center gap-1 overflow-x-auto">
             {tabs.map((tab) => {
               const isActive = activeCategory === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveCategory(tab.id)}
-                  className={`px-4 py-2.5 text-xs font-medium border-b-2 transition-all shrink-0 cursor-pointer ${
+                  className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer ${
                     isActive
                       ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
-                      : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                      : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
                   }`}
                 >
-                  {tab.label}
+                  <span>{tab.label}</span>
                 </button>
               );
             })}

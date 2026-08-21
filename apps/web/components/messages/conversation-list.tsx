@@ -5,17 +5,22 @@ import {
   Users,
   Search,
   VolumeX,
+  Volume2,
   Inbox,
   MoreVertical,
+  Trash2,
+  FolderInput,
 } from 'lucide-react';
 import { useMessageStore, FolderType } from '@/store/message-store';
 import { useAuthStore } from '@/store/auth-store';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Conversation } from '@/services/message-service';
+import { toast } from 'sonner';
 
 export function ConversationList() {
   const currentUser = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
   const {
     activeFolder,
     setActiveFolder,
@@ -25,6 +30,9 @@ export function ConversationList() {
     activeConversationId,
     setActiveConversationId,
     setCreateGroupOpen,
+    deleteConversation,
+    toggleMute,
+    moveConversationToFolder,
   } = useMessageStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,126 +49,146 @@ export function ConversationList() {
       setActiveMenuConvId(null);
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('click', handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('click', handleClickOutside);
     };
   }, [activeMenuConvId]);
 
-  const rawList = conversations[activeFolder] || [];
-  const currentList = Array.from(new Map(rawList.map((c) => [c.id, c])).values());
-
-  const getOtherUser = (conv: Conversation) => {
-    if (conv.otherUser) return conv.otherUser;
-    const participant = conv.participants?.find((p) => p.user?.id !== currentUser?.id);
-    if (participant?.user) return participant.user;
-    const member = conv.members?.find((m) => m.userId !== currentUser?.id);
-    return member?.user;
+  const handleDeleteConversation = async (convId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveMenuConvId(null);
+    try {
+      await deleteConversation(convId);
+      toast.success('Conversation deleted');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete conversation');
+    }
   };
+
+  const handleToggleMuteConv = async (conv: Conversation, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveMenuConvId(null);
+    try {
+      await toggleMute(conv.id, !conv.isMuted);
+      toast.success(conv.isMuted ? 'Conversation unmuted' : 'Conversation muted');
+    } catch (err: any) {
+      toast.error('Failed to update mute settings');
+    }
+  };
+
+  const handleMoveFolderConv = async (conv: Conversation, targetFolder: FolderType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveMenuConvId(null);
+    try {
+      await moveConversationToFolder(conv.id, targetFolder);
+      toast.success(`Moved to ${targetFolder}`);
+    } catch (err: any) {
+      toast.error('Failed to move conversation');
+    }
+  };
+
+  const currentList = conversations[activeFolder] || [];
 
   const filteredConversations = currentList.filter((conv) => {
     if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase();
 
     if (conv.type === 'group') {
-      return conv.title?.toLowerCase().includes(q);
+      return conv.title?.toLowerCase().includes(query);
     }
 
-    const otherUser = getOtherUser(conv);
+    const otherUser = conv.participants?.find((p) => String(p.user?.id) !== String(currentUser?.id))?.user;
     return (
-      otherUser?.displayName?.toLowerCase().includes(q) ||
-      otherUser?.username?.toLowerCase().includes(q)
+      otherUser?.displayName?.toLowerCase().includes(query) ||
+      otherUser?.username?.toLowerCase().includes(query)
     );
   });
+
+  const formatTimestamp = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+
+    if (isToday) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
 
   const getConversationDetails = (conv: Conversation) => {
     if (conv.type === 'group') {
       return {
         title: conv.title || 'Group Chat',
-        avatar: conv.avatarUrl,
-        subtitle: `${conv.participants?.length || conv.members?.length || 0} members`,
+        avatar: conv.avatarUrl || null,
+        subtitle: `${conv.members?.length || conv.participants?.length || 0} members`,
       };
     }
 
-    const otherUser = getOtherUser(conv);
+    const otherUser = conv.participants?.find(
+      (p) => String(p.user?.id) !== String(currentUser?.id)
+    )?.user;
+
     return {
-      title: otherUser?.displayName || otherUser?.username || 'Direct Message',
-      avatar: otherUser?.avatarUrl,
+      title: otherUser?.displayName || otherUser?.username || 'User',
+      avatar: otherUser?.avatarUrl || null,
       subtitle: `@${otherUser?.username || 'user'}`,
     };
   };
 
-  const formatTimestamp = (isoDate?: string) => {
-    if (!isoDate) return '';
-    const date = new Date(isoDate);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-
-    if (isToday) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  };
-
   return (
-    <div className="flex flex-col h-full bg-slate-900 w-full flex-shrink-0 select-none min-h-0 overflow-hidden font-sans">
-      {/* Header & Controls */}
-      <div className="p-4 border-b border-slate-800 space-y-3 shrink-0">
+    <div className="w-full md:w-80 flex flex-col h-[calc(100vh-100px)] bg-slate-900 border-r border-slate-800 flex-shrink-0 font-sans">
+      {/* Search Header */}
+      <div className="p-3 border-b border-slate-800 space-y-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-base font-bold text-slate-100 flex items-center gap-2">
+          <h1 className="text-sm font-bold text-slate-100 flex items-center gap-2">
             <span>Messages</span>
           </h1>
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCreateGroupOpen(true)}
-              title="Create Group Chat"
-              className="text-xs px-2.5 h-8 border-slate-800 bg-slate-950/80 hover:bg-slate-800 text-slate-200"
-            >
-              <Users className="w-3.5 h-3.5 mr-1" />
-              Group
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            onClick={() => setCreateGroupOpen(true)}
+            className="text-xs h-7 px-2.5 rounded-sm bg-blue-600 hover:bg-blue-500 text-white"
+          >
+            <Users className="w-3.5 h-3.5 mr-1" />
+            New Group
+          </Button>
         </div>
 
-        {/* Search Bar */}
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
-            placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+            placeholder="Search conversations..."
+            className="w-full bg-slate-950 text-slate-200 pl-8 pr-3 py-1.5 text-xs border border-slate-800 rounded-sm focus:outline-none focus:border-blue-500 placeholder:text-slate-500"
           />
         </div>
       </div>
 
-      {/* Folder Tabs (Styled identically to Notifications Page) */}
-      <div className="flex items-center px-4 bg-slate-950 border-b border-slate-800 overflow-x-auto gap-1 shrink-0">
-        {(['main', 'pending'] as FolderType[]).map((folder) => {
+      {/* Folder Tabs */}
+      <div className="flex items-center bg-slate-950 border-b border-slate-800 overflow-x-auto no-scrollbar font-sans">
+        {(['main', 'pending', 'archived'] as FolderType[]).map((folder) => {
           const isActive = activeFolder === folder;
-          const count = conversations[folder]?.reduce((acc, c) => acc + (c.unreadCount || 0), 0) || 0;
-          const label = folder === 'main' ? 'Main' : 'Pending';
+          const label = folder === 'main' ? 'Primary' : folder === 'pending' ? 'Requests' : 'Archived';
+          const count = conversations[folder]?.length || 0;
 
           return (
             <button
               key={folder}
               type="button"
               onClick={() => setActiveFolder(folder)}
-              className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+              className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
                 isActive
                   ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
-                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-800'
               }`}
             >
               <span>{label}</span>
               {count > 0 && (
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  className={`px-1.5 py-0.2 rounded-sm text-[10px] font-bold ${
                     isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-400'
                   }`}
                 >
@@ -172,7 +200,7 @@ export function ConversationList() {
         })}
       </div>
 
-      {/* Conversation List Feed (Soft, soothing borders & selection highlight) */}
+      {/* Conversation List Feed */}
       <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-800/40">
         {isLoadingConversations && currentList.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-500 animate-pulse">
@@ -223,7 +251,7 @@ export function ConversationList() {
                       <span className="truncate">{title}</span>
                       {conv.isMuted && <VolumeX className="w-3 h-3 text-slate-500 flex-shrink-0" />}
                     </span>
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1 flex-shrink-0 relative">
                       <span className="text-[10px] text-slate-500">{timeStr}</span>
                       <button
                         type="button"
@@ -231,11 +259,65 @@ export function ConversationList() {
                           e.stopPropagation();
                           setActiveMenuConvId(isMenuOpen ? null : conv.id);
                         }}
-                        title="Conversation actions"
-                        className="p-0.5 text-slate-400 hover:text-slate-200 rounded hover:bg-slate-800 opacity-0 group-hover/conv:opacity-100 transition-opacity"
+                        title="Conversation options"
+                        className="p-0.5 text-slate-400 hover:text-slate-200 rounded-sm hover:bg-slate-800 opacity-0 group-hover/conv:opacity-100 transition-opacity"
                       >
                         <MoreVertical className="w-3.5 h-3.5" />
                       </button>
+
+                      {/* Dropdown Action Menu */}
+                      {isMenuOpen && (
+                        <div className="absolute right-0 top-6 z-30 w-44 bg-slate-900 border border-slate-800 rounded-sm shadow-xl p-1 flex flex-col gap-0.5 animate-in fade-in duration-100 text-xs">
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleMuteConv(conv, e)}
+                            className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-800 text-slate-200 rounded-sm text-left"
+                          >
+                            {conv.isMuted ? (
+                              <>
+                                <Volume2 className="w-3.5 h-3.5 text-blue-400" />
+                                <span>Unmute</span>
+                              </>
+                            ) : (
+                              <>
+                                <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+                                <span>Mute</span>
+                              </>
+                            )}
+                          </button>
+
+                          {activeFolder !== 'main' && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleMoveFolderConv(conv, 'main', e)}
+                              className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-800 text-slate-200 rounded-sm text-left"
+                            >
+                              <FolderInput className="w-3.5 h-3.5 text-blue-400" />
+                              <span>Move to Primary</span>
+                            </button>
+                          )}
+
+                          {activeFolder !== 'pending' && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleMoveFolderConv(conv, 'pending', e)}
+                              className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-800 text-slate-200 rounded-sm text-left"
+                            >
+                              <FolderInput className="w-3.5 h-3.5 text-slate-400" />
+                              <span>Move to Requests</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteConversation(conv.id, e)}
+                            className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-rose-950/50 text-rose-400 rounded-sm text-left font-medium"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                            <span>Delete Conversation</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 

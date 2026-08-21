@@ -193,13 +193,13 @@ export function MessageItem({ message }: MessageItemProps) {
           {displayMediaUrls.length > 0 && !isUnsent && (
             <div
               onContextMenu={handleContextMenu}
-              className={`relative grid gap-1.5 mb-1.5 overflow-hidden rounded-2xl ${displayMediaUrls.length === 1
+              className={`relative grid gap-1.5 mb-1.5 overflow-hidden rounded-sm ${displayMediaUrls.length === 1
                 ? 'grid-cols-1 max-w-[280px] sm:max-w-[320px]'
                 : 'grid-cols-2 max-w-[300px] sm:max-w-[340px]'
                 }`}
             >
               {displayMediaUrls.map((url: string, idx: number) => (
-                <div key={idx} className="relative group/media block overflow-hidden rounded-xl bg-slate-900 border border-slate-800/80">
+                <div key={idx} className="relative group/media block overflow-hidden rounded-sm bg-slate-900 border border-slate-800/80">
                   <button
                     type="button"
                     onClick={() => setLightboxState({ isOpen: true, index: idx })}
@@ -209,7 +209,7 @@ export function MessageItem({ message }: MessageItemProps) {
                     <img
                       src={url}
                       alt="attachment"
-                      className="w-full h-auto max-h-64 object-cover rounded-xl group-hover/media:scale-105 transition-transform duration-200"
+                      className="w-full h-auto max-h-64 object-cover rounded-sm group-hover/media:scale-105 transition-transform duration-200"
                     />
                   </button>
                   {/* Quick Reaction Button on Image Hover */}
@@ -220,7 +220,7 @@ export function MessageItem({ message }: MessageItemProps) {
                       handleContextMenu(e);
                     }}
                     title="React to message"
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-950/80 hover:bg-slate-900 text-slate-300 hover:text-white border border-slate-700/60 opacity-0 group-hover/media:opacity-100 transition-all shadow-lg text-xs"
+                    className="absolute top-2 right-2 p-1.5 rounded-sm bg-slate-950/80 hover:bg-slate-900 text-slate-300 hover:text-white border border-slate-700/60 opacity-0 group-hover/media:opacity-100 transition-all shadow-lg text-xs"
                   >
                     ❤️
                   </button>
@@ -231,7 +231,7 @@ export function MessageItem({ message }: MessageItemProps) {
               {!message.content && reactionSummary.length > 0 && (
                 <div
                   className={`absolute -bottom-2 ${isOwn ? 'left-2' : 'right-2'
-                    } z-10 flex items-center gap-1 bg-slate-900 border border-slate-700/80 shadow-md rounded-full px-1.5 py-0.5 text-[10px] select-none`}
+                    } z-10 flex items-center gap-1 bg-slate-900 border border-slate-700/80 shadow-md rounded-sm px-1.5 py-0.5 text-[10px] select-none`}
                 >
                   {reactionSummary.map((item) => (
                     <button
@@ -257,9 +257,9 @@ export function MessageItem({ message }: MessageItemProps) {
           {(message.content || isUnsent) && (
             <div
               onContextMenu={handleContextMenu}
-              className={`relative p-3 rounded-2xl text-xs leading-relaxed break-words shadow-sm transition-all ${isOwn
-                  ? 'bg-blue-600/30 text-blue-50 border border-blue-400/40 rounded-br-xs'
-                  : 'bg-slate-800/80 text-slate-100 rounded-bl-xs border border-slate-700/60'
+              className={`relative p-3 rounded-sm text-xs leading-relaxed break-words shadow-sm transition-all ${isOwn
+                  ? 'bg-blue-600/30 text-blue-50 border border-blue-400/40'
+                  : 'bg-slate-800/80 text-slate-100 border border-slate-700/60'
                 } ${isUnsent ? 'italic opacity-60 bg-slate-900 text-slate-400 border border-dashed border-slate-700' : ''}`}
             >
               {isUnsent ? (

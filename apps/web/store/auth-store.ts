@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
 import { apiClient, ApiError } from '@/lib/api-client';
 
@@ -30,7 +31,7 @@ interface AuthState {
   openRegisterModal: () => void;
   closeRegisterModal: () => void;
   closeAllModals: () => void;
-  
+
   // API Async Actions
   initAuth: () => Promise<void>;
   login: (credentials: { identifier: string; password: string }) => Promise<void>;
@@ -41,110 +42,127 @@ interface AuthState {
   logout: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  token: null,
-  isLoading: true,
-  isLoginModalOpen: false,
-  isRegisterModalOpen: false,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      token: null,
+      isLoading: true,
+      isLoginModalOpen: false,
+      isRegisterModalOpen: false,
 
-  setUser: (user) => set({ user }),
-  setToken: (token) => set({ token }),
-  setIsLoading: (isLoading) => set({ isLoading }),
+      setUser: (user) => set({ user }),
+      setToken: (token) => set({ token }),
+      setIsLoading: (isLoading) => set({ isLoading }),
 
-  openLoginModal: () => set({ isLoginModalOpen: true, isRegisterModalOpen: false }),
-  closeLoginModal: () => set({ isLoginModalOpen: false }),
-  openRegisterModal: () => set({ isRegisterModalOpen: true, isLoginModalOpen: false }),
-  closeRegisterModal: () => set({ isRegisterModalOpen: false }),
-  closeAllModals: () => set({ isLoginModalOpen: false, isRegisterModalOpen: false }),
+      openLoginModal: () => set({ isLoginModalOpen: true, isRegisterModalOpen: false }),
+      closeLoginModal: () => set({ isLoginModalOpen: false }),
+      openRegisterModal: () => set({ isRegisterModalOpen: true, isLoginModalOpen: false }),
+      closeRegisterModal: () => set({ isRegisterModalOpen: false }),
+      closeAllModals: () => set({ isLoginModalOpen: false, isRegisterModalOpen: false }),
 
-  initAuth: async () => {
-    try {
-      const res = await apiClient.post('/auth/refresh');
-      if (res.accessToken) {
-        set({ token: res.accessToken, user: res.user || null });
-      }
-    } catch (err) {
-      // Refresh token absent or expired, reset state
-      set({ token: null, user: null });
-    } finally {
-      set({ isLoading: false });
+      initAuth: async () => {
+        try {
+          const res = await apiClient.post('/auth/refresh');
+          if (res.accessToken) {
+            set({ token: res.accessToken, user: res.user || get().user });
+          }
+        } catch (err) {
+          // If refresh cookie is missing or rejected, check if we have a valid token in localStorage
+          const currentToken = get().token;
+          if (currentToken) {
+            try {
+              const me = await apiClient.get('/users/me', { token: currentToken });
+              if (me) {
+                set({ user: me });
+                return;
+              }
+            } catch {
+              // Both refresh cookie and access token are invalid/expired
+              set({ token: null, user: null });
+            }
+          } else {
+            set({ token: null, user: null });
+          }
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      login: async (credentials) => {
+        try {
+          const res = await apiClient.post('/auth/login', credentials);
+          set({ token: res.accessToken, user: res.user || null });
+          get().closeAllModals();
+          toast.success('Login successful!');
+        } catch (err: any) {
+          const msg = err instanceof ApiError ? err.message : 'Login failed';
+          toast.error(msg);
+          throw err;
+        }
+      },
+
+      register: async (data) => {
+        try {
+          await apiClient.post('/auth/register', data);
+          toast.success('Account created! Verification code sent to email.');
+        } catch (err: any) {
+          const msg = err instanceof ApiError ? err.message : 'Registration failed';
+          toast.error(msg);
+          throw err;
+        }
+      },
+
+      sendVerification: async (email) => {
+        try {
+          await apiClient.post('/auth/send-verification', { email });
+          toast.info('Verification OTP code sent to your email.');
+        } catch (err: any) {
+          const msg = err instanceof ApiError ? err.message : 'Failed to send verification code';
+          toast.error(msg);
+          throw err;
+        }
+      },
+
+      verifyEmail: async (email, code) => {
+        try {
+          await apiClient.post('/auth/verify-email', { email, code });
+          toast.success('Email verified successfully! You can now log in.');
+        } catch (err: any) {
+          const msg = err instanceof ApiError ? err.message : 'Invalid or expired OTP code';
+          toast.error(msg);
+          throw err;
+        }
+      },
+
+      googleAuth: async (idToken, userInfo) => {
+        try {
+          const res = await apiClient.post('/auth/google', { idToken, userInfo });
+          set({ token: res.accessToken, user: res.user || null });
+          get().closeAllModals();
+          toast.success('Google login successful!');
+        } catch (err: any) {
+          const msg = err instanceof ApiError ? err.message : 'Google login failed';
+          toast.error(msg);
+          throw err;
+        }
+      },
+
+      logout: async () => {
+        try {
+          await apiClient.post('/auth/logout');
+        } catch {
+          // ignore logout errors
+        } finally {
+          set({ token: null, user: null });
+          get().closeAllModals();
+          toast.success('Logged out');
+        }
+      },
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({ user: state.user, token: state.token }),
     }
-  },
-
-  login: async (credentials) => {
-    try {
-      const res = await apiClient.post('/auth/login', credentials);
-      set({ token: res.accessToken, user: res.user || null });
-      get().closeAllModals();
-      toast.success('Login successful!');
-    } catch (err: any) {
-      const msg = err instanceof ApiError ? err.message : 'Login failed';
-      toast.error(msg);
-      throw err;
-    }
-  },
-
-  register: async (data) => {
-    try {
-      await apiClient.post('/auth/register', data);
-      toast.success('Account created! Verification code sent to email.');
-    } catch (err: any) {
-      const msg = err instanceof ApiError ? err.message : 'Registration failed';
-      toast.error(msg);
-      throw err;
-    }
-  },
-
-  sendVerification: async (email) => {
-    try {
-      await apiClient.post('/auth/send-verification', { email });
-      toast.info('Verification OTP code sent to your email.');
-    } catch (err: any) {
-      const msg = err instanceof ApiError ? err.message : 'Failed to send verification code';
-      toast.error(msg);
-      throw err;
-    }
-  },
-
-  verifyEmail: async (email, code) => {
-    try {
-      await apiClient.post('/auth/verify-email', { email, code });
-      toast.success('Email verified successfully! You can now log in.');
-    } catch (err: any) {
-      const msg = err instanceof ApiError ? err.message : 'Invalid or expired OTP code';
-      toast.error(msg);
-      throw err;
-    }
-  },
-
-  googleAuth: async (idToken, userInfo) => {
-    try {
-      const res = await apiClient.post('/auth/google', { idToken, userInfo });
-      set({ token: res.accessToken, user: res.user || null });
-      get().closeAllModals();
-      toast.success('Google login successful!');
-    } catch (err: any) {
-      const msg = err instanceof ApiError ? err.message : 'Google login failed';
-      toast.error(msg);
-      throw err;
-    }
-  },
-
-  logout: async () => {
-    const { token } = get();
-    try {
-      if (token) {
-        await apiClient.post('/auth/logout', undefined, { token });
-      }
-    } catch (err) {
-      // Ignore logout errors
-    } finally {
-      set({ user: null, token: null, isLoginModalOpen: false, isRegisterModalOpen: false });
-      toast.info('Logged out successfully');
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
-    }
-  },
-}));
+  )
+);

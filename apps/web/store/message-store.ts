@@ -49,6 +49,9 @@ interface MessageState {
   sendDirectMessage: (payload: SendMessagePayload) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   clearHistory: (conversationId: string) => Promise<void>;
+  deleteConversation: (conversationId: string) => Promise<void>;
+  toggleMute: (conversationId: string, isMuted: boolean) => Promise<void>;
+  moveConversationToFolder: (conversationId: string, targetFolder: FolderType) => Promise<void>;
   reactToMessage: (messageId: string, emoji: string) => Promise<void>;
   removeReaction: (messageId: string) => Promise<void>;
   markConversationAsRead: (conversationId?: string) => Promise<void>;
@@ -337,6 +340,46 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     } catch (err) {
       console.error('Failed to clear conversation history:', err);
       toast.error('Failed to clear chat history');
+    }
+  },
+
+  deleteConversation: async (conversationId: string) => {
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+    try {
+      await messageService.deleteConversation(conversationId, token);
+      get().removeConversationFromList(conversationId);
+      if (get().activeConversationId === conversationId) {
+        set({ activeConversationId: null, activeConversation: null });
+      }
+    } catch (err) {
+      console.error('Failed to delete conversation:', err);
+      throw err;
+    }
+  },
+
+  toggleMute: async (conversationId: string, isMuted: boolean) => {
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+    try {
+      await messageService.toggleMute(conversationId, isMuted, token);
+      get().updateConversationInList({ id: conversationId, isMuted });
+    } catch (err) {
+      console.error('Failed to toggle mute:', err);
+      throw err;
+    }
+  },
+
+  moveConversationToFolder: async (conversationId: string, targetFolder: FolderType) => {
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+    try {
+      const apiFolder = targetFolder === 'main' ? 'primary' : 'general';
+      await messageService.moveConversationFolder(conversationId, apiFolder, token);
+      get().removeConversationFromList(conversationId);
+    } catch (err) {
+      console.error('Failed to move conversation:', err);
+      throw err;
     }
   },
 
