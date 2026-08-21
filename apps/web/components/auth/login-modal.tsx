@@ -53,8 +53,6 @@ export const LoginModal: React.FC = () => {
     }
   };
 
-  const openGoogleModal = useAuthStore((s) => s.openGoogleModal);
-
   const handleGoogleLogin = () => {
     setGoogleLoading(true);
     triggerGoogleOAuthPopup(
@@ -74,7 +72,6 @@ export const LoginModal: React.FC = () => {
       },
       (err) => {
         setGoogleLoading(false);
-        openGoogleModal();
       }
     );
   };

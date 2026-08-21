@@ -48,8 +48,6 @@ export default function LoginPage() {
     }
   };
 
-  const openGoogleModal = useAuthStore((s) => s.openGoogleModal);
-
   const handleGoogleLogin = () => {
     setGoogleLoading(true);
     triggerGoogleOAuthPopup(
@@ -70,7 +68,6 @@ export default function LoginPage() {
       },
       (err) => {
         setGoogleLoading(false);
-        openGoogleModal();
       }
     );
   };

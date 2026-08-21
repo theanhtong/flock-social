@@ -86,8 +86,6 @@ export const RegisterModal: React.FC = () => {
     }
   };
 
-  const openGoogleModal = useAuthStore((s) => s.openGoogleModal);
-
   const handleGoogleAuth = () => {
     setGoogleLoading(true);
     triggerGoogleOAuthPopup(
@@ -103,7 +101,6 @@ export const RegisterModal: React.FC = () => {
       },
       (err) => {
         setGoogleLoading(false);
-        openGoogleModal();
       }
     );
   };

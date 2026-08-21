@@ -84,8 +84,6 @@ export default function RegisterPage() {
     }
   };
 
-  const openGoogleModal = useAuthStore((s) => s.openGoogleModal);
-
   const handleGoogleAuth = () => {
     setGoogleLoading(true);
     triggerGoogleOAuthPopup(
@@ -106,7 +104,6 @@ export default function RegisterPage() {
       },
       (err) => {
         setGoogleLoading(false);
-        openGoogleModal();
       }
     );
   };

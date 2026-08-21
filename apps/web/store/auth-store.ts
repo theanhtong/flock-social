@@ -20,7 +20,6 @@ interface AuthState {
   isLoading: boolean;
   isLoginModalOpen: boolean;
   isRegisterModalOpen: boolean;
-  isGoogleModalOpen: boolean;
 
   // Actions
   setUser: (user: User | null) => void;
@@ -30,8 +29,6 @@ interface AuthState {
   closeLoginModal: () => void;
   openRegisterModal: () => void;
   closeRegisterModal: () => void;
-  openGoogleModal: () => void;
-  closeGoogleModal: () => void;
   closeAllModals: () => void;
   
   // API Async Actions
@@ -50,19 +47,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true,
   isLoginModalOpen: false,
   isRegisterModalOpen: false,
-  isGoogleModalOpen: false,
 
   setUser: (user) => set({ user }),
   setToken: (token) => set({ token }),
   setIsLoading: (isLoading) => set({ isLoading }),
 
-  openLoginModal: () => set({ isLoginModalOpen: true, isRegisterModalOpen: false, isGoogleModalOpen: false }),
+  openLoginModal: () => set({ isLoginModalOpen: true, isRegisterModalOpen: false }),
   closeLoginModal: () => set({ isLoginModalOpen: false }),
-  openRegisterModal: () => set({ isRegisterModalOpen: true, isLoginModalOpen: false, isGoogleModalOpen: false }),
+  openRegisterModal: () => set({ isRegisterModalOpen: true, isLoginModalOpen: false }),
   closeRegisterModal: () => set({ isRegisterModalOpen: false }),
-  openGoogleModal: () => set({ isGoogleModalOpen: true, isLoginModalOpen: false, isRegisterModalOpen: false }),
-  closeGoogleModal: () => set({ isGoogleModalOpen: false }),
-  closeAllModals: () => set({ isLoginModalOpen: false, isRegisterModalOpen: false, isGoogleModalOpen: false }),
+  closeAllModals: () => set({ isLoginModalOpen: false, isRegisterModalOpen: false }),
 
   initAuth: async () => {
     try {
