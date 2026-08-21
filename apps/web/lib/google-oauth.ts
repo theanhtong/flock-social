@@ -24,7 +24,32 @@ export function triggerGoogleOAuthPopup(
     return;
   }
 
-  // Open Official Google OAuth Account Selector Popup Window directly with Google's servers
+  // 1. Preferred: Official Google Identity Services (GIS) Token Client Popup
+  if ((window as any).google?.accounts?.oauth2) {
+    try {
+      const tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'openid email profile',
+        callback: (response: any) => {
+          if (response.access_token || response.id_token) {
+            onSuccess(response.id_token || response.access_token);
+          } else if (onError) {
+            onError('Google authentication cancelled or failed');
+          }
+        },
+        error_callback: (err: any) => {
+          if (onError) onError(err?.message || 'Google OAuth Error');
+        },
+      });
+
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
+      return;
+    } catch (e) {
+      // Fallback to direct popup window below
+    }
+  }
+
+  // 2. Direct Popup Window fallback
   const width = 500;
   const height = 620;
   const left = window.screenX + (window.outerWidth - width) / 2;
