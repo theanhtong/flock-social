@@ -77,46 +77,46 @@ export default function NotificationsPage() {
     switch (item.type) {
       case 'like':
         return {
-          icon: <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />,
-          text: `${actorName} liked your post`,
+          icon: <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />,
+          text: `liked your post`,
           link: item.entityId ? `/post/${item.entityId}` : '#',
         };
       case 'comment':
         return {
-          icon: <MessageSquare className="w-4 h-4 text-blue-400 fill-blue-400/20" />,
-          text: `${actorName} commented on your post`,
+          icon: <MessageSquare className="w-3.5 h-3.5 text-blue-500 fill-blue-500/20" />,
+          text: `commented on your post`,
           link: item.entityId ? `/post/${item.entityId}` : '#',
         };
       case 'follow':
         return {
-          icon: <UserPlus className="w-4 h-4 text-emerald-400" />,
-          text: `${actorName} started following you`,
+          icon: <UserPlus className="w-3.5 h-3.5 text-emerald-400" />,
+          text: `started following you`,
           link: item.actor?.username ? `/profile/${item.actor.username}` : '#',
         };
       case 'follow_request':
         return {
-          icon: <UserPlus className="w-4 h-4 text-amber-400" />,
-          text: `${actorName} requested to follow you`,
+          icon: <UserPlus className="w-3.5 h-3.5 text-amber-400" />,
+          text: `requested to follow you`,
           link: item.actor?.username ? `/profile/${item.actor.username}` : '#',
           isFollowRequest: true,
         };
       case 'repost':
         return {
-          icon: <Repeat className="w-4 h-4 text-emerald-400" />,
-          text: `${actorName} reposted your post`,
+          icon: <Repeat className="w-3.5 h-3.5 text-emerald-400" />,
+          text: `reposted your post`,
           link: item.entityId ? `/post/${item.entityId}` : '#',
         };
       case 'system_warning':
         return {
-          icon: <Megaphone className="w-4 h-4 text-blue-400" />,
+          icon: <Megaphone className="w-3.5 h-3.5 text-blue-500" />,
           text: item.message || 'System Notice: Account warning or report notification received.',
           link: '#',
           isSystem: true,
         };
       default:
         return {
-          icon: <Bell className="w-4 h-4 text-blue-400" />,
-          text: `${actorName} interacted with you`,
+          icon: <Bell className="w-3.5 h-3.5 text-blue-500" />,
+          text: `interacted with you`,
           link: '#',
         };
     }
@@ -133,72 +133,73 @@ export default function NotificationsPage() {
 
   return (
     <SidebarLayout rightPanel={<RightPanel />}>
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl font-sans min-h-[80vh] flex flex-col">
-        {/* Top Header */}
-        <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-blue-400" />
-            <h1 className="text-base font-bold text-slate-100">Notifications</h1>
-            {unreadCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-extrabold rounded-full bg-blue-600 text-white">
-                {unreadCount} new
-              </span>
-            )}
+      <div className="flex flex-col font-sans max-w-4xl pb-10">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-20 bg-slate-950/90 backdrop-blur-md pb-3 pt-1 border-b border-slate-800">
+          <div className="flex items-center justify-between px-1 mb-3">
+            <div className="flex items-center gap-2.5">
+              <Bell className="w-5 h-5 text-blue-500" />
+              <h1 className="text-lg font-bold text-slate-100">Notifications</h1>
+              {unreadCount > 0 && (
+                <span className="px-2 py-0.5 text-[11px] font-extrabold rounded-sm bg-blue-600 text-white">
+                  {unreadCount} new
+                </span>
+              )}
+            </div>
+
+            {/* Header Action Buttons */}
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={markAllAsRead}
+                  className="text-xs text-blue-400 hover:text-blue-300 hover:bg-slate-900 rounded-sm h-8 px-2.5"
+                >
+                  <CheckCheck className="w-3.5 h-3.5 mr-1 text-blue-500" />
+                  Mark all as read
+                </Button>
+              )}
+
+              {notifications.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAll}
+                  className="text-xs text-rose-400 hover:text-rose-300 hover:bg-slate-900 rounded-sm h-8 px-2.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                  Clear all
+                </Button>
+              )}
+            </div>
           </div>
 
-          {/* Top Actions */}
-          <div className="flex items-center gap-2">
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={markAllAsRead}
-                className="text-xs text-blue-400 hover:text-blue-300 hover:bg-slate-800 h-8"
-              >
-                <CheckCheck className="w-3.5 h-3.5 mr-1.5" />
-                Mark all read
-              </Button>
-            )}
-
-            {notifications.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAll}
-                className="text-xs text-rose-400 hover:text-rose-300 hover:bg-slate-800 h-8"
-              >
-                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                Clear all
-              </Button>
-            )}
+          {/* Filter Category Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar px-1">
+            {tabs.map((tab) => {
+              const isActive = activeCategory === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveCategory(tab.id)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-all shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Category Tabs */}
-        <div className="flex items-center px-4 bg-slate-950 border-b border-slate-800 overflow-x-auto gap-1">
-          {tabs.map((tab) => {
-            const isActive = activeCategory === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveCategory(tab.id)}
-                className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer ${
-                  isActive
-                    ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
-                }`}
-              >
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Notifications List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60">
+        {/* Notifications Main Container */}
+        <div className="mt-4 bg-slate-900 border border-slate-800 rounded-sm overflow-hidden divide-y divide-slate-800/80">
           {isLoading && notifications.length === 0 ? (
-            <div className="divide-y divide-slate-800/60">
-              <NotificationItemSkeleton />
+            <div className="divide-y divide-slate-800/80">
               <NotificationItemSkeleton />
               <NotificationItemSkeleton />
               <NotificationItemSkeleton />
@@ -206,10 +207,13 @@ export default function NotificationsPage() {
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-16 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-500">
-                <Bell className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-sm bg-slate-800/60 border border-slate-700/50 flex items-center justify-center text-slate-400">
+                <Bell className="w-5 h-5 text-blue-500" />
               </div>
-              <p className="text-xs font-medium">No notifications in this category</p>
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-semibold text-slate-200">No notifications yet</p>
+                <p className="text-xs text-slate-400">When you get likes, comments, or followers, they will appear here.</p>
+              </div>
             </div>
           ) : (
             notifications.map((item) => {
@@ -218,40 +222,40 @@ export default function NotificationsPage() {
               return (
                 <div
                   key={item.id}
-                  className={`group relative p-4 flex items-start gap-3.5 transition-colors hover:bg-slate-850/60 ${
-                    !item.isRead ? 'bg-blue-950/20' : 'bg-slate-900/40'
+                  className={`group relative p-4 flex items-start gap-3.5 transition-colors hover:bg-slate-850/80 ${
+                    !item.isRead ? 'bg-blue-950/20' : 'bg-slate-900'
                   }`}
                 >
-                  {/* Unread Indicator Dot */}
+                  {/* Unread Left Border Line */}
                   {!item.isRead && (
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    <span className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500" />
                   )}
 
-                  {/* Notification Icon Badge */}
+                  {/* Actor Avatar with Type Badge */}
                   <div className="relative shrink-0 mt-0.5">
                     <Avatar
                       src={item.actor?.avatarUrl}
                       name={item.actor?.displayName || item.actor?.username || 'User'}
                       size="sm"
                     />
-                    <span className="absolute -bottom-1 -right-1 p-0.5 rounded-full bg-slate-900 border border-slate-800">
+                    <span className="absolute -bottom-1 -right-1 p-1 rounded-sm bg-slate-950 border border-slate-800 shadow-sm">
                       {details.icon}
                     </span>
                   </div>
 
                   {/* Main Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="text-xs text-slate-300 flex items-baseline gap-1.5 flex-wrap">
                       <Link
                         href={item.actor?.username ? `/profile/${item.actor.username}` : '#'}
-                        className="text-xs font-bold text-slate-100 hover:text-blue-400 transition-colors"
+                        className="font-bold text-slate-100 hover:text-blue-400 transition-colors"
                       >
                         {item.actor?.displayName || item.actor?.username}
                       </Link>
-                      <span className="text-xs text-slate-300">{details.text.replace(item.actor?.displayName || item.actor?.username || 'Someone', '')}</span>
+                      <span>{details.text}</span>
                     </div>
 
-                    <span className="text-[10px] text-slate-500 mt-1 block">
+                    <span className="text-[11px] text-slate-500 mt-1 block">
                       {new Date(item.createdAt).toLocaleDateString([], {
                         month: 'short',
                         day: 'numeric',
@@ -260,46 +264,46 @@ export default function NotificationsPage() {
                       })}
                     </span>
 
-                    {/* Follow Request Actions */}
+                    {/* Follow Request Action Buttons */}
                     {details.isFollowRequest && (
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2 mt-2.5">
                         <Button
                           size="sm"
                           onClick={() => handleRespondFollowRequest(item.actorId, 'accept', item.id)}
-                          className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] h-7 px-3 rounded-md"
+                          className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-7 px-3 rounded-sm"
                         >
-                          <Check className="w-3 h-3 mr-1" />
+                          <Check className="w-3.5 h-3.5 mr-1" />
                           Accept
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleRespondFollowRequest(item.actorId, 'reject', item.id)}
-                          className="border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 text-[11px] h-7 px-3 rounded-md"
+                          className="border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs h-7 px-3 rounded-sm"
                         >
-                          <X className="w-3 h-3 mr-1" />
+                          <X className="w-3.5 h-3.5 mr-1" />
                           Decline
                         </Button>
                       </div>
                     )}
                   </div>
 
-                  {/* Item Actions */}
+                  {/* Hover Action Buttons */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {!item.isRead && (
                       <button
                         onClick={() => markAsRead(item.id)}
                         title="Mark as read"
-                        className="p-1.5 text-slate-400 hover:text-blue-400 rounded-md hover:bg-slate-800 transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-blue-400 rounded-sm hover:bg-slate-800 transition-colors"
                       >
-                        <CheckCheck className="w-3.5 h-3.5" />
+                        <CheckCheck className="w-3.5 h-3.5 text-blue-500" />
                       </button>
                     )}
 
                     <button
                       onClick={() => deleteNotification(item.id)}
                       title="Delete notification"
-                      className="p-1.5 text-slate-400 hover:text-rose-400 rounded-md hover:bg-slate-800 transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-rose-400 rounded-sm hover:bg-slate-800 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -317,7 +321,7 @@ export default function NotificationsPage() {
                 size="sm"
                 disabled={isLoading}
                 onClick={() => fetchNotifications(false)}
-                className="text-xs text-blue-400 hover:text-blue-300 hover:bg-slate-800"
+                className="text-xs text-blue-400 hover:text-blue-300 hover:bg-slate-800 rounded-sm"
               >
                 {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : 'Load older notifications'}
               </Button>
