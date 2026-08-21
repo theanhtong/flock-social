@@ -56,11 +56,6 @@ export const Sidebar = () => {
                 <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-800/60">
                     <Link href="/" className="flex items-center gap-2 text-slate-100 hover:text-white transition-colors">
                         <span className="font-extrabold text-base tracking-tight text-white">flock.</span>
-                        {isAdminOrMod && (
-                            <span className="text-[10px] font-mono tracking-wider text-blue-400 uppercase bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-sm">
-                                {user?.role}
-                            </span>
-                        )}
                     </Link>
                 </div>
 

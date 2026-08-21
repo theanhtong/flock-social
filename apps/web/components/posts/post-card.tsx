@@ -171,11 +171,6 @@ export function PostCard({ post, currentUserId, token, onPostUpdated, onPostDele
                 >
                   {authorName}
                 </Link>
-                {localPost.user?.role === 'admin' && (
-                  <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1 py-0.2 rounded-sm font-semibold">
-                    ADMIN
-                  </span>
-                )}
                 <span className="text-[11px] text-slate-400 truncate">@{authorUsername}</span>
                 <span className="text-[10px] text-slate-500">•</span>
                 <span className="text-[11px] text-slate-400">{formatRelativeTime(localPost.createdAt)}</span>
