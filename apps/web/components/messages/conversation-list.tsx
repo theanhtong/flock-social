@@ -290,10 +290,10 @@ export function ConversationList() {
                             <button
                               type="button"
                               onClick={(e) => handleMoveFolderConv(conv, 'main', e)}
-                              className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-800 text-slate-200 rounded-sm text-left"
+                              className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-800 text-slate-200 rounded-sm text-left transition-colors"
                             >
                               <FolderInput className="w-3.5 h-3.5 text-blue-400" />
-                              <span>Move to Primary</span>
+                              <span>Move to Main</span>
                             </button>
                           )}
 
@@ -301,10 +301,10 @@ export function ConversationList() {
                             <button
                               type="button"
                               onClick={(e) => handleMoveFolderConv(conv, 'pending', e)}
-                              className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-800 text-slate-200 rounded-sm text-left"
+                              className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-800 text-slate-200 rounded-sm text-left transition-colors"
                             >
                               <FolderInput className="w-3.5 h-3.5 text-slate-400" />
-                              <span>Move to Requests</span>
+                              <span>Move to Pending</span>
                             </button>
                           )}
 
