@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Key, Eye, Bell, Check, Settings, Loader2, Play, Lock } from 'lucide-react';
+import { Key, Eye, Bell, Check, Settings, Loader2, Play, Lock, AlertTriangle, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { userService, UserSettings } from '@/services/user-service';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { toast } from 'sonner';
 
 const DEFAULT_SETTINGS: Partial<UserSettings> = {
@@ -49,13 +50,15 @@ export default function SettingsPage() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const logout = useAuthStore((s) => s.logout);
 
   const [initialSettings, setInitialSettings] = useState<Partial<UserSettings>>(DEFAULT_SETTINGS);
   const [settings, setSettings] = useState<Partial<UserSettings>>(DEFAULT_SETTINGS);
   const [fetching, setFetching] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // Change Password State
+  // Change Password Modal State
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -167,10 +170,21 @@ export default function SettingsPage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setIsPasswordModalOpen(false);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to update password');
     } finally {
       setChangingPassword(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/login');
+      toast.success('Logged out successfully');
+    } catch (err: any) {
+      toast.error('Failed to log out');
     }
   };
 
@@ -214,60 +228,6 @@ export default function SettingsPage() {
             )}
             {hasChanges ? 'Save Changes' : 'Saved'}
           </Button>
-        </div>
-
-        {/* Security & Password Management */}
-        <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
-          <div className="flex items-center gap-2 pb-2">
-            <Key className="w-4 h-4 text-blue-500" />
-            <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-              Security & Password
-            </h2>
-          </div>
-
-          <form onSubmit={handleChangePasswordSubmit} className="flex flex-col gap-4 text-xs">
-            <p className="text-[11px] text-slate-400">
-              Update your password or set a password to log in with Email & Password.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Input
-                label="Current Password"
-                type="password"
-                placeholder="Current password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-              />
-
-              <Input
-                label="New Password"
-                type="password"
-                placeholder="Min. 6 characters"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-
-              <Input
-                label="Confirm New Password"
-                type="password"
-                placeholder="Re-enter password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-
-            <div className="flex justify-end pt-1">
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                className="rounded-sm text-xs px-4"
-                isLoading={changingPassword}
-              >
-                Update Password
-              </Button>
-            </div>
-          </form>
         </div>
 
         {/* Profile Privacy & Status */}
@@ -522,7 +482,125 @@ export default function SettingsPage() {
             </label>
           </div>
         </div>
+
+        {/* DANGER ZONE - Critical Security & Account Actions */}
+        <div className="p-5 bg-rose-950/15 border border-rose-900/40 rounded-sm flex flex-col gap-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-rose-900/40">
+            <AlertTriangle className="w-4 h-4 text-rose-500" />
+            <h2 className="text-xs font-semibold text-rose-300 uppercase tracking-wider">
+              Danger Zone & Security
+            </h2>
+          </div>
+
+          <div className="flex flex-col gap-4 text-xs">
+            {/* Action 1: Change Password */}
+            <div className="flex sm:items-center justify-between flex-col sm:flex-row gap-3 p-3.5 bg-slate-950/60 border border-rose-900/30 rounded-sm">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-semibold text-slate-100 flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-rose-400" />
+                  Change Account Password
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Set or update your password to log in with Email & Password.
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPasswordModalOpen(true)}
+                className="border-rose-800/60 hover:bg-rose-950/50 text-rose-300 hover:text-rose-200 rounded-sm text-xs px-3.5 shrink-0 self-start sm:self-auto"
+              >
+                Change Password
+              </Button>
+            </div>
+
+            {/* Action 2: Sign Out */}
+            <div className="flex sm:items-center justify-between flex-col sm:flex-row gap-3 p-3.5 bg-slate-950/60 border border-rose-900/30 rounded-sm">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-semibold text-slate-100 flex items-center gap-1.5">
+                  <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                  Sign Out
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Log out of your account on this device.
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="border-rose-800/60 hover:bg-rose-950/50 text-rose-300 hover:text-rose-200 rounded-sm text-xs px-3.5 shrink-0 self-start sm:self-auto"
+              >
+                Log Out
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Change Password Modal */}
+      <Modal
+        isOpen={isPasswordModalOpen}
+        onClose={() => {
+          setIsPasswordModalOpen(false);
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        }}
+        title="Change Account Password"
+        maxWidth="sm"
+      >
+        <form onSubmit={handleChangePasswordSubmit} className="flex flex-col gap-4 font-sans text-xs">
+          <p className="text-slate-400 text-[11px]">
+            Enter your new password below. If your account already has a password set, please enter your current password.
+          </p>
+
+          <Input
+            label="Current Password"
+            type="password"
+            placeholder="Current password (if set)"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
+
+          <Input
+            label="New Password"
+            type="password"
+            placeholder="Min. 6 characters"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+
+          <Input
+            label="Confirm New Password"
+            type="password"
+            placeholder="Re-enter new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-800/80 mt-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-sm text-xs"
+              onClick={() => setIsPasswordModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              className="rounded-sm text-xs px-4"
+              isLoading={changingPassword}
+            >
+              Update Password
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </SidebarLayout>
   );
 }
