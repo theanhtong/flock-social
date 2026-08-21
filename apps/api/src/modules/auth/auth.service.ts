@@ -189,20 +189,38 @@ export class AuthService {
     let picture: string | undefined;
 
     try {
-      // strictly verify real google oauth token via google auth library
-      const googleClientId =
-        this.configService.get<string>('GOOGLE_CLIENT_ID');
-      const ticket = await this.googleClient.verifyIdToken({
-        idToken,
-        audience: googleClientId || undefined,
-      });
-      const payload = ticket.getPayload();
-      if (!payload || !payload.email) {
-        throw new BadRequestException('Invalid Google ID Token');
+      const isAccessToken = idToken.startsWith('ya29.') || idToken.split('.').length !== 3;
+      if (isAccessToken) {
+        // Verify real Google OAuth Access Token via Google's official UserInfo API
+        const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        if (!userinfoRes.ok) {
+          throw new BadRequestException('Google access token verification failed');
+        }
+        const userinfo = (await userinfoRes.json()) as { email?: string; name?: string; picture?: string };
+        if (!userinfo || !userinfo.email) {
+          throw new BadRequestException('Invalid Google Access Token response');
+        }
+        email = userinfo.email;
+        name = userinfo.name || email.split('@')[0];
+        picture = userinfo.picture;
+      } else {
+        // Strictly verify real Google ID Token via Google Auth Library
+        const googleClientId =
+          this.configService.get<string>('GOOGLE_CLIENT_ID');
+        const ticket = await this.googleClient.verifyIdToken({
+          idToken,
+          audience: googleClientId || undefined,
+        });
+        const payload = ticket.getPayload();
+        if (!payload || !payload.email) {
+          throw new BadRequestException('Invalid Google ID Token');
+        }
+        email = payload.email;
+        name = payload.name || payload.email.split('@')[0];
+        picture = payload.picture;
       }
-      email = payload.email;
-      name = payload.name || payload.email.split('@')[0];
-      picture = payload.picture;
     } catch (err: any) {
       throw new BadRequestException(
         `Google authentication failed: ${err.message || 'Invalid token'}`,
