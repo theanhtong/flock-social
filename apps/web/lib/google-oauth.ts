@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Official Google Identity Services (GSI) & OAuth 2.0 Popup Integration
+ * Official Google Identity Services (GSI) & OAuth 2.0 Integration Module
  */
 export function triggerGoogleOAuthPopup(
   onSuccess: (token: string, userInfo?: { email: string; name: string; picture: string }) => void,
@@ -9,9 +9,15 @@ export function triggerGoogleOAuthPopup(
 ) {
   if (typeof window === 'undefined') return;
 
-  const clientId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    '1014389947879-flocksocial.apps.googleusercontent.com';
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  // If no custom Google Client ID is configured in environment, fallback immediately to in-app Google OAuth Modal
+  if (!clientId || clientId.includes('demo') || clientId.includes('flocksocial')) {
+    if (onError) {
+      onError('GOOGLE_CLIENT_ID_NOT_CONFIGURED');
+    }
+    return;
+  }
 
   // 1. If Google GSI SDK is loaded on page (window.google.accounts.id)
   if ((window as any).google?.accounts?.id) {
@@ -27,10 +33,8 @@ export function triggerGoogleOAuthPopup(
         },
       });
 
-      // Prompt official Google One Tap / Account Selector popup modal
       (window as any).google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // Fallback to Popup Window if GSI Prompt is suppressed
           openGooglePopupWindow(clientId, onSuccess, onError);
         }
       });
@@ -55,7 +59,8 @@ function openGooglePopupWindow(
   const top = window.screenY + (window.outerHeight - height) / 2;
 
   const redirectUri = window.location.origin;
-  const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+  const googleAuthUrl =
+    `https://accounts.google.com/o/oauth2/v2/auth?` +
     `client_id=${encodeURIComponent(clientId)}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
     `&response_type=token%20id_token` +
@@ -69,11 +74,10 @@ function openGooglePopupWindow(
   );
 
   if (!popup) {
-    if (onError) onError('Popup blocked by browser. Please allow popups.');
+    if (onError) onError('Popup blocked by browser');
     return;
   }
 
-  // Poll for popup response or closure
   const timer = setInterval(() => {
     try {
       if (!popup || popup.closed) {
@@ -91,17 +95,12 @@ function openGooglePopupWindow(
 
         if (idToken) {
           onSuccess(idToken);
-        } else {
-          // If in dev environment, complete with verified Google test user credentials
-          onSuccess(`google_gsi_token_${Date.now()}`, {
-            email: 'google.user@flock.social',
-            name: 'Google Verified User',
-            picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-          });
+        } else if (onError) {
+          onError('OAUTH_CANCELLED');
         }
       }
     } catch (e) {
-      // Cross-origin errors until redirect uri matches
+      // Cross-origin check while popup navigates on google.com
     }
   }, 300);
 }
