@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { toast } from 'sonner';
 import { useAuthStore } from '@/store/auth-store';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
@@ -15,6 +14,7 @@ export const RegisterModal: React.FC = () => {
   const register = useAuthStore((s) => s.register);
   const sendVerification = useAuthStore((s) => s.sendVerification);
   const verifyEmail = useAuthStore((s) => s.verifyEmail);
+  const googleAuth = useAuthStore((s) => s.googleAuth);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [displayName, setDisplayName] = useState('');
@@ -84,23 +84,10 @@ export const RegisterModal: React.FC = () => {
     }
   };
 
-  const handleGoogleAuthRegister = async () => {
-    setGoogleLoading(true);
-    try {
-      const mockGoogleEmail = 'alex.dev@gmail.com';
-      const mockGoogleName = 'Alex Developer';
-      
-      setEmail(mockGoogleEmail);
-      setDisplayName(mockGoogleName);
-      if (!username) {
-        setUsername('alex_dev');
-      }
-      toast.success('Connected Google account! Please review your username and password below to finish registration.');
-    } catch (err: any) {
-      toast.error('Google OAuth connection failed');
-    } finally {
-      setGoogleLoading(false);
-    }
+  const openGoogleModal = useAuthStore((s) => s.openGoogleModal);
+
+  const handleGoogleAuth = () => {
+    openGoogleModal();
   };
 
   const handleResendOtp = async () => {
@@ -139,8 +126,8 @@ export const RegisterModal: React.FC = () => {
             <Button
               variant="secondary"
               size="md"
-              className="w-full font-sans flex items-center justify-center gap-2 cursor-pointer"
-              onClick={handleGoogleAuthRegister}
+              className="w-full font-sans flex items-center justify-center gap-2"
+              onClick={handleGoogleAuth}
               isLoading={googleLoading}
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -161,12 +148,12 @@ export const RegisterModal: React.FC = () => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>Autofill details with Google</span>
+              <span>Continue with Google</span>
             </Button>
 
             <div className="flex items-center gap-3 my-0.5 font-sans">
               <div className="flex-1 h-[1px] bg-slate-800" />
-              <span className="text-[11px] text-slate-500 uppercase font-medium font-sans">OR ENTER DETAILS</span>
+              <span className="text-[11px] text-slate-500 uppercase font-medium font-sans">OR EMAIL</span>
               <div className="flex-1 h-[1px] bg-slate-800" />
             </div>
 

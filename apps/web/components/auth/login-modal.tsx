@@ -52,27 +52,10 @@ export const LoginModal: React.FC = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    try {
-      const mockGoogleToken = 'google_oauth_token_' + Date.now();
-      const mockUserInfo = {
-        email: 'google.user@flock.social',
-        name: 'Google User',
-        picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      };
-      await googleAuth(mockGoogleToken, mockUserInfo);
-      setIdentifier('');
-      setPassword('');
-      const loggedUser = useAuthStore.getState().user;
-      if (loggedUser && (loggedUser.role === 'admin' || loggedUser.role === 'moderator')) {
-        router.push('/dashboard');
-      }
-    } catch (err) {
-      // Handled by store toasts
-    } finally {
-      setGoogleLoading(false);
-    }
+  const openGoogleModal = useAuthStore((s) => s.openGoogleModal);
+
+  const handleGoogleLogin = () => {
+    openGoogleModal();
   };
 
   return (

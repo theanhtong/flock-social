@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { AuthInitializer } from "@/components/auth-initializer";
 import { LoginModal } from "@/components/auth/login-modal";
 import { RegisterModal } from "@/components/auth/register-modal";
+import { GoogleOAuthModal } from "@/components/auth/google-oauth-modal";
 import { Header } from "@/components/layout/header";
 import { RestrictionModal } from "@/components/restriction-modal";
 
@@ -46,6 +47,7 @@ export default function RootLayout({
         </div>
         <LoginModal />
         <RegisterModal />
+        <GoogleOAuthModal />
         <Toaster position="bottom-right" richColors theme="dark" />
       </body>
     </html>
