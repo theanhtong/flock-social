@@ -176,17 +176,17 @@ export default function NotificationsPage() {
           </div>
 
           {/* Filter Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar px-1">
+          <div className="flex items-center border-b border-slate-800/80 overflow-x-auto no-scrollbar">
             {tabs.map((tab) => {
               const isActive = activeCategory === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveCategory(tab.id)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-all shrink-0 cursor-pointer ${
+                  className={`px-4 py-2.5 text-xs font-medium border-b-2 transition-all shrink-0 cursor-pointer ${
                     isActive
-                      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent'
+                      ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
+                      : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                   }`}
                 >
                   {tab.label}
