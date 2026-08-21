@@ -168,27 +168,27 @@ export function ConversationList() {
       </div>
 
       {/* Folder Tabs */}
-      <div className="flex items-center bg-slate-950 border-b border-slate-800 overflow-x-auto no-scrollbar font-sans">
-        {(['main', 'pending', 'archived'] as FolderType[]).map((folder) => {
+      <div className="flex items-center px-4 bg-slate-950 border-b border-slate-800 overflow-x-auto gap-1 shrink-0 font-sans">
+        {(['main', 'pending'] as FolderType[]).map((folder) => {
           const isActive = activeFolder === folder;
-          const label = folder === 'main' ? 'Primary' : folder === 'pending' ? 'Requests' : 'Archived';
-          const count = conversations[folder]?.length || 0;
+          const count = conversations[folder]?.reduce((acc, c) => acc + (c.unreadCount || 0), 0) || 0;
+          const label = folder === 'main' ? 'Main' : 'Pending';
 
           return (
             <button
               key={folder}
               type="button"
               onClick={() => setActiveFolder(folder)}
-              className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+              className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
                 isActive
                   ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
-                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-800'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
               }`}
             >
               <span>{label}</span>
               {count > 0 && (
                 <span
-                  className={`px-1.5 py-0.2 rounded-sm text-[10px] font-bold ${
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                     isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-400'
                   }`}
                 >
