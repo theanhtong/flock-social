@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Key, Eye, Bell, Check, Settings, Loader2, Play, Lock } from 'lucide-react';
+import { Key, Eye, Bell, Check, Settings, Loader2, Play, Lock } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { userService, UserSettings } from '@/services/user-service';
 import { SidebarLayout } from '@/components/layout/sidebar';
@@ -186,17 +186,13 @@ export default function SettingsPage() {
     <SidebarLayout>
       <div className="flex flex-col gap-6 font-sans max-w-4xl pb-10">
         {/* Page Header */}
-        <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-500">
-              <Settings className="w-5 h-5" />
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <Settings className="w-5 h-5 text-blue-500 shrink-0" />
             <div>
-              <h1 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                <span>User Account Settings</span>
-              </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Manage your privacy, security, passwords, and notification rules.
+              <h1 className="text-lg font-bold text-slate-100">Settings</h1>
+              <p className="text-xs text-slate-400">
+                Manage your account security, privacy, and preferences.
               </p>
             </div>
           </div>
@@ -220,25 +216,25 @@ export default function SettingsPage() {
           </Button>
         </div>
 
-        {/* Section 1: Security & Password Management */}
+        {/* Security & Password Management */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2 pb-2">
             <Key className="w-4 h-4 text-blue-500" />
-            <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-              1. Security & Change Password
+            <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Security & Password
             </h2>
           </div>
 
           <form onSubmit={handleChangePasswordSubmit} className="flex flex-col gap-4 text-xs">
             <p className="text-[11px] text-slate-400">
-              Set or update your password to enable logging in via Email & Password.
+              Update your password or set a password to log in with Email & Password.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Input
                 label="Current Password"
                 type="password"
-                placeholder="Required if set"
+                placeholder="Current password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
               />
@@ -254,7 +250,7 @@ export default function SettingsPage() {
               <Input
                 label="Confirm New Password"
                 type="password"
-                placeholder="Re-enter new password"
+                placeholder="Re-enter password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -274,12 +270,12 @@ export default function SettingsPage() {
           </form>
         </div>
 
-        {/* Section 2: Profile Privacy & Status */}
+        {/* Profile Privacy & Status */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2 pb-2">
             <Eye className="w-4 h-4 text-blue-500" />
-            <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-              2. Profile Privacy & Status
+            <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Privacy & Online Status
             </h2>
           </div>
 
@@ -296,7 +292,7 @@ export default function SettingsPage() {
                   Private Profile
                 </span>
                 <span className="text-[11px] text-slate-400">
-                  When enabled, your profile is private. New followers require your manual approval to view your posts and follow your account.
+                  When enabled, your profile is private. Followers require your manual approval.
                 </span>
               </div>
             </label>
@@ -313,7 +309,7 @@ export default function SettingsPage() {
                   Show Online Status
                 </span>
                 <span className="text-[11px] text-slate-400">
-                  Allow other members to see when you are online in messages and feeds.
+                  Allow other members to see when you are online.
                 </span>
               </div>
             </label>
@@ -330,19 +326,19 @@ export default function SettingsPage() {
                   Show Read Receipts
                 </span>
                 <span className="text-[11px] text-slate-400">
-                  Let senders know when you have read their messages in direct chats.
+                  Let senders know when you have read their direct messages.
                 </span>
               </div>
             </label>
           </div>
         </div>
 
-        {/* Section 3: Interaction & Messaging Rules */}
+        {/* Interaction & Messaging Rules */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2 pb-2">
             <Lock className="w-4 h-4 text-blue-500" />
-            <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-              3. Interaction & Messaging Rules
+            <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Interaction & Messaging Rules
             </h2>
           </div>
 
@@ -401,12 +397,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Section 4: Notification Preferences */}
+        {/* Notification Preferences */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2 pb-2">
             <Bell className="w-4 h-4 text-blue-500" />
-            <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-              4. Notification Preferences
+            <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Notification Preferences
             </h2>
           </div>
 
@@ -498,12 +494,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Section 5: Media & Autoplay Settings */}
+        {/* Media & Autoplay Settings */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-sm flex flex-col gap-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2 pb-2">
             <Play className="w-4 h-4 text-blue-500" />
-            <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-              5. Media & Autoplay Settings
+            <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Media & Autoplay
             </h2>
           </div>
 
@@ -520,7 +516,7 @@ export default function SettingsPage() {
                   Autoplay Videos
                 </span>
                 <span className="text-[11px] text-slate-400">
-                  Automatically play video attachments when scrolling through the home feed.
+                  Automatically play video attachments when scrolling through feeds.
                 </span>
               </div>
             </label>
