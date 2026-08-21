@@ -189,4 +189,19 @@ export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect
       memberId,
     });
   }
+
+  notifyUserBlocked(blockerId: string, blockedId: string, isBlocked: boolean) {
+    if (this.server) {
+      this.server.to(`user_${blockedId}`).emit('user_blocked', {
+        blockerId,
+        blockedId,
+        isBlocked,
+      });
+      this.server.to(`user_${blockerId}`).emit('user_blocked', {
+        blockerId,
+        blockedId,
+        isBlocked,
+      });
+    }
+  }
 }

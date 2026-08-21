@@ -275,8 +275,24 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         lastMessage: newMsg,
         updatedAt: new Date().toISOString(),
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to send message:', err);
+      const errMsg = err?.message || '';
+      if (
+        errMsg.toLowerCase().includes('block') ||
+        errMsg.toLowerCase().includes('locked')
+      ) {
+        if (get().activeConversation) {
+          set((state) => ({
+            activeConversation: state.activeConversation
+              ? { ...state.activeConversation, isBlockedByOther: true }
+              : null,
+          }));
+        }
+        toast.error('Cannot send message: This conversation is locked due to block status.');
+      } else {
+        toast.error(errMsg || 'Failed to send message');
+      }
       throw err;
     }
   },
@@ -546,6 +562,33 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     s.off('group_updated');
     s.off('member_joined');
     s.off('member_removed');
+    s.off('user_blocked');
+
+    s.on('user_blocked', (data: { blockerId: string; blockedId: string; isBlocked: boolean }) => {
+      const currentUserId = useAuthStore.getState().user?.id;
+      const activeConv = get().activeConversation;
+      if (activeConv) {
+        const otherUser = activeConv.participants?.find((p) => String(p.user?.id) !== String(currentUserId))?.user;
+        if (otherUser && (String(otherUser.id) === String(data.blockerId) || String(otherUser.id) === String(data.blockedId))) {
+          const isBlockedByMe = String(data.blockerId) === String(currentUserId);
+          const isBlockedByOther = String(data.blockedId) === String(currentUserId);
+
+          set((state) => ({
+            activeConversation: state.activeConversation
+              ? {
+                ...state.activeConversation,
+                isBlockedByMe: isBlockedByMe ? data.isBlocked : state.activeConversation.isBlockedByMe,
+                isBlockedByOther: isBlockedByOther ? data.isBlocked : state.activeConversation.isBlockedByOther,
+              }
+              : null,
+          }));
+
+          if (isBlockedByOther && data.isBlocked) {
+            toast.error('This user has blocked you.');
+          }
+        }
+      }
+    });
 
     s.on('message_received', (msg: DirectMessage) => {
       const convId = msg.conversationId;
