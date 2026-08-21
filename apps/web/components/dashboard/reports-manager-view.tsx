@@ -32,8 +32,19 @@ function formatDateTimeLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+import { useRouter } from 'next/navigation';
+
 export function ReportsManagerView() {
+  const router = useRouter();
   const token = useAuthStore((s) => s.token);
+  const user = useAuthStore((s) => s.user);
+  const isLoading = useAuthStore((s) => s.isLoading);
+
+  useEffect(() => {
+    if (!isLoading && (!token || !user)) {
+      router.push('/login');
+    }
+  }, [isLoading, token, user, router]);
 
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);

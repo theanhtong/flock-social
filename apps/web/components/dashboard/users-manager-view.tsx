@@ -15,8 +15,19 @@ import { Modal } from '@/components/ui/modal';
 import { SidebarLayout } from '@/components/layout/sidebar';
 import { TableRowSkeleton } from '@/components/ui/skeleton';
 
+import { useRouter } from 'next/navigation';
+
 export function UsersManagerView() {
+  const router = useRouter();
   const token = useAuthStore((s) => s.token);
+  const user = useAuthStore((s) => s.user);
+  const isLoading = useAuthStore((s) => s.isLoading);
+
+  useEffect(() => {
+    if (!isLoading && (!token || !user)) {
+      router.push('/login');
+    }
+  }, [isLoading, token, user, router]);
 
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [usersNextCursor, setUsersNextCursor] = useState<string | null>(null);

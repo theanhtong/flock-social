@@ -140,8 +140,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err) {
       // Ignore logout errors
     } finally {
-      set({ user: null, token: null });
+      set({ user: null, token: null, isLoginModalOpen: false, isRegisterModalOpen: false });
       toast.info('Logged out successfully');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
   },
 }));

@@ -133,17 +133,23 @@ export async function request<T = any>(
           }
         }
 
-        // Refresh failed -> Clear session and open login modal
+        // Refresh failed -> Clear session and redirect to /login
         useAuthStore.getState().setToken(null);
         useAuthStore.getState().setUser(null);
-        useAuthStore.getState().openLoginModal();
+        useAuthStore.getState().closeAllModals();
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
         const refreshErr = new ApiError(401, 'Session expired. Please log in again.');
         processQueue(refreshErr);
         throw refreshErr;
       } catch (err) {
         useAuthStore.getState().setToken(null);
         useAuthStore.getState().setUser(null);
-        useAuthStore.getState().openLoginModal();
+        useAuthStore.getState().closeAllModals();
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
         processQueue(err);
         throw err;
       } finally {
