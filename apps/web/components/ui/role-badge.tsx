@@ -14,19 +14,19 @@ export interface RoleBadgeProps {
 const roleConfigs: Record<string, { label: string; style: string }> = {
   admin: {
     label: 'ADMIN',
-    style: 'bg-red-950/80 text-red-400 border-red-800/80',
+    style: 'bg-blue-500/10 text-blue-400',
   },
   moderator: {
     label: 'MODERATOR',
-    style: 'bg-amber-950/80 text-amber-400 border-amber-800/80',
+    style: 'bg-blue-500/10 text-blue-400',
   },
   bot_system: {
     label: 'BOT',
-    style: 'bg-cyan-950/80 text-cyan-400 border-cyan-800/80',
+    style: 'bg-blue-500/10 text-blue-400',
   },
   customer: {
     label: 'MEMBER',
-    style: 'bg-slate-800 text-slate-300 border-slate-700',
+    style: 'bg-slate-800/80 text-slate-300',
   },
 };
 
@@ -45,7 +45,7 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded border uppercase select-none font-sans',
+        'inline-flex items-center rounded-sm uppercase select-none font-sans',
         config.style,
         sizeStyles[size],
         className

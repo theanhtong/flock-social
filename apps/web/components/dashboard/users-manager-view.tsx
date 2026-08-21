@@ -308,17 +308,18 @@ export function UsersManagerView() {
                       </td>
                       <td className="py-3 px-4">
                         {u.isDeleted ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-slate-800 text-slate-400 border border-slate-700">
+                          <span className="inline-block px-2 py-0.5 rounded-sm text-[10px] font-semibold uppercase bg-slate-800 text-slate-400">
                             Soft Deleted
                           </span>
                         ) : (
                           <span
-                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase font-sans ${u.status === 'active'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : u.status === 'suspended'
-                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                              }`}
+                            className={`inline-block px-2 py-0.5 rounded-sm text-[10px] font-semibold uppercase font-sans ${
+                              u.status === 'active'
+                                ? 'bg-blue-500/10 text-blue-400'
+                                : u.status === 'suspended'
+                                ? 'bg-blue-500/10 text-blue-400'
+                                : 'bg-slate-800 text-slate-400'
+                            }`}
                           >
                             {u.status}
                           </span>

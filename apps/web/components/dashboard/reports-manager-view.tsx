@@ -205,13 +205,13 @@ export function ReportsManagerView() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <span className="text-amber-400 font-semibold uppercase text-[11px]">Pending</span>;
+        return <span className="bg-blue-500/10 text-blue-400 font-semibold uppercase text-[10px] px-2 py-0.5 rounded-sm">Pending</span>;
       case 'resolved':
-        return <span className="text-emerald-400 font-semibold uppercase text-[11px]">Resolved</span>;
+        return <span className="bg-blue-500/10 text-blue-400 font-semibold uppercase text-[10px] px-2 py-0.5 rounded-sm">Resolved</span>;
       case 'dismissed':
-        return <span className="text-slate-400 font-semibold uppercase text-[11px]">Dismissed</span>;
+        return <span className="bg-slate-800 text-slate-400 font-semibold uppercase text-[10px] px-2 py-0.5 rounded-sm">Dismissed</span>;
       default:
-        return <span className="text-slate-400 font-semibold uppercase text-[11px]">{status}</span>;
+        return <span className="bg-slate-800 text-slate-400 font-semibold uppercase text-[10px] px-2 py-0.5 rounded-sm">{status}</span>;
     }
   };
 
@@ -223,7 +223,7 @@ export function ReportsManagerView() {
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-800 font-sans">
           <div className="flex items-center gap-2.5">
-            <Flag className="w-5 h-5 text-rose-400" />
+            <Flag className="w-5 h-5 text-blue-400" />
             <h1 className="text-lg font-bold text-slate-100">Reports Queue</h1>
           </div>
           <Button
