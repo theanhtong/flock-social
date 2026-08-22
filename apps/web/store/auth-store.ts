@@ -157,6 +157,9 @@ export const useAuthStore = create<AuthState>()(
           set({ token: null, user: null });
           get().closeAllModals();
           toast.success('Logged out');
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         }
       },
     }),
