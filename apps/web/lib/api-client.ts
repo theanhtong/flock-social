@@ -67,12 +67,27 @@ export async function request<T = any>(
 
   const fullUrl = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
-  const response = await fetch(fullUrl, {
-    headers,
-    credentials: 'include', // Needed for HttpOnly refresh cookies
-    body: body ? (isFormData ? (body as FormData) : typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
-    ...customOptions,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  let response: Response;
+  try {
+    response = await fetch(fullUrl, {
+      headers,
+      credentials: 'include', // Needed for HttpOnly refresh cookies
+      body: body ? (isFormData ? (body as FormData) : typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+      signal: controller.signal,
+      ...customOptions,
+    });
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new ApiError(504, 'Server response timed out. Please try again.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const contentType = response.headers.get('content-type');
   const isJson = contentType && contentType.includes('application/json');
@@ -85,6 +100,7 @@ export async function request<T = any>(
     !endpoint.includes('/auth/register') &&
     !endpoint.includes('/auth/refresh') &&
     !endpoint.includes('/auth/forgot-password') &&
+    !endpoint.includes('/auth/verify-forgot-otp') &&
     !endpoint.includes('/auth/reset-password')
   ) {
     if (!isRefreshing) {

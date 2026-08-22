@@ -142,16 +142,11 @@ export class AuthService {
     await this.redis.set(redisKey, otpCode, 600);
     await this.redis.set(cooldownKey, 'true', 60);
 
-    const emailSent = await this.mailService.sendVerificationCode(
-      email,
-      otpCode,
-    );
-
-    if (!emailSent) {
-      throw new BadRequestException(
-        'Failed to send verification email. Please try again later.',
-      );
-    }
+    void this.mailService
+      .sendVerificationCode(email, otpCode)
+      .catch((err: any) => {
+        this.logger.error(`Async register email send failed for ${email}: ${err?.message}`);
+      });
 
     return {
       success: true,
@@ -209,15 +204,34 @@ export class AuthService {
     await this.redis.set(redisKey, otpCode, 600);
     await this.redis.set(cooldownKey, 'true', 60);
 
-    try {
-      await this.mailService.sendVerificationCode(email, otpCode);
-    } catch (err: any) {
+    // Fire & forget mail dispatch in background so HTTP response returns in 5ms
+    void this.mailService.sendVerificationCode(email, otpCode).catch((err: any) => {
       this.logger.error(`Async email send failed for ${email}: ${err?.message}`);
-    }
+    });
 
     return {
       success: true,
       message: 'A 6-digit password reset code has been sent to your email.',
+    };
+  }
+
+  async verifyForgotOtp(
+    email: string,
+    code: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const redisKey = `forgot_otp:${email}`;
+    const savedOtp = await this.redis.get(redisKey);
+
+    if (!savedOtp || savedOtp !== code) {
+      throw new BadRequestException('Invalid or expired password reset OTP code.');
+    }
+
+    const verifiedKey = `forgot_otp_verified:${email}`;
+    await this.redis.set(verifiedKey, 'true', 900);
+
+    return {
+      success: true,
+      message: 'OTP code verified successfully! Please enter your new password.',
     };
   }
 
@@ -227,9 +241,11 @@ export class AuthService {
     newPassword: string,
   ): Promise<{ success: boolean; message: string }> {
     const redisKey = `forgot_otp:${email}`;
+    const verifiedKey = `forgot_otp_verified:${email}`;
     const savedOtp = await this.redis.get(redisKey);
+    const isVerified = await this.redis.get(verifiedKey);
 
-    if (!savedOtp || savedOtp !== code) {
+    if ((!savedOtp || savedOtp !== code) && isVerified !== 'true') {
       throw new BadRequestException('Invalid or expired password reset OTP code.');
     }
 
@@ -249,6 +265,7 @@ export class AuthService {
     });
 
     await this.redis.del(redisKey);
+    await this.redis.del(verifiedKey);
     await this.sessionService.revokeUserSessions(user.id.toString());
 
     return {

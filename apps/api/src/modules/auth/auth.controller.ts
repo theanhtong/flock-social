@@ -24,6 +24,7 @@ import {
   SendVerificationDto,
   VerifyEmailDto,
   ForgotPasswordDto,
+  VerifyForgotOtpDto,
   ResetPasswordDto,
   ChangePasswordDto,
 } from './auth.dto.js';
@@ -71,6 +72,14 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'OTP sent' })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.sendForgotPasswordEmail(dto.email);
+  }
+
+  @Post('verify-forgot-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify password reset OTP' })
+  @ApiResponse({ status: 200, description: 'OTP code verified' })
+  async verifyForgotOtp(@Body() dto: VerifyForgotOtpDto) {
+    return this.authService.verifyForgotOtp(dto.email, dto.code);
   }
 
   @Post('reset-password')
