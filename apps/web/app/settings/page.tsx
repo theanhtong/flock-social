@@ -215,11 +215,10 @@ export default function SettingsPage() {
             onClick={handleSave}
             disabled={isSaving || !hasChanges}
             size="sm"
-            className={`rounded-sm text-xs px-4 self-start sm:self-auto ${
-              hasChanges
+            className={`rounded-sm text-xs px-4 self-start sm:self-auto ${hasChanges
                 ? 'bg-blue-600 hover:bg-blue-500 text-white'
                 : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-            }`}
+              }`}
           >
             {isSaving ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
@@ -427,7 +426,7 @@ export default function SettingsPage() {
               />
               <div className="flex flex-col">
                 <span className="font-semibold text-slate-100 group-hover:text-blue-400 transition-colors">
-                  Notify on Tagging / Mentions
+                  Notify on Tagging
                 </span>
                 <span className="text-[11px] text-slate-400">
                   Receive notifications when you are mentioned or tagged in posts.

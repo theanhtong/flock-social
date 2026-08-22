@@ -20,7 +20,7 @@ export const Sidebar = () => {
     const isAdminOrMod = user?.role === 'admin' || user?.role === 'moderator';
 
     const navItem = (href: string, icon: React.ReactNode, label: string, danger = false, badge?: number) => {
-        const isActive = href === '/' || href === '/dashboard'
+        const isActive = href === '/' || href === '/dashboard' || href === '/profile'
             ? pathname === href
             : pathname?.startsWith(href);
         return (

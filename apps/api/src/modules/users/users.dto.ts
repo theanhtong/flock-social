@@ -164,6 +164,7 @@ export class UserProfileDto {
   createdAt: string;
   isPrivateProfile?: boolean;
   whoCanMessageMe?: string;
+  showOnlineStatus?: boolean;
 }
 
 export class UserSettingDto {

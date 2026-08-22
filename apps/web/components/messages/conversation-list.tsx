@@ -151,7 +151,7 @@ export function ConversationList() {
             className="text-xs h-7 px-2.5 rounded-sm bg-blue-600 hover:bg-blue-500 text-white"
           >
             <Users className="w-3.5 h-3.5 mr-1" />
-            New Group
+            Add Group
           </Button>
         </div>
 
@@ -179,18 +179,16 @@ export function ConversationList() {
               key={folder}
               type="button"
               onClick={() => setActiveFolder(folder)}
-              className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                isActive
+              className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isActive
                   ? 'border-blue-500 text-blue-400 font-bold bg-blue-500/5'
                   : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
-              }`}
+                }`}
             >
               <span>{label}</span>
               {count > 0 && (
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                    isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-400'
-                  }`}
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${isActive ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-400'
+                    }`}
                 >
                   {count}
                 </span>
@@ -230,14 +228,13 @@ export function ConversationList() {
                     setActiveConversationId(conv.id);
                   }
                 }}
-                className={`group/conv relative p-3 flex items-center gap-3 cursor-pointer transition-all hover:bg-slate-800/40 ${
-                  isSelected
+                className={`group/conv relative p-3 flex items-center gap-3 cursor-pointer transition-all hover:bg-slate-800/40 ${isSelected
                     ? 'bg-blue-500/10 border-l-2 border-blue-500'
                     : 'hover:bg-slate-800/30'
-                }`}
+                  }`}
               >
                 <div className="relative flex-shrink-0">
-                  <Avatar src={avatar} name={title} size="md" />
+                  <Avatar src={avatar} name={title} size="md" isOnline={conv.type !== 'group'} />
                   {conv.type === 'group' && (
                     <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-800 border border-slate-700 rounded-full flex items-center justify-center text-slate-300">
                       <Users className="w-2.5 h-2.5 text-blue-400" />
@@ -323,9 +320,8 @@ export function ConversationList() {
 
                   <div className="flex items-center justify-between text-[11px]">
                     <p
-                      className={`truncate flex-1 ${
-                        hasUnread ? 'font-semibold text-slate-100' : 'text-slate-400'
-                      }`}
+                      className={`truncate flex-1 ${hasUnread ? 'font-semibold text-slate-100' : 'text-slate-400'
+                        }`}
                     >
                       {conv.lastMessage ? (
                         <span>

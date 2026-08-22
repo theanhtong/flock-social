@@ -313,17 +313,17 @@ export function MessageItem({ message }: MessageItemProps) {
           {showContextMenu && !isUnsent && (
             <div
               ref={menuRef}
-              className={`absolute top-0 z-30 flex flex-col gap-1.5 p-1.5 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-100 font-sans min-w-[160px] ${isOwn ? 'right-full mr-2' : 'left-full ml-2'
+              className={`absolute top-0 z-30 flex flex-col gap-1.5 p-1.5 bg-slate-900 border border-slate-800 rounded-sm shadow-2xl animate-in fade-in zoom-in-95 duration-100 font-sans min-w-[160px] ${isOwn ? 'right-full mr-2' : 'left-full ml-2'
                 }`}
             >
               {/* Quick Reactions Bar */}
-              <div className="flex items-center justify-between gap-1 p-1 bg-slate-950 rounded-lg border border-slate-800">
+              <div className="flex items-center justify-between gap-1 p-1 bg-slate-950 rounded-sm border border-slate-800">
                 {EMOJI_OPTIONS.map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
                     onClick={() => handleToggleReaction(emoji)}
-                    className="p-1 text-sm hover:scale-125 transition-transform rounded hover:bg-slate-800"
+                    className="p-1 text-sm hover:scale-125 transition-transform rounded-sm hover:bg-slate-800"
                   >
                     {emoji}
                   </button>
@@ -335,7 +335,7 @@ export function MessageItem({ message }: MessageItemProps) {
                 <button
                   type="button"
                   onClick={handleReply}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-slate-200 hover:bg-slate-800 hover:text-blue-400 transition-colors w-full text-left"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-xs text-slate-200 hover:bg-slate-800 hover:text-blue-400 transition-colors w-full text-left"
                 >
                   <Reply className="w-3.5 h-3.5" />
                   <span>Reply</span>

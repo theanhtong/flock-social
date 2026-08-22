@@ -241,7 +241,7 @@ export function GroupDetailsOverlay() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-white rounded-sm hover:bg-slate-800 transition-colors"
             title="Back to chat"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -252,7 +252,7 @@ export function GroupDetailsOverlay() {
         </div>
         <button
           onClick={handleClose}
-          className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition-colors"
+          className="p-1.5 text-slate-400 hover:text-white rounded-sm hover:bg-slate-800 transition-colors"
           title="Close details"
         >
           <X className="w-4 h-4" />
@@ -262,7 +262,7 @@ export function GroupDetailsOverlay() {
       {/* Main Details Body */}
       <div className="p-4 space-y-5 flex-1 min-h-0">
         {/* Profile Card / Header Info */}
-        <div className="flex flex-col items-center justify-center text-center p-5 bg-slate-950 border border-slate-800 rounded-xl space-y-3 shadow-inner">
+        <div className="flex flex-col items-center justify-center text-center p-5 bg-slate-950 border border-slate-800 rounded-sm space-y-3 shadow-inner">
           <Avatar
             src={isGroup ? activeConversation.avatarUrl : otherUser?.avatarUrl}
             name={isGroup ? activeConversation.title || 'Group' : otherUser?.displayName || otherUser?.username || 'User'}
@@ -279,14 +279,14 @@ export function GroupDetailsOverlay() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Group title..."
-                    className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-md text-slate-100 text-center focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-sm text-slate-100 text-center focus:outline-none focus:border-blue-500"
                   />
                   <input
                     type="text"
                     value={avatarUrl}
                     onChange={(e) => setAvatarUrl(e.target.value)}
                     placeholder="Avatar image URL (optional)..."
-                    className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-md text-slate-100 text-center focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-sm text-slate-100 text-center focus:outline-none focus:border-blue-500"
                   />
                   <div className="flex justify-center gap-2 pt-1">
                     <Button
@@ -316,7 +316,7 @@ export function GroupDetailsOverlay() {
                   {isAdmin && (
                     <button
                       onClick={() => setIsEditingTitle(true)}
-                      className="p-1 text-slate-400 hover:text-blue-400 rounded hover:bg-slate-900"
+                      className="p-1 text-slate-400 hover:text-blue-400 rounded-sm hover:bg-slate-900"
                       title="Edit group title & avatar"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -336,7 +336,7 @@ export function GroupDetailsOverlay() {
                 {otherUser?.username && (
                   <Link
                     href={`/profile/${otherUser.username}`}
-                    className="inline-flex items-center gap-1 mt-2 px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs rounded-full transition-colors"
+                    className="inline-flex items-center gap-1 mt-2 px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs rounded-sm transition-colors"
                   >
                     <span>View Profile</span>
                     <ExternalLink className="w-3 h-3 text-blue-400" />
@@ -383,7 +383,7 @@ export function GroupDetailsOverlay() {
 
         {/* Add Follower Member Section (Inline Drawer) */}
         {isGroup && isAdmin && isAddMemberOpen && (
-          <div className="p-3 bg-slate-950 border border-blue-900/60 rounded-xl space-y-2 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="p-3 bg-slate-950 border border-blue-900/60 rounded-sm space-y-2 animate-in fade-in slide-in-from-top-2 duration-150">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                 <UserPlus className="w-3.5 h-3.5 text-blue-400" />
@@ -399,7 +399,7 @@ export function GroupDetailsOverlay() {
 
             <p className="text-[11px] text-slate-400">Select a follower to invite into this group chat.</p>
 
-            <div className="max-h-40 overflow-y-auto border border-slate-800 rounded-lg bg-slate-900 p-1 space-y-1">
+            <div className="max-h-40 overflow-y-auto border border-slate-800 rounded-sm bg-slate-900 p-1 space-y-1">
               {isLoadingFollowers ? (
                 <div className="p-3 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
@@ -414,7 +414,7 @@ export function GroupDetailsOverlay() {
                   <div
                     key={f.id}
                     onClick={() => handleAddMember(f.id)}
-                    className="flex items-center justify-between p-2 rounded-md hover:bg-slate-800 cursor-pointer text-slate-200 text-xs transition-colors"
+                    className="flex items-center justify-between p-2 rounded-sm hover:bg-slate-800 cursor-pointer text-slate-200 text-xs transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <Avatar src={f.avatarUrl} name={f.displayName || f.username} size="xs" />
@@ -443,7 +443,7 @@ export function GroupDetailsOverlay() {
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <span>Group Members</span>
-                <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded-full font-semibold">
+                <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded-sm font-semibold">
                   {membersList.length}
                 </span>
               </h3>
@@ -458,7 +458,7 @@ export function GroupDetailsOverlay() {
                   placeholder="Filter members..."
                   value={searchMemberQuery}
                   onChange={(e) => setSearchMemberQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-950 border border-slate-800 rounded-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
             )}
@@ -475,7 +475,7 @@ export function GroupDetailsOverlay() {
                 return (
                   <div
                     key={m.id || memberUserId}
-                    className="p-3 bg-slate-950 border border-slate-800/80 rounded-lg flex items-center justify-between text-xs hover:border-slate-700 transition-colors"
+                    className="p-3 bg-slate-950 border border-slate-800/80 rounded-sm flex items-center justify-between text-xs hover:border-slate-700 transition-colors"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar src={m.user?.avatarUrl} name={m.user?.displayName || m.user?.username || 'Member'} size="sm" />
@@ -485,7 +485,7 @@ export function GroupDetailsOverlay() {
                             {m.user?.displayName || m.user?.username}
                           </span>
                           {isSelf && (
-                            <span className="text-[10px] text-blue-400 font-semibold bg-blue-950/80 border border-blue-800 px-1.5 py-0.2 rounded-full">
+                            <span className="text-[10px] text-blue-400 font-semibold bg-blue-950/80 border border-blue-800 px-1.5 py-0.2 rounded-sm">
                               You
                             </span>
                           )}
@@ -494,7 +494,7 @@ export function GroupDetailsOverlay() {
                           <span className="text-[10px] text-slate-400 truncate">@{m.user?.username}</span>
                           {/* Role Badge */}
                           <span
-                            className={`text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded border ${
+                            className={`text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded-sm border ${
                               isMemberOwner
                                 ? 'bg-amber-950/80 border-amber-800 text-amber-400'
                                 : isMemberAdmin
@@ -507,7 +507,7 @@ export function GroupDetailsOverlay() {
 
                           {/* Muted Badge */}
                           {isMemberMuted && (
-                            <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded border bg-rose-950/80 border-rose-800 text-rose-400 flex items-center gap-0.5">
+                            <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded-sm border bg-rose-950/80 border-rose-800 text-rose-400 flex items-center gap-0.5">
                               <MessageSquareOff className="w-2.5 h-2.5" />
                               Muted
                             </span>
@@ -530,7 +530,7 @@ export function GroupDetailsOverlay() {
                             )
                           }
                           title={isMemberMuted ? 'Unmute member (allow messaging)' : 'Mute member (restrict messaging)'}
-                          className={`p-1.5 rounded transition-colors ${
+                          className={`p-1.5 rounded-sm transition-colors ${
                             isMemberMuted
                               ? 'text-rose-400 hover:bg-rose-950/60'
                               : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'
@@ -551,7 +551,7 @@ export function GroupDetailsOverlay() {
                               )
                             }
                             title={isMemberAdmin ? 'Demote to Member' : 'Promote to Admin'}
-                            className="p-1.5 text-slate-400 hover:text-blue-400 rounded hover:bg-slate-800 transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-blue-400 rounded-sm hover:bg-slate-800 transition-colors"
                           >
                             {isMemberAdmin ? <ShieldAlert className="w-3.5 h-3.5 text-amber-400" /> : <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />}
                           </button>
@@ -562,7 +562,7 @@ export function GroupDetailsOverlay() {
                           type="button"
                           onClick={() => handleKickMember(memberUserId, m.user?.displayName || m.user?.username || 'user')}
                           title="Kick member from group"
-                          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-sm transition-colors"
                         >
                           <UserMinus className="w-3.5 h-3.5" />
                         </button>

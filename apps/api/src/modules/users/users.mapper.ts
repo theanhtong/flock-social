@@ -20,5 +20,6 @@ export function formatProfile(user: any): UserProfileDto {
     createdAt: user.createdAt.toISOString(),
     isPrivateProfile: Boolean(user.settings?.isPrivateProfile),
     whoCanMessageMe: user.settings?.whoCanMessageMe || 'everyone',
+    showOnlineStatus: user.settings?.showOnlineStatus !== false,
   };
 }

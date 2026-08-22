@@ -250,7 +250,7 @@ export function ChatWindow() {
               href={`/profile/${otherUser.username}`}
               className="flex items-center gap-3 min-w-0 group/profile cursor-pointer"
             >
-              <Avatar src={avatar} name={title} size="md" className="group-hover/profile:opacity-90 transition-opacity" />
+              <Avatar src={avatar} name={title} size="md" isOnline className="group-hover/profile:opacity-90 transition-opacity" />
               <div className="min-w-0">
                 <h2 className="text-xs font-bold text-slate-100 truncate group-hover/profile:text-blue-400 transition-colors flex items-center gap-1.5">
                   <span>{title}</span>

@@ -105,7 +105,7 @@ export function RepostModal({
         </div>
 
         {/* Post Preview Card being Reposted */}
-        <div className="bg-slate-950/80 border border-slate-800 rounded-lg p-3 flex flex-col gap-2 relative">
+        <div className="bg-slate-950/80 border border-slate-800 rounded-sm p-3 flex flex-col gap-2 relative">
           <div className="flex items-center gap-2">
             <Avatar
               src={post.user?.avatarUrl}

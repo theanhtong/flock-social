@@ -102,7 +102,7 @@ export function RightPanel() {
 
         {/* User Search Results Dropdown */}
         {showSearchDropdown && searchQuery.trim().length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-800 rounded-lg shadow-xl z-50 overflow-hidden max-h-72 overflow-y-auto font-sans">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-800 rounded-sm shadow-xl z-50 overflow-hidden max-h-72 overflow-y-auto font-sans">
             {isSearching ? (
               <div className="p-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" /> Searching...

@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar } from '@/components/ui/avatar';
 import { UserProfile, userService } from '@/services/user-service';
 import { useAuthStore } from '@/store/auth-store';
 import { toast } from 'sonner';
@@ -70,38 +69,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile" maxWidth="md">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 font-sans text-slate-100">
-        
-        {/* Banner & Avatar Preview (Avatar initial auto-generated from Display Name) */}
-        <div className="rounded-sm overflow-hidden bg-slate-950 border border-slate-800 shadow-md">
-          {/* Banner Container */}
-          <div className="h-28 w-full bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center">
-            {profile.bannerUrl ? (
-              <img src={profile.bannerUrl} alt="Banner" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-xs text-slate-500 font-medium">Header Banner</span>
-            )}
-          </div>
-
-          {/* Avatar & Display Name Preview */}
-          <div className="px-4 py-3 flex items-center justify-between bg-slate-950 border-t border-slate-900">
-            <div className="flex items-center gap-3">
-              <div className="-mt-10">
-                <div className="ring-4 ring-slate-950 rounded-full overflow-hidden bg-slate-900 shadow-xl">
-                  <Avatar name={displayName || profile.username} size="lg" />
-                </div>
-              </div>
-
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-slate-100 truncate max-w-[180px]">
-                  {displayName || profile.username}
-                </span>
-                <span className="text-xs text-slate-400 font-mono">@{profile.username}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Profile Details Inputs */}
         <Input
           label="Display Name"
           value={displayName}

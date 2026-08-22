@@ -21,6 +21,8 @@ export interface UserProfile {
   createdAt: string;
   isPrivateProfile?: boolean;
   whoCanMessageMe?: string;
+  isOnline?: boolean;
+  showOnlineStatus?: boolean;
 }
 
 export interface UpdateProfilePayload {

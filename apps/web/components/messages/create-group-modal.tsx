@@ -150,7 +150,7 @@ export function CreateGroupModal() {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-md p-5 space-y-4 shadow-2xl relative animate-in fade-in zoom-in duration-200 font-sans">
+      <div className="bg-slate-900 border border-slate-800 rounded-sm w-full max-w-md p-5 space-y-4 shadow-2xl relative animate-in fade-in zoom-in duration-200 font-sans">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
             <Users className="w-4 h-4 text-blue-400" />
@@ -158,7 +158,7 @@ export function CreateGroupModal() {
           </h2>
           <button
             onClick={() => setCreateGroupOpen(false)}
-            className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
+            className="p-1 text-slate-400 hover:text-white rounded-sm hover:bg-slate-800"
           >
             <X className="w-4 h-4" />
           </button>
@@ -173,7 +173,7 @@ export function CreateGroupModal() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
@@ -186,7 +186,6 @@ export function CreateGroupModal() {
               </span>
             </div>
 
-            {/* Search Followers Input */}
             <div className="relative mb-2">
               <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
               <input
@@ -194,12 +193,11 @@ export function CreateGroupModal() {
                 placeholder="Search followers by name or username..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-950 border border-slate-800 rounded-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
             </div>
 
-            {/* Scrollable Unselected Followers List (Max H-36) */}
-            <div className="max-h-36 overflow-y-auto border border-slate-800 rounded-lg bg-slate-950 p-1 space-y-1 mb-2">
+            <div className="max-h-36 overflow-y-auto border border-slate-800 rounded-sm bg-slate-950 p-1 space-y-1 mb-2">
               {isLoadingFollowers ? (
                 <div className="p-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
@@ -214,7 +212,7 @@ export function CreateGroupModal() {
                   <div
                     key={f.id}
                     onClick={() => handleSelectFollower(f.username)}
-                    className="flex items-center gap-2.5 p-2 rounded-md cursor-pointer transition-colors hover:bg-slate-900 text-slate-300"
+                    className="flex items-center gap-2.5 p-2 rounded-sm cursor-pointer transition-colors hover:bg-slate-900 text-slate-300"
                   >
                     <Avatar src={f.avatarUrl} name={f.displayName || f.username} size="sm" />
                     <div className="flex flex-col min-w-0">
@@ -228,18 +226,9 @@ export function CreateGroupModal() {
               )}
             </div>
 
-            {/* Selected Members List Below (Fixed Max H-36) */}
             <div className="space-y-1.5 pt-1">
-              {/* <div className="flex items-center justify-between text-[10px] uppercase font-semibold tracking-wider">
-                <span className="text-slate-400">
-                  Selected Members ({members.length}/2 minimum):
-                </span>
-                {members.length < 2 && (
-                  <span className="text-amber-400 font-medium">Select at least 2 followers</span>
-                )}
-              </div> */}
               {members.length > 0 && (
-                <div className="max-h-36 overflow-y-auto space-y-1.5 p-1.5 bg-slate-950 border border-slate-800 rounded-lg">
+                <div className="max-h-36 overflow-y-auto space-y-1.5 p-1.5 bg-slate-950 border border-slate-800 rounded-sm">
                   {members.map((username) => {
                     const followerObj = followers.find(
                       (f) => f.username.toLowerCase() === username.toLowerCase()
@@ -247,7 +236,7 @@ export function CreateGroupModal() {
                     return (
                       <div
                         key={username}
-                        className="flex items-center justify-between p-2 rounded-md bg-blue-950/40 border border-blue-900/60 text-slate-100 font-sans"
+                        className="flex items-center justify-between p-2 rounded-sm bg-blue-950/40 border border-blue-900/60 text-slate-100 font-sans"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <Avatar
@@ -267,7 +256,7 @@ export function CreateGroupModal() {
                         <button
                           type="button"
                           onClick={() => handleRemoveMember(username)}
-                          className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
+                          className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-sm transition-colors"
                           title="Remove member"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -291,7 +280,7 @@ export function CreateGroupModal() {
             />
 
             {avatarUrl ? (
-              <div className="relative rounded-lg overflow-hidden border border-slate-800 bg-slate-950 p-2.5 flex items-center justify-between">
+              <div className="relative rounded-sm overflow-hidden border border-slate-800 bg-slate-950 p-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img src={avatarUrl} alt="Avatar preview" className="w-12 h-12 rounded-full object-cover border border-slate-700 shrink-0" />
                   <div className="flex flex-col">
@@ -313,7 +302,7 @@ export function CreateGroupModal() {
                   <button
                     type="button"
                     onClick={() => setAvatarUrl('')}
-                    className="p-1 text-rose-400 hover:text-rose-300 hover:bg-slate-800 rounded"
+                    className="p-1 text-rose-400 hover:text-rose-300 hover:bg-slate-800 rounded-sm"
                     title="Remove image"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -326,7 +315,7 @@ export function CreateGroupModal() {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-lg p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${isDragging
+                className={`border-2 border-dashed rounded-sm p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${isDragging
                     ? 'border-blue-500 bg-blue-500/10'
                     : 'border-slate-800 hover:border-slate-700 bg-slate-950/60'
                   }`}
