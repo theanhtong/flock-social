@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -20,6 +20,14 @@ export default function ForgotPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const otpInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (step === 2 && otpInputRef.current) {
+      otpInputRef.current.focus();
+    }
+  }, [step]);
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
@@ -29,11 +37,13 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      await apiClient.post('/auth/forgot-password', { email: email.trim() });
-      toast.success('Verification OTP code sent to your email');
+      const res = await apiClient.post<{ success: boolean; message: string }>('/auth/forgot-password', {
+        email: email.trim(),
+      });
+      toast.success(res?.message || 'Verification OTP code sent to your email!');
       setStep(2);
     } catch (err: any) {
-      const msg = err instanceof ApiError ? err.message : 'Failed to send OTP code';
+      const msg = err instanceof ApiError ? err.message : err?.message || 'Failed to send OTP code';
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -62,11 +72,11 @@ export default function ForgotPasswordPage() {
         code: code.trim(),
         newPassword,
       });
-      toast.success('Password reset successfully! Please sign in.');
+      toast.success('Password reset successfully! Opening login...');
       router.push('/login');
       openLoginModal();
     } catch (err: any) {
-      const msg = err instanceof ApiError ? err.message : 'Failed to reset password';
+      const msg = err instanceof ApiError ? err.message : err?.message || 'Failed to reset password';
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -83,7 +93,7 @@ export default function ForgotPasswordPage() {
           <p className="text-xs text-slate-400">
             {step === 1
               ? 'Enter your email address to receive an OTP reset code'
-              : `Enter OTP code sent to ${email} and your new password`}
+              : `Enter the 6-digit OTP code sent to ${email} and your new password`}
           </p>
         </div>
 
@@ -111,6 +121,7 @@ export default function ForgotPasswordPage() {
         ) : (
           <form onSubmit={handleResetPassword} className="flex flex-col gap-3">
             <Input
+              ref={otpInputRef}
               label="OTP Code (6 digits)"
               type="text"
               placeholder="123456"

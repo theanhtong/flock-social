@@ -209,10 +209,11 @@ export class AuthService {
     await this.redis.set(redisKey, otpCode, 600);
     await this.redis.set(cooldownKey, 'true', 60);
 
-    // Fire & forget email dispatch so user UI responds instantly
-    this.mailService.sendVerificationCode(email, otpCode).catch((err) => {
-      this.logger.error(`Async email send failed for ${email}: ${err.message}`);
-    });
+    try {
+      await this.mailService.sendVerificationCode(email, otpCode);
+    } catch (err: any) {
+      this.logger.error(`Async email send failed for ${email}: ${err?.message}`);
+    }
 
     return {
       success: true,
