@@ -96,16 +96,32 @@ export class SessionService {
   }
 
   async revokeAllSessions(): Promise<number> {
-  const { count } = await this.prisma.session.deleteMany({});
-  try {
-    const keys = await this.redis.client.keys('session:*');
-    if (keys.length > 0) {
-      await this.redis.client.del(...keys);
+    const { count } = await this.prisma.session.deleteMany({});
+    try {
+      const keys = await this.redis.client.keys('session:*');
+      if (keys.length > 0) {
+        await this.redis.client.del(...keys);
+      }
+    } catch (err: any) {
+      this.logger.warn(`Redis cache flush failed during revokeAllSessions: ${err.message}`);
     }
-  } catch (err: any) {
-    this.logger.warn(`Redis cache flush failed during revokeAllSessions: ${err.message}`);
+
+    return count; 
   }
 
-  return count; 
-}
+  async revokeUserSessions(userId: string): Promise<number> {
+    const userBigInt = BigInt(userId);
+    const { count } = await this.prisma.session.deleteMany({
+      where: { userId: userBigInt },
+    });
+    try {
+      const keys = await this.redis.client.keys(`session:${userId}:*`);
+      if (keys.length > 0) {
+        await this.redis.client.del(...keys);
+      }
+    } catch (err: any) {
+      this.logger.warn(`Redis cache flush failed for user ${userId}: ${err.message}`);
+    }
+    return count;
+  }
 }

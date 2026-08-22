@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import argon2 from 'argon2';
 import { ConfigService } from '@nestjs/config';
@@ -177,6 +178,109 @@ export class AuthService {
     return {
       success: true,
       message: 'Email verified successfully! Please complete your profile.',
+    };
+  }
+
+  async sendForgotPasswordEmail(
+    email: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const user = await this.prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
+    });
+
+    if (!user) {
+      // Return generic success to prevent email enumeration
+      return {
+        success: true,
+        message: 'If an account exists with this email, a password reset code has been sent.',
+      };
+    }
+
+    const cooldownKey = `forgot_otp_cooldown:${email}`;
+    const inCooldown = await this.redis.get(cooldownKey);
+    if (inCooldown) {
+      throw new BadRequestException(
+        'Please wait 60 seconds before requesting a new password reset code.',
+      );
+    }
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const redisKey = `forgot_otp:${email}`;
+    await this.redis.set(redisKey, otpCode, 600);
+    await this.redis.set(cooldownKey, 'true', 60);
+
+    await this.mailService.sendVerificationCode(email, otpCode);
+
+    return {
+      success: true,
+      message: 'If an account exists with this email, a password reset code has been sent.',
+    };
+  }
+
+  async resetPassword(
+    email: string,
+    code: string,
+    newPassword: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const redisKey = `forgot_otp:${email}`;
+    const savedOtp = await this.redis.get(redisKey);
+
+    if (!savedOtp || savedOtp !== code) {
+      throw new BadRequestException('Invalid or expired password reset OTP code.');
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const hashedPassword = await argon2.hash(newPassword);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: hashedPassword },
+    });
+
+    await this.redis.del(redisKey);
+    await this.sessionService.revokeUserSessions(user.id.toString());
+
+    return {
+      success: true,
+      message: 'Password reset successfully! Please log in with your new password.',
+    };
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: BigInt(userId) },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const isCurrentValid = await argon2.verify(user.passwordHash, currentPassword);
+    if (!isCurrentValid) {
+      throw new BadRequestException('Current password is incorrect.');
+    }
+
+    const hashedPassword = await argon2.hash(newPassword);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: hashedPassword },
+    });
+
+    return {
+      success: true,
+      message: 'Password changed successfully!',
     };
   }
 

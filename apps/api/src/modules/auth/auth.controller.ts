@@ -23,10 +23,14 @@ import {
   RegisterDto,
   SendVerificationDto,
   VerifyEmailDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  ChangePasswordDto,
 } from './auth.dto.js';
 import { Role, Roles } from './decorators/roles.decorator.js';
 import { RolesGuard } from './guards/roles.guard.js';
 import { AllowWhileRestricted } from './guards/allow-while-restricted.decorator.js';
+import { CurrentUser } from './decorators/current-user.decorator.js';
 
 @ApiTags('Auth')
 @AllowWhileRestricted()
@@ -59,6 +63,39 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Verified' })
   async verifyEmail(@Body() dto: VerifyEmailDto) {
     return this.authService.verifyEmail(dto.email, dto.code);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send password reset OTP' })
+  @ApiResponse({ status: 200, description: 'OTP sent' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.sendForgotPasswordEmail(dto.email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password with OTP' })
+  @ApiResponse({ status: 200, description: 'Password reset successful' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.email, dto.code, dto.newPassword);
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Change password while logged in' })
+  @ApiResponse({ status: 200, description: 'Password changed successfully' })
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(
+      userId,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 
   @Post('google')

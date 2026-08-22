@@ -110,7 +110,7 @@ export const userService = {
   },
 
   changePassword: async (data: { currentPassword?: string; newPassword: string }, token?: string | null): Promise<{ success: boolean; message: string }> => {
-    return apiClient.post<{ success: boolean; message: string }>('/users/me/change-password', data, { token });
+    return apiClient.post<{ success: boolean; message: string }>('/auth/change-password', data, { token });
   },
 };
 

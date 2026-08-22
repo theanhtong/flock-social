@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuthStore } from '@/store/auth-store';
 import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
@@ -93,14 +94,25 @@ export const LoginModal: React.FC = () => {
             error={errors.identifier}
           />
 
-          <Input
-            label="Password"
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.password}
-          />
+          <div className="space-y-1">
+            <Input
+              label="Password"
+              type="password"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={errors.password}
+            />
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                onClick={closeLoginModal}
+                className="text-[11px] text-blue-400 hover:underline font-medium"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          </div>
 
           <Button
             type="submit"
