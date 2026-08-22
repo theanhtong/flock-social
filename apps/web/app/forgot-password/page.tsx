@@ -14,6 +14,19 @@ export default function ForgotPasswordPage() {
   const router = useRouter();
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
 
+  const user = useAuthStore((s) => s.user);
+  const isLoading = useAuthStore((s) => s.isLoading);
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (user.role === 'admin' || user.role === 'moderator') {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/');
+      }
+    }
+  }, [user, isLoading, router]);
+
   const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -13,6 +13,19 @@ export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
   const googleAuth = useAuthStore((s) => s.googleAuth);
+
+  const user = useAuthStore((s) => s.user);
+  const isLoading = useAuthStore((s) => s.isLoading);
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (user.role === 'admin' || user.role === 'moderator') {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/');
+      }
+    }
+  }, [user, isLoading, router]);
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
