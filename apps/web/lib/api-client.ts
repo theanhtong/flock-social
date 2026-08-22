@@ -83,7 +83,9 @@ export async function request<T = any>(
     response.status === 401 &&
     !endpoint.includes('/auth/login') &&
     !endpoint.includes('/auth/register') &&
-    !endpoint.includes('/auth/refresh')
+    !endpoint.includes('/auth/refresh') &&
+    !endpoint.includes('/auth/forgot-password') &&
+    !endpoint.includes('/auth/reset-password')
   ) {
     if (!isRefreshing) {
       isRefreshing = true;

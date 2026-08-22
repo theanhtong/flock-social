@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   ConflictException,
   UnauthorizedException,
   BadRequestException,
@@ -25,6 +26,7 @@ import { SessionValidationResult } from './session/session.enum.js';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly cookieName = 'refreshToken';
   private readonly googleClient: OAuth2Client;
 
@@ -207,7 +209,10 @@ export class AuthService {
     await this.redis.set(redisKey, otpCode, 600);
     await this.redis.set(cooldownKey, 'true', 60);
 
-    await this.mailService.sendVerificationCode(email, otpCode);
+    // Fire & forget email dispatch so user UI responds instantly
+    this.mailService.sendVerificationCode(email, otpCode).catch((err) => {
+      this.logger.error(`Async email send failed for ${email}: ${err.message}`);
+    });
 
     return {
       success: true,
