@@ -62,7 +62,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 4000;
   await app.listen(port);
-  console.log(`🚀 NestJS API running on http://localhost:${port}`);
-  console.log(`📚 Swagger Documentation: http://localhost:${port}/api/docs`);
+  console.log(`NestJS API running on http://localhost:${port}`);
+  console.log(`Swagger Documentation: http://localhost:${port}/api/docs`);
 }
 bootstrap();

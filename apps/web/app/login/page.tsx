@@ -89,14 +89,24 @@ export default function LoginPage() {
             error={errors.identifier}
           />
 
-          <Input
-            label="Password"
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.password}
-          />
+          <div className="space-y-1">
+            <Input
+              label="Password"
+              type="password"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={errors.password}
+            />
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-[11px] text-blue-400 hover:underline font-medium"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          </div>
 
           <Button
             type="submit"

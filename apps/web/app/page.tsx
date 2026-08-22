@@ -17,13 +17,19 @@ export default function Home() {
     }
   }, [isLoading, user, router]);
 
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
-      // <div className="flex-1 flex items-center justify-center text-blue-500">
-      //   <Spinner size="lg" />
-      // </div>
-      <></>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-blue-500 font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <Spinner size="lg" />
+          <span className="text-xs text-slate-400 font-medium">Verifying authentication...</span>
+        </div>
+      </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return <UserHomeFeed />;
