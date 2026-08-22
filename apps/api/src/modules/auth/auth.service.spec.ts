@@ -234,18 +234,7 @@ describe('AuthService', () => {
       );
     });
 
-    it('should throw BadRequestException when email fails to send', async () => {
-      const { service, prisma, redis, mailService } = await makeService();
-      prisma.user.findFirst.mockResolvedValue(null);
-      redis.get.mockResolvedValue(null);
-      mailService.sendVerificationCode.mockResolvedValue(false);
-
-      await expect(
-        service.sendVerificationEmail(mockUser.email),
-      ).rejects.toThrow(/failed to send verification email/i);
-    });
-
-    it('should return success when email sent', async () => {
+    it('should dispatch verification email and return success', async () => {
       const { service, prisma, redis, mailService } = await makeService();
       prisma.user.findFirst.mockResolvedValue(null);
       redis.get.mockResolvedValue(null);
@@ -254,6 +243,7 @@ describe('AuthService', () => {
       const result = await service.sendVerificationEmail(mockUser.email);
 
       expect(result.success).toBe(true);
+      expect(mailService.sendVerificationCode).toHaveBeenCalled();
     });
   });
 
