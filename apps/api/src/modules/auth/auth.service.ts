@@ -189,11 +189,9 @@ export class AuthService {
     });
 
     if (!user) {
-      // Return generic success to prevent email enumeration
-      return {
-        success: true,
-        message: 'If an account exists with this email, a password reset code has been sent.',
-      };
+      throw new NotFoundException(
+        'No account found with this email address.',
+      );
     }
 
     const cooldownKey = `forgot_otp_cooldown:${email}`;
@@ -213,7 +211,7 @@ export class AuthService {
 
     return {
       success: true,
-      message: 'If an account exists with this email, a password reset code has been sent.',
+      message: 'A 6-digit password reset code has been sent to your email.',
     };
   }
 

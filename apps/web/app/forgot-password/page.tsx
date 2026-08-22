@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
               className="w-full mt-1 font-sans"
               isLoading={loading}
             >
-              Send OTP Code
+              Continue
             </Button>
           </form>
         ) : (
