@@ -170,7 +170,6 @@ export default function SelfProfilePage() {
                     src={profile.avatarUrl}
                     name={profile.displayName || profile.username}
                     size="xl"
-                    isOnline
                     className="ring-4 ring-slate-900"
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center text-white">
