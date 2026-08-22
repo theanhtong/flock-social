@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient, ApiError } from '@/lib/api-client';
 import { Input } from '@/components/ui/input';
@@ -83,18 +84,38 @@ export default function ForgotPasswordPage() {
     }
   };
 
+  const handleBack = () => {
+    if (step === 2) {
+      setStep(1);
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
     <div className="flex-1 min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 font-sans text-slate-100">
       <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-sm p-5 shadow-xl flex flex-col gap-4">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-xl font-bold text-slate-100">
-            {step === 1 ? 'Forgot Password' : 'Reset Password'}
-          </h1>
-          <p className="text-xs text-slate-400">
-            {step === 1
-              ? 'Enter your email address to receive an OTP reset code'
-              : `Enter the 6-digit OTP code sent to ${email} and your new password`}
-          </p>
+        {/* Header with ArrowLeft Back Icon */}
+        <div className="flex items-start gap-2.5">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-sm transition-colors -ml-1 mt-0.5 cursor-pointer"
+            title="Go back"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+
+          <div className="flex flex-col gap-0.5">
+            <h1 className="text-xl font-bold text-slate-100">
+              {step === 1 ? 'Forgot Password' : 'Reset Password'}
+            </h1>
+            <p className="text-xs text-slate-400">
+              {step === 1
+                ? 'Enter your email address to receive an OTP reset code'
+                : `Enter the 6-digit OTP code sent to ${email} and your new password`}
+            </p>
+          </div>
         </div>
 
         {step === 1 ? (
