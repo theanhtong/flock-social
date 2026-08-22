@@ -74,7 +74,7 @@ export const useAuthStore = create<AuthState>()(
             try {
               const me = await apiClient.get('/users/me', { token: currentToken });
               if (me) {
-                set({ user: me });
+                set({ user: me, isLoading: false });
                 return;
               }
             } catch {
